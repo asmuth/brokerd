@@ -72,7 +72,7 @@ object Fyrehose{
     if (CONFIG contains 'timeout)
       CONN_IDLE_TIMEOUT = CONFIG('timeout).toInt
 
-    boot()
+    safe_boot()
   }
 
 
@@ -111,6 +111,12 @@ object Fyrehose{
       udp_listener.listen
     }
 
+  }
+
+  def safe_boot() = try{
+    boot
+  } catch {
+    case e: Exception => Fyrehose.fatal(e.toString)
   }
 
 

@@ -13,11 +13,12 @@ class UDPListener(port: Int) extends Receivable {
     val sock = new DatagramSocket(port)
 
     val stream = new InboundStream(this, Fyrehose.BUFFER_SIZE_UDP)
-    stream.set_safe_mode(false)
+    stream.set_safe_mode(true)
 
     while (true) {
       sock.receive(next)
-      stream.read(next.getData, Fyrehose.BUFFER_SIZE_UDP)
+      stream.read(next.getData, next.getLength)
+      stream.clear
     }
 
   }
@@ -31,6 +32,6 @@ class UDPListener(port: Int) extends Receivable {
 
 
   def query(qry: QueryBody) =
-    Fyrehose.error("received query via UDP: illegal")
+    Fyrehose.error("received query via UDP (illegal): " + new String(qry.raw))
 
 }

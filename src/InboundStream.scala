@@ -5,6 +5,10 @@ import scala.actors.Actor._
 
 class InboundStream(recv: Receivable, buffer_size: Int){
 
+  // if fast_mode is enabled, events and queries are splitted
+  // by newline, which means you can't have \n in your events
+  var fast_mode = true
+
   // if safe_mode is disabled, non-json input is silently
   // ignored. safe_mode=false requires strict_mode=true
   var safe_mode = true
@@ -20,9 +24,11 @@ class InboundStream(recv: Receivable, buffer_size: Int){
   def set_safe_mode(m: Boolean) =
     safe_mode = m
 
-
   def set_strict_mode(m: Boolean) =
     strict_mode = m
+
+  def set_fast_mode(m: Boolean) =
+    fast_mode = m
 
 
   def read(buf: Array[Byte], buf_len: Int) : Unit = {
@@ -37,7 +43,53 @@ class InboundStream(recv: Receivable, buffer_size: Int){
     System.arraycopy(buf, 0, buffer, buffer_pos, buf_len)
     buffer_pos += buf_len
 
-    read_chunked()
+    if (fast_mode)
+      read_fast(false)
+    else
+      read_chunked()
+  }
+
+
+  def clear = {
+    if (fast_mode)
+      read_fast(true)
+    else
+      read_chunked()
+
+    buffer_pos = 0
+  }
+
+
+  private def read_fast(last: Boolean) : Unit = {
+    var pos = 0
+    var offset = 0
+
+    while (pos <= buffer_pos) {
+
+      if (pos > 0 && ((buffer(pos) == 10) || ((pos == buffer_pos) && last))) {
+
+        while ((offset < pos) && (
+              (buffer(offset) == 0) ||
+              (buffer(offset) == 9)  ||
+              (buffer(offset) == 10) ||
+              (buffer(offset) == 13) ||
+              (buffer(offset) == 32))) offset += 1
+
+        if (buffer(offset) == 123)
+          emit_event(java.util.Arrays.copyOfRange(buffer, offset, pos))
+        else
+          emit_query(java.util.Arrays.copyOfRange(buffer, offset, pos))
+
+        offset = pos
+
+        if (pos + 1 >= buffer_pos)
+          buffer_pos = 0
+
+      }
+
+      pos += 1
+    }
+
   }
 
 
@@ -114,8 +166,10 @@ class InboundStream(recv: Receivable, buffer_size: Int){
       throw new ParseException("something went horribly wrong while parsing")
 
 
-  private def emit_event(buf: Array[Byte]) =
+  private def emit_event(buf: Array[Byte]) = {
+    println("emit:" + new String(buf))
     recv.message(new MessageBody(buf))
+  }
 
 
   private def emit_query(buf: Array[Byte]) =
