@@ -166,10 +166,8 @@ class InboundStream(recv: Receivable, buffer_size: Int){
       throw new ParseException("something went horribly wrong while parsing")
 
 
-  private def emit_event(buf: Array[Byte]) = {
-    println("emit:" + new String(buf))
+  private def emit_event(buf: Array[Byte]) =
     recv.message(new MessageBody(buf))
-  }
 
 
   private def emit_query(buf: Array[Byte]) =
