@@ -59,7 +59,10 @@ class Backbone() extends Actor{
   }
 
 
-  private def finish(query: Query) = {
+  private def finish(query: Query) : Unit = {
+    if (query == null)
+      return ()
+
     queries -= query
     query ! HangupSig
   }
