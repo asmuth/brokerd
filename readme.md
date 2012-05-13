@@ -34,6 +34,11 @@ subscribe to all signups from now on
     echo "! since(now) stream() filter(action = 'signup')" | nc localhost 2323
 
 
+subscribe to all events
+ 
+    echo "! stream()" | nc localhost 2323
+
+
 
 Fyerhose Query Language
 -----------------------
