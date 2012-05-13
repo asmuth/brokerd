@@ -1,12 +1,12 @@
 Fyerhose
 ========
 
-fyerhose is a simple, clusterable pubsub daemon that streams json events. 
+fyerhose is a scala-based, clusterable pub/sub daemon designed to stream json events. 
 it allows for server-side history replay and event filtering.
 
 
-Synopsis:
----------
+Synopsis
+--------
 
 Fyerhose opens up a tcp (and optionally udp) port to which you stream
 one event (an arbitrary json object/hash) per packet/message. Messages
@@ -40,31 +40,31 @@ Fyerhose Query Language
 
 command order within a query is not significannt.
 
-#   filter(KEY = VALUE)
-#   filter(KEY < MAX)
-#   filter(KEY > MIN)
-#   filter(KEY ~ MIN-MAX)
-#   filter(KEY & ONE,TWO,THREE...)
-#   filter(KEY)
+    filter(KEY = VALUE)
+    filter(KEY < MAX)
+    filter(KEY > MIN)
+    filter(KEY ~ MIN-MAX)
+    filter(KEY & ONE,TWO,THREE...)
+    filter(KEY)
 
-#   since(TIMESTAMP)
-#   since(-SECONDS)
-#   since(now)
+    since(TIMESTAMP)
+    since(-SECONDS)
+    since(now)
 
-#   until(TIMESTAMP)
-#   until(-SECONDS)
-#   until(now)
-#   stream()
+    until(TIMESTAMP)
+    until(-SECONDS)
+    until(now)
+    stream()
 
-#   confirm()
+    confirm()
 
 
 examples:
 
-#   filter(channel = 'dawanda-firehose') since(0) until(now)
-#   filter(channel = 'dawanda-firehose') since(now) stream()
-#   filter(channel & 'dawanda-firehose','dawanda-searchfeed') since(now) stream()
-#   filter(_channel = 'dawanda-tap') filter(q_params.page > 150) since(0) stream()" 
+   filter(channel = 'dawanda-firehose') since(0) until(now)
+   filter(channel = 'dawanda-firehose') since(now) stream()
+   filter(channel & 'dawanda-firehose','dawanda-searchfeed') since(now) stream()
+   filter(_channel = 'dawanda-tap') filter(q_params.page > 150) since(0) stream()" 
 
 
 
