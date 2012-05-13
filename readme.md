@@ -61,16 +61,39 @@ command order within a query is not significannt.
 
 examples:
 
-   filter(channel = 'dawanda-firehose') since(0) until(now)
-   filter(channel = 'dawanda-firehose') since(now) stream()
-   filter(channel & 'dawanda-firehose','dawanda-searchfeed') since(now) stream()
-   filter(_channel = 'dawanda-tap') filter(q_params.page > 150) since(0) stream()" 
+    filter(channel = 'dawanda-firehose') since(0) until(now)
+    filter(channel = 'dawanda-firehose') since(now) stream()
+    filter(channel & 'dawanda-firehose','dawanda-searchfeed') since(now) stream()
+    filter(_channel = 'dawanda-tap') filter(q_params.page > 150) since(0) stream()" 
 
 
 
----
+
+JSON Format
+-----------
+
+fyerhose know three special json keys/fields:
+
+  _time
+
+    timestamp at which the event was received.
+    will be automatically added if not set.
 
 
+  _eid
+
+    unique event-id. 
+    will be automatically added if not set.
+
+
+  _volatile
+
+    publish, but do not log this event
+
+
+
+Usage
+-----
 
     usage: fyerhose [options]
       
@@ -98,38 +121,4 @@ examples:
 
          comma-seperated list of other nodes in the cluster
       
-
-
-
-JSON ATTRIBUTES:
-
-  _channel
-   
-    channel on which the event shoud be broadcasted
-
-
-  _time
-
-    timestamp at which the event was received.
-    will be automatically added if not set.
-
-
-  _eid
-
-    unique event-id. 
-    will be automatically added if not set.
-
-
-  _request_id / _response_id
-
-    if request id is set, the event with a matching 
-    response_id will only be delivered to the requester
-    (unless request_timeout was reached, then it will
-    be delivered to everybody)
-
-
-  _nolog
-
-    do not log this event
-
 
