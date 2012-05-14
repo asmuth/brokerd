@@ -9,8 +9,8 @@ Synopsis
 --------
 
 Fyerhose opens up a tcp (and optionally udp) port to which you stream
-one event (an arbitrary json object/hash) per packet/message. Messages
-starting with an ASCII bang ("!") are interpreted as queries:
+one event (an arbitrary json object/hash) per packet/message. A messages
+starting with an ASCII bang ("!") will set the connection into query-mode:
 
 add a few example events:
 
