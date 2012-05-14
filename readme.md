@@ -2,7 +2,7 @@ Fyerhose
 ========
 
 fyerhose is a scala-based, clusterable pub/sub daemon designed to stream json events. 
-it allows for server-side history replay and event filtering.
+it allows for server-side history replay, event filtering and a few more advanced queries.
 
 
 Synopsis
@@ -21,22 +21,17 @@ add a few example events:
 
 get the last 60 seconds of signups
  
-    echo "! since(-60) until(now) filter(action = 'signup')" | nc localhost 2323
+    echo "! stream() filter(action = 'signup') since(-60) until(now)" | nc localhost 2323
 
 
-get all signups from ref2 from start of recording till now:
+subscribe to all signups from ref2 now on
  
-    echo "! since(0) until(now) filter(action = 'signup') filter(referrer = 'ref1)" | nc localhost 2323
+    echo "! stream() filter(action = 'signup') filter(referrer = 'ref2') since(now) until(*)" | nc localhost 2323
 
 
-subscribe to all signups from now on
+how many signups in the last hour?
  
-    echo "! since(now) stream() filter(action = 'signup')" | nc localhost 2323
-
-
-subscribe to all events
- 
-    echo "! stream()" | nc localhost 2323
+    echo "! count() filter(action = 'signup') since(-3600) until(now)" | nc localhost 2323
 
 
 
@@ -45,7 +40,17 @@ Fyerhose Query Language
 
 command order within a query is not significannt.
 
+    stream()   
+      +only(KEY1,KEY2...)
+
+    count()
+    sum(KEY)
+    average(KEY)
+      +interval(SECONDS)
+      +moving_average(SECONDS)
+
     filter(KEY = VALUE)
+    filter(KEY ! VALUE)
     filter(KEY < MAX)
     filter(KEY > MIN)
     filter(KEY ~ MIN-MAX)
@@ -59,9 +64,12 @@ command order within a query is not significannt.
     until(TIMESTAMP)
     until(-SECONDS)
     until(now)
-    stream()
+    until(*)
 
-    confirm()
+
+advanced:
+
+    pipeline() / execute()
 
 
 examples:
@@ -122,8 +130,78 @@ Usage
         write the log as bson instead of json
 
 
-      -x, --upstream
+      -x, --cluster
 
-         comma-seperated list of other nodes in the cluster
-      
+         address of the next downstream node (pull)
 
+
+
+Advanced / Hacking
+------------------
+
+  format: ![hello_args](whitespace/newline)
+
+  format: /![^ ]*[ \n]+/
+
+
+### bson mode
+
+to enable bson mode, you have to initiate the connection with this: 
+
+    !bson
+
+
+### keepalive mode:
+
+to enable keepalive mode, you have to initiate the connection with
+this: 
+
+    !json;keepalive
+
+
+if in keepalive mode, the connection wont be closed after the query 
+completes. instead the server will sent this line:
+
+    !keepalive \n
+
+
+
+### pipelining
+
+if you have multiple queries over common time-ranges and common filters
+they can be pipelined to reduce reponse time. pipelining is only available 
+in keepalive mode and stream()-queries can't be pipelined.
+
+to pipeline multiple queries send your queries one after another but 
+add a "pipeline()" to every query. the server will not execute them yet, 
+but respond with the number of queries in the pipeline.
+
+after you added all queries, send a line containing only "execute()". 
+this will block the connection until all pipelined queries have completed. 
+
+you then have to re-send all pipelined queries (but this time without the 
+pipeline()) to retrieve the results. when re-sending the queries the order 
+does not matter.
+
+example:
+
+    count() filter(fu = 'bar1') since(0) until(now) pipline()
+    >> 1
+
+    count() filter(fu = 'bar2') since(0) until(now) pipline()
+    >> 2
+
+    count() filter(fu = 'bar3') since(0) until(now) pipline()
+    >> 3
+
+    execute()
+    >> 3
+
+    count() filter(fu = 'bar1') since(0) until(now)
+    >> 43534667
+
+    count() filter(fu = 'bar2') since(0) until(now)
+    >> 57567456
+
+    count() filter(fu = 'bar3') since(0) until(now)
+    >> 34523647
