@@ -180,7 +180,7 @@ class Multiplex() extends Runnable {
     val buf: ByteBuffer = ByteBuffer.allocate(1024)
     
     if (channel.isOpen unary_!){
-      println("DISCONNECT")
+      println("DISCONNECT CHANNEL CLOSED")
     }
 
     else channel.read(buf) match {
@@ -188,7 +188,8 @@ class Multiplex() extends Runnable {
       case 0 => ()
 
       case -1 => {
-        println("DISCONNECT")
+        println("DISCONNECT END OF STREAM")
+        key.cancel()
       }
 
       case m => {
