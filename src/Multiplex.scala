@@ -88,6 +88,13 @@ class Multiplex() extends Runnable {
         accept(key)
       } 
 
+
+      if (key.isReadable()) {
+        println("SELECT READABLE")
+        //multiplex ! Accept(key)
+        read(key)
+      } 
+
     }
 
     println("SELECT END")
@@ -101,7 +108,7 @@ class Multiplex() extends Runnable {
       case null => ()   
       case channel:SocketChannel => {
         channel.configureBlocking(false)
-        //channel.register(selector, SelectionKey.OP_WRITE, "fnord")
+        channel.register(selector, SelectionKey.OP_READ, "fnord")
       }
     }
 
@@ -168,42 +175,36 @@ class Multiplex() extends Runnable {
   //   }
   // }
    
-  // def read(key: SelectionKey) {
-  //   val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
-  //   val buf: ByteBuffer = ByteBuffer.allocate(1024)
+  def read(key: SelectionKey) {
+    val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
+    val buf: ByteBuffer = ByteBuffer.allocate(1024)
     
-  //   if (channel.isOpen unary_!){
-  //     key.attachment.asInstanceOf[Actor] ! ConnectionClosedSig
-  //     println("DISCONNECT")
-  //   }
+    if (channel.isOpen unary_!){
+      println("DISCONNECT")
+    }
 
-  //   else channel.read(buf) match {
+    else channel.read(buf) match {
 
-  //     case 0 => ()
+      case 0 => ()
 
-  //     case -1 => {
-  //       key.attachment().asInstanceOf[Actor] ! ConnectionClosedSig
-  //       // channel.close()
-  //       // println("DISCONNECT")
-  //     }
+      case -1 => {
+        println("DISCONNECT")
+      }
 
-  //     case m => {
-  //       buf.flip()
+      case m => {
+        buf.flip()
 
-  //       // FIXPAUL: check if message ends with newline, otherwise -> problem
+        // FIXPAUL: check if message ends with newline, otherwise -> problem
+        val msg = Charset.forName("UTF-8").decode(buf).toString().trim()
+        println("READ RECEIVED, REALYING TO ACTOR: " + msg)
 
-  //       val msg = Charset.forName("UTF-8").decode(buf).toString().trim()
-  //       // println("READ RECEIVED, REALYING TO ACTOR: " + msg)
-
-  //       buf.compact()
-
-  //       key.cancel()
-
-  //       key.attachment().asInstanceOf[Actor] ! new ReceiveSig(msg)  
-  //     }
+        buf.compact()
+        // key.cancel()
+        // key.attachment().asInstanceOf[Actor] ! new ReceiveSig(msg)  
+      }
       
-  //   }
-  // }
+    }
+  }
 
   // def write(key: SelectionKey, sig: StreamSig){
   //   val channel: SocketChannel = sig.channel()
