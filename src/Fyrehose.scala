@@ -8,6 +8,9 @@ object Fyrehose{
   
   def main(args: Array[String]) : Unit = {
     println("hello fyrehose")
+
+    val multiplex = new Multiplex();
+    multiplex.run();
   }
 
   def log(msg: String) = {

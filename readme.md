@@ -1,14 +1,14 @@
-Fyerhose
+Fyrehose
 ========
 
-fyerhose is a scala-based, clusterable pub/sub daemon designed to stream json events. 
+fyrehose is a scala-based, clusterable pub/sub daemon designed to stream json events. 
 it allows for server-side history replay, event filtering and a few more advanced queries.
 
 
 Synopsis
 --------
 
-Fyerhose opens up a tcp (and optionally udp) port to which you stream
+Fyrehose opens up a tcp (and optionally udp) port to which you stream
 one event (an arbitrary json object/hash) per packet/message. A messages
 starting with an ASCII bang ("!") will set the connection into query-mode:
 
@@ -51,11 +51,22 @@ command order within a query is not significannt.
 
     filter(KEY = VALUE)
     filter(KEY ! VALUE)
+    filter(KEY | ONE,TWO,THREE...)
+
+    filter(KEY $ /REGEX/)
+
     filter(KEY < MAX)
     filter(KEY > MIN)
     filter(KEY ~ MIN-MAX)
-    filter(KEY & ONE,TWO,THREE...)
+    filter(KEY % NUM)
+    filter(KEY ^ NUM)
+    filter(KEY & NUM)
+
+    filter(KEY any_in ANY_IN,TWO,THREE...)
+    filter(KEY all_in ALL_IN,TWO,THREE...)
+
     filter(KEY)
+    filter(!KEY)
 
     since(TIMESTAMP)
     since(-SECONDS)
@@ -125,14 +136,9 @@ Usage
         path to datastore (default: /tmp/fyerhose/)
 
 
-      -b, --binary-log
-
-        write the log as bson instead of json
-
-
       -x, --cluster
 
-         address of the next downstream node (pull)
+         address of the next upstream node (pull)
 
 
 
