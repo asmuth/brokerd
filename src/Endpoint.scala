@@ -28,7 +28,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
     println("endpoint read: " + msg)
     write("FNORD?".getBytes("UTF-8"))
-    write("FNORD!".getBytes("UTF-8"))
+    write("FNORD!\n".getBytes("UTF-8"))
   }
 
 }

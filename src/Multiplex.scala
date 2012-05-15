@@ -112,7 +112,7 @@ class Multiplex() extends Runnable {
 
   def read(key: SelectionKey) {
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
-    val buf: ByteBuffer = ByteBuffer.allocate(1024)
+    val buf: ByteBuffer = ByteBuffer.allocate(1024) // FIXPAUL
     
     if (channel.isOpen unary_!){
       println("DISCONNECT CHANNEL CLOSED")
@@ -149,23 +149,18 @@ class Multiplex() extends Runnable {
 
   def write(key: SelectionKey){
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
+    val buf: ByteBuffer = ByteBuffer.allocate(1024) // FIXPAUL
+
 
     if(stack contains channel unary_!){
        println("CANT WRITE - NO ATTACHMENT")
     }
 
     else {
-
-      stack(channel).foreach{ msg =>
-        channel.write(
-          Charset.forName("UTF-8").encode(
-            CharBuffer.wrap(msg + "\n")
-          )
-        )
-      }
-
+      stack(channel).foreach{ chunk => buf.put(chunk) }
       stack -= channel
-
+      buf.flip()
+      channel.write(buf)
       ready(channel)
     }
   }
