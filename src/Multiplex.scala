@@ -34,10 +34,12 @@ class Multiplex() extends Runnable {
     }
   }}
 
+
   def push(channel: SocketChannel, msg: String){
     reactor ! Stream(channel, msg)
     selector.wakeup()
   }
+
 
   def run() {
     //val port = Integer.parseInt(node.listen.split(":", 2)(1))
@@ -51,6 +53,7 @@ class Multiplex() extends Runnable {
     reactor ! Select
   }
 
+
   private def stream(channel: SocketChannel, msg: String){
     if(stack contains channel unary_!){
       stack(channel) = ListBuffer[String]()
@@ -62,35 +65,24 @@ class Multiplex() extends Runnable {
     channel.register(selector, SelectionKey.OP_WRITE, null)
   }
 
+
   def select() {
-    println("SELECT START")
-
     selector.select()
-
     selector.selectedKeys().foreach { key =>
 
-      if (key.isValid() unary_!){
+      if (key.isValid() unary_!)
         println("DISCONNECT CHANNEL CLOSED")
-      }
       
-      else if (key.isAcceptable()) {
-        println("SELECT ACCEPTABLE")
+      else if (key.isAcceptable())
         accept(key)
-      } 
 
-      else if (key.isReadable()) {
-        println("SELECT READABLE")
+      else if (key.isReadable())
         read(key)
-      } 
 
-      else if (key.isWritable()) {
-        println("SELECT WRITABLE")
+      else if (key.isWritable())
         write(key)
-      } 
 
     }
-
-    println("SELECT END")
   }
 
   def accept(key: SelectionKey) {
@@ -110,10 +102,12 @@ class Multiplex() extends Runnable {
     reactor ! Select
   }
 
+
   def ready(channel: SocketChannel) {
     channel.configureBlocking(false)
     channel.register(selector, SelectionKey.OP_READ, "fnord")
   }
+
 
   def read(key: SelectionKey) {
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
@@ -151,6 +145,7 @@ class Multiplex() extends Runnable {
     }
   }
 
+
   def write(key: SelectionKey){
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
 
@@ -169,15 +164,10 @@ class Multiplex() extends Runnable {
       }
 
       stack -= channel
-      
+
       ready(channel)
     }
   }
 
-
-  //   } catch {
-  //       case e: CancelledKeyException => println("CANNCELLED KEY")
-  //       case e: ClosedChannelException => println("CLOSED CHANNEL")
-  //   }
 
 }
