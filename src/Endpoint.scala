@@ -13,10 +13,10 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   def act() = { 
     Actor.loop{ react{
       case msg: String => { 
-      	// multiple streams kill each other since attachment will be overwritten. fix with sta
-	    multixplex.push(channel, "FFFFU: " + msg)
-	    multixplex.push(channel, "end of message ;)")
-	  }
+        // multiple streams kill each other since attachment will be overwritten. fix with sta
+      multixplex.push(channel, "FFFFU: " + msg)
+      multixplex.push(channel, "end of message ;)")
+    }
     }}
   }
 
