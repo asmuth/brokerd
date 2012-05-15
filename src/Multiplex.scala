@@ -7,33 +7,40 @@ import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels._
+
 import java.nio.charset.Charset
 import java.nio.CharBuffer
-import java.nio.channels._
 import java.nio.charset.Charset
 
+
 class Multiplex() extends Runnable {
-  val listener:ServerSocketChannel = ServerSocketChannel.open()
-  val selector:Selector = Selector.open()
 
-  var endpoints = HashMap[SocketChannel, Endpoint]()
-
-  case class Stream(channel: SocketChannel, msg: String)
+  case class Stream(channel: SocketChannel, buf: Array[Byte])
   case class Read(channel: SocketChannel)
   case class Select()
+
+
+  val listener  = ServerSocketChannel.open()
+  val selector  = Selector.open()
+  val endpoints = HashMap[SocketChannel, Endpoint]()
+  val stack     = HashMap[SocketChannel, ListBuffer[Array[Byte]]]()
+
 
   val reactor = actor { loop { 
     receive {
       case Select => select()
-      case Stream(channel, msg) => stream(channel, msg)
+      case Stream(channel, buf) => stream(channel, buf)
       case Read(channel) => ready(channel)
     }
   }}
 
-  def push(channel: SocketChannel, msg: String){
-    reactor ! Stream(channel, msg)
+
+  def push(channel: SocketChannel, buf: Array[Byte]){
+    reactor ! Stream(channel, buf)
     selector.wakeup()
   }
+
 
   def run() {
     //val port = Integer.parseInt(node.listen.split(":", 2)(1))
@@ -47,41 +54,36 @@ class Multiplex() extends Runnable {
     reactor ! Select
   }
 
-  private def stream(channel: SocketChannel, msg: String){
-    println("stream start")
-    channel.configureBlocking(false)
-    channel.register(selector, SelectionKey.OP_WRITE, msg)
-  }
 
-  def select() {
-    println("SELECT START")
-
-    selector.select()
-
-    selector.selectedKeys().foreach { key =>
-
-      if (key.isValid() unary_!){
-        println("DISCONNECT CHANNEL CLOSED")
-      }
-      
-      else if (key.isAcceptable()) {
-        println("SELECT ACCEPTABLE")
-        accept(key)
-      } 
-
-      else if (key.isReadable()) {
-        println("SELECT READABLE")
-        read(key)
-      } 
-
-      else if (key.isWritable()) {
-        println("SELECT WRITABLE")
-        write(key)
-      } 
-
+  private def stream(channel: SocketChannel, buf: Array[Byte]){
+    if(stack contains channel unary_!){
+      stack(channel) = ListBuffer[Array[Byte]]()
     }
 
-    println("SELECT END")
+    stack(channel) += buf
+
+    channel.configureBlocking(false)
+    channel.register(selector, SelectionKey.OP_WRITE, null)
+  }
+
+
+  def select() {
+    selector.select()
+    selector.selectedKeys().foreach { key =>
+
+      if (key.isValid() unary_!)
+        println("DISCONNECT CHANNEL CLOSED")
+      
+      else if (key.isAcceptable())
+        accept(key)
+
+      else if (key.isReadable())
+        read(key)
+
+      else if (key.isWritable())
+        write(key)
+
+    }
   }
 
   def accept(key: SelectionKey) {
@@ -101,14 +103,16 @@ class Multiplex() extends Runnable {
     reactor ! Select
   }
 
+
   def ready(channel: SocketChannel) {
     channel.configureBlocking(false)
     channel.register(selector, SelectionKey.OP_READ, "fnord")
   }
 
+
   def read(key: SelectionKey) {
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
-    val buf: ByteBuffer = ByteBuffer.allocate(1024)
+    val buf: ByteBuffer = ByteBuffer.allocate(1024) // FIXPAUL
     
     if (channel.isOpen unary_!){
       println("DISCONNECT CHANNEL CLOSED")
@@ -126,12 +130,12 @@ class Multiplex() extends Runnable {
       case m => {
         buf.flip()
 
-        // FIXPAUL: check if message ends with newline, otherwise -> problem
-        val msg = Charset.forName("UTF-8").decode(buf).toString().trim()
-        println("READ RECEIVED, REALYING TO ACTOR: " + msg)
-
         if(endpoints contains channel){
-          endpoints(channel) ! msg
+
+          val bytes = new Array[Byte](buf.remaining());
+          buf.get(bytes, 0, bytes.length);
+
+          endpoints(channel) ! bytes
         } else {
           println("!!!! CAN'T FIND ENDPOINT")
         }
@@ -142,28 +146,24 @@ class Multiplex() extends Runnable {
     }
   }
 
+
   def write(key: SelectionKey){
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
+    val buf: ByteBuffer = ByteBuffer.allocate(1024) // FIXPAUL
 
-    if(key.attachment == null){
+
+    if(stack contains channel unary_!){
        println("CANT WRITE - NO ATTACHMENT")
     }
 
     else {
-      channel.write(
-        Charset.forName("UTF-8").encode(
-          CharBuffer.wrap(key.attachment.asInstanceOf[String] + "\n")
-        )
-      )
-
+      stack(channel).foreach{ chunk => buf.put(chunk) }
+      stack -= channel
+      buf.flip()
+      channel.write(buf)
       ready(channel)
     }
   }
 
-
-  //   } catch {
-  //       case e: CancelledKeyException => println("CANNCELLED KEY")
-  //       case e: ClosedChannelException => println("CLOSED CHANNEL")
-  //   }
 
 }
