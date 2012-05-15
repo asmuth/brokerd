@@ -5,17 +5,18 @@ import scala.actors.Actor._
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
-import scala.collection.mutable.SynchronizedMap
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels._
+
 import java.nio.charset.Charset
 import java.nio.CharBuffer
-import java.nio.channels._
 import java.nio.charset.Charset
+
 
 class Multiplex() extends Runnable {
 
-  case class Stream(channel: SocketChannel, msg: String)
+  case class Stream(channel: SocketChannel, buf: Array[Byte])
   case class Read(channel: SocketChannel)
   case class Select()
 
@@ -23,20 +24,20 @@ class Multiplex() extends Runnable {
   val listener  = ServerSocketChannel.open()
   val selector  = Selector.open()
   val endpoints = HashMap[SocketChannel, Endpoint]()
-  val stack     = HashMap[SocketChannel, ListBuffer[String]]()
+  val stack     = HashMap[SocketChannel, ListBuffer[Array[Byte]]]()
 
 
   val reactor = actor { loop { 
     receive {
       case Select => select()
-      case Stream(channel, msg) => stream(channel, msg)
+      case Stream(channel, buf) => stream(channel, buf)
       case Read(channel) => ready(channel)
     }
   }}
 
 
-  def push(channel: SocketChannel, msg: String){
-    reactor ! Stream(channel, msg)
+  def push(channel: SocketChannel, buf: Array[Byte]){
+    reactor ! Stream(channel, buf)
     selector.wakeup()
   }
 
@@ -54,12 +55,12 @@ class Multiplex() extends Runnable {
   }
 
 
-  private def stream(channel: SocketChannel, msg: String){
+  private def stream(channel: SocketChannel, buf: Array[Byte]){
     if(stack contains channel unary_!){
-      stack(channel) = ListBuffer[String]()
+      stack(channel) = ListBuffer[Array[Byte]]()
     }
 
-    stack(channel) += msg
+    stack(channel) += buf
 
     channel.configureBlocking(false)
     channel.register(selector, SelectionKey.OP_WRITE, null)
@@ -129,12 +130,12 @@ class Multiplex() extends Runnable {
       case m => {
         buf.flip()
 
-        // FIXPAUL: check if message ends with newline, otherwise -> problem
-        val msg = Charset.forName("UTF-8").decode(buf).toString().trim()
-        println("READ RECEIVED, REALYING TO ACTOR: " + msg)
-
         if(endpoints contains channel){
-          endpoints(channel) ! msg
+
+          val bytes = new Array[Byte](buf.remaining());
+          buf.get(bytes, 0, bytes.length);
+
+          endpoints(channel) ! bytes
         } else {
           println("!!!! CAN'T FIND ENDPOINT")
         }

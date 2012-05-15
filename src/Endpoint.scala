@@ -5,19 +5,30 @@ import scala.actors.Actor._
 import java.net._
 import java.io._
 import java.nio.channels.SocketChannel
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
+import java.nio.CharBuffer
 
 class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
-  println("endpoint started")
-
   def act() = { 
     Actor.loop{ react{
-      case msg: String => { 
-        // multiple streams kill each other since attachment will be overwritten. fix with sta
-      multixplex.push(channel, "FFFFU: " + msg)
-      multixplex.push(channel, "end of message ;)")
-    }
+      case buf: Array[Byte] => read(buf)
     }}
+  }
+
+
+  def write(buf: Array[Byte]) = 
+    multixplex.push(channel, buf)
+
+
+  def read(buf: Array[Byte]) = {
+    // FIXPAUL: check if message ends with newline, otherwise ->   problem
+    val msg = new String(buf, "UTF-8")
+
+    println("endpoint read: " + msg)
+    write("FNORD?".getBytes("UTF-8"))
+    write("FNORD!".getBytes("UTF-8"))
   }
 
 }
