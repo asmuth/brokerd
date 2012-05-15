@@ -5,6 +5,7 @@ import scala.actors.Actor._
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.SynchronizedMap
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
@@ -13,14 +14,17 @@ import java.nio.channels._
 import java.nio.charset.Charset
 
 class Multiplex() extends Runnable {
-  val listener:ServerSocketChannel = ServerSocketChannel.open()
-  val selector:Selector = Selector.open()
-
-  var endpoints = HashMap[SocketChannel, Endpoint]()
 
   case class Stream(channel: SocketChannel, msg: String)
   case class Read(channel: SocketChannel)
   case class Select()
+
+
+  val listener  = ServerSocketChannel.open()
+  val selector  = Selector.open()
+  val endpoints = HashMap[SocketChannel, Endpoint]()
+  val stack     = HashMap[SocketChannel, ListBuffer[String]]()
+
 
   val reactor = actor { loop { 
     receive {
@@ -48,9 +52,14 @@ class Multiplex() extends Runnable {
   }
 
   private def stream(channel: SocketChannel, msg: String){
-    println("stream start")
+    if(stack contains channel unary_!){
+      stack(channel) = ListBuffer[String]()
+    }
+
+    stack(channel) += msg
+
     channel.configureBlocking(false)
-    channel.register(selector, SelectionKey.OP_WRITE, msg)
+    channel.register(selector, SelectionKey.OP_WRITE, null)
   }
 
   def select() {
@@ -145,17 +154,22 @@ class Multiplex() extends Runnable {
   def write(key: SelectionKey){
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
 
-    if(key.attachment == null){
+    if(stack contains channel unary_!){
        println("CANT WRITE - NO ATTACHMENT")
     }
 
     else {
-      channel.write(
-        Charset.forName("UTF-8").encode(
-          CharBuffer.wrap(key.attachment.asInstanceOf[String] + "\n")
-        )
-      )
 
+      stack(channel).foreach{ msg =>
+        channel.write(
+          Charset.forName("UTF-8").encode(
+            CharBuffer.wrap(msg + "\n")
+          )
+        )
+      }
+
+      stack -= channel
+      
       ready(channel)
     }
   }
