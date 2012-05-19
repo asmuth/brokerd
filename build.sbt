@@ -13,3 +13,5 @@ mainClass in (Compile, run) := Some("com.paulasmuth.fyrehose.Fyrehose")
 assemblySettings
 
 scalaVersion := "2.9.1"
+
+libraryDependencies += "com.google.code.gson" % "gson" % "1.4"

@@ -11,6 +11,10 @@ import java.nio.CharBuffer
 
 class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
+  case class StreamingMode
+  case class QueryMode
+  var mode = StreamingMode
+
   def act() = { 
     Actor.loop{ react{
       case buf: Array[Byte] => read(buf)
@@ -18,17 +22,24 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   }
 
 
-  def write(buf: Array[Byte]) = 
+  private def write(buf: Array[Byte]) = 
     multixplex.push(channel, buf)
 
 
-  def read(buf: Array[Byte]) = {
-    // FIXPAUL: check if message ends with newline, otherwise ->   problem
-    val msg = new String(buf, "UTF-8")
+  private def read(buf: Array[Byte]) = {
+    println(new String(buf))
+    // try{
+    //   val event = new Event(buf)
+    //   println("received: " + new String(event.bytes))
+    // } catch {
+    //   case e: com.google.gson.JsonParseException => error("invalid json")
+    // }
+  }
 
-    println("endpoint read: " + msg)
-    write("FNORD?".getBytes("UTF-8"))
-    write("FNORD!\n".getBytes("UTF-8"))
+  private def error(msg: String) = {
+    Fyrehose.error("endpoint closed: " + msg)
+    write(("{\"error\": \""+msg+"\"}").getBytes)
+    println("FIXPAUL: close connection")
   }
 
 }

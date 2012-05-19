@@ -23,4 +23,7 @@ object Fyrehose{
     println("[" + now.format(new Date()) + "] " + msg)
   }
 
+  def error(msg: String) =
+    log("[ERROR] " + msg)
+
 }
