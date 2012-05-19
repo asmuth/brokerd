@@ -35,6 +35,46 @@ how many signups in the last hour?
 
 
 
+
+JSON Format
+-----------
+
+fyerhose know three special json keys/fields:
+
+  **_time** timestamp at which the event was received. will be automatically added if not set.
+
+  **_eid** unique event-id. will be automatically added if not set.
+
+  **_volatile** publish, but do not log this event
+
+
+
+Usage
+-----
+
+    usage: fyerhose [options]
+      
+      -t, --listen-tcp 
+
+        listen for clients on this tcp address
+
+
+      -u, --listen-udp
+
+        listen for incoming events on this address
+
+
+      -p, --path
+
+        path to datastore (default: /tmp/fyerhose/)
+
+
+      -x, --cluster
+
+         address of the next upstream node (pull)
+
+
+
 Fyerhose Query Language
 -----------------------
 
@@ -92,70 +132,8 @@ examples:
 
 
 
-
-JSON Format
------------
-
-fyerhose know three special json keys/fields:
-
-  _time
-
-    timestamp at which the event was received.
-    will be automatically added if not set.
-
-
-  _eid
-
-    unique event-id. 
-    will be automatically added if not set.
-
-
-  _volatile
-
-    publish, but do not log this event
-
-
-
-Usage
------
-
-    usage: fyerhose [options]
-      
-      -t, --listen-tcp 
-
-        listen for clients on this tcp address
-
-
-      -u, --listen-udp
-
-        listen for incoming events on this address
-
-
-      -p, --path
-
-        path to datastore (default: /tmp/fyerhose/)
-
-
-      -x, --cluster
-
-         address of the next upstream node (pull)
-
-
-
 Advanced / Hacking
 ------------------
-
-  format: ![hello_args](whitespace/newline)
-
-  format: /![^ ]*[ \n]+/
-
-
-### bson mode
-
-to enable bson mode, you have to initiate the connection with this: 
-
-    !bson
-
 
 ### keepalive mode:
 
@@ -172,42 +150,23 @@ completes. instead the server will sent this line:
 
 
 
-### pipelining
+License
+-------
 
-if you have multiple queries over common time-ranges and common filters
-they can be pipelined to reduce reponse time. pipelining is only available 
-in keepalive mode and stream()-queries can't be pipelined.
+Copyright (c) 2011 Paul Asmuth
 
-to pipeline multiple queries send your queries one after another but 
-add a "pipeline()" to every query. the server will not execute them yet, 
-but respond with the number of queries in the pipeline.
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to use, copy and modify copies of the Software, subject 
+to the following conditions:
 
-after you added all queries, send a line containing only "execute()". 
-this will block the connection until all pipelined queries have completed. 
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
 
-you then have to re-send all pipelined queries (but this time without the 
-pipeline()) to retrieve the results. when re-sending the queries the order 
-does not matter.
-
-example:
-
-    count() filter(fu = 'bar1') since(0) until(now) pipline()
-    >> 1
-
-    count() filter(fu = 'bar2') since(0) until(now) pipline()
-    >> 2
-
-    count() filter(fu = 'bar3') since(0) until(now) pipline()
-    >> 3
-
-    execute()
-    >> 3
-
-    count() filter(fu = 'bar1') since(0) until(now)
-    >> 43534667
-
-    count() filter(fu = 'bar2') since(0) until(now)
-    >> 57567456
-
-    count() filter(fu = 'bar3') since(0) until(now)
-    >> 34523647
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
