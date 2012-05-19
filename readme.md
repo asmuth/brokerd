@@ -83,11 +83,6 @@ command order within a query is not significannt.
     until(*)
 
 
-advanced:
-
-    pipeline() / execute()
-
-
 examples:
 
     filter(channel = 'dawanda-firehose') since(0) until(now)
