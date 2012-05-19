@@ -35,20 +35,6 @@ how many signups in the last hour?
 
 
 
-
-JSON Format
------------
-
-fyerhose know three special json keys/fields:
-
-  **_time** timestamp at which the event was received. will be automatically added if not set.
-
-  **_eid** unique event-id. will be automatically added if not set.
-
-  **_volatile** publish, but do not log this event
-
-
-
 Usage
 -----
 
@@ -72,6 +58,23 @@ Usage
       -x, --cluster
 
          address of the next upstream node (pull)
+
+
+
+JSON Format
+-----------
+
+fyerhose know three special json keys/fields:
+
+  **_time** 
+  timestamp at which the event was emitted. will be automatically added if not set.
+
+  **_eid** 
+  unique event-id. will be automatically added if not set.
+
+  **_volatile** 
+  if set, the event will be published, but not logged to disk
+
 
 
 
