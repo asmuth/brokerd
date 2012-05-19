@@ -39,25 +39,10 @@ Usage
 -----
 
     usage: fyerhose [options]
-      
-      -t, --listen-tcp 
-
-        listen for clients on this tcp address
-
-
-      -u, --listen-udp
-
-        listen for incoming events on this address
-
-
-      -p, --path
-
-        path to datastore (default: /tmp/fyerhose/)
-
-
-      -x, --cluster
-
-         address of the next upstream node (pull)
+      -t, --listen-tcp <addr>    listen for clients on this tcp address
+      -u, --listen-udp <addr>    listen for incoming events on this address
+      -p, --path       <path>    path to datastore (default: /tmp/fyerhose/)
+      -x, --cluster    <addr>    address of the next upstream node (pull)
 
 
 
