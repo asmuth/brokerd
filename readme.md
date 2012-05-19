@@ -66,7 +66,7 @@ fyerhose know three special json keys/fields:
 Fyerhose Query Language
 -----------------------
 
-command order within a query is not significannt.
+command/token order within a query is not significant. the order of events in the response is random!
 
     stream()   
       +only(KEY1,KEY2...)
