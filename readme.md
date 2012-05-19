@@ -9,7 +9,7 @@ Synopsis
 --------
 
 Fyrehose opens up a tcp (and optionally udp) port to which you stream
-one event (an arbitrary json object/hash) per packet/message. A messages
+one event (an arbitrary json object/hash) per packet/message. Any message
 starting with an ASCII bang ("!") will set the connection into query-mode:
 
 add a few example events:
@@ -42,13 +42,18 @@ command order within a query is not significannt.
 
     stream()   
       +only(KEY1,KEY2...)
+      +rename(KEY1,KEY2)
 
     count()
     sum(KEY)
-    average(KEY)
-      +interval(SECONDS)
-      +moving_average(SECONDS)
-
+    mean(KEY)
+    median(KEY)
+    mode(KEY)
+    min(KEY)
+    max(KEY)
+    range(KEY)
+      +window(SECONDS)
+    
     filter(KEY = VALUE)
     filter(KEY ! VALUE)
     filter(KEY | ONE,TWO,THREE...)
