@@ -51,13 +51,19 @@ JSON Format
 
 fyerhose know three special json keys/fields:
 
+
   **_time** 
+  
   timestamp at which the event was emitted. will be automatically added if not set.
 
+
   **_eid** 
+  
   unique event-id. will be automatically added if not set.
 
+
   **_volatile** 
+  
   if set, the event will be published, but not logged to disk
 
 
