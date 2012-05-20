@@ -26,7 +26,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
-      case evt: EventBody => println("QUERY BODY RECVD.")
+      case evt: EventBody => Fyrehose.backbone ! evt
     }}
   }
 

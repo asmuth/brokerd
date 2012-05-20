@@ -6,6 +6,7 @@ import java.text.DateFormat
 
 // todo:
 //   > move endpoints hash to main object since multiplex will have it's own thread
+//   > kill endpoint via idle timeout
 
 object HangupSig{}
 
