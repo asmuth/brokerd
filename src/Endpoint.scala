@@ -21,6 +21,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
   def act() = { 
     Actor.loop{ react{
+      case HangupSig => { println("FIXPAUL: endpoint hangup"); hangup() }
       case buf: Array[Byte] => read(buf)
       case qry: QueryBody   => query(qry)
     }}
@@ -28,11 +29,16 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def query(qry: QueryBody) =
-    println("received query")
+    multixplex.hangup(channel)
 
 
   private def write(buf: Array[Byte]) = 
     multixplex.push(channel, buf)
+
+
+  private def hangup() = {
+    channel.close(); exit()
+  }
 
 
   private def read(buf: Array[Byte]) : Unit = {
@@ -137,7 +143,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   private def error(msg: String) = {
     Fyrehose.error("endpoint closed: " + msg)
     write(("{\"error\": \""+msg+"\"}").getBytes)
-    println("FIXPAUL: close connection")
+    hangup()
   }
 
 

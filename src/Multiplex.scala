@@ -18,6 +18,7 @@ class Multiplex() extends Runnable {
 
   case class Stream(channel: SocketChannel, buf: Array[Byte])
   case class Read(channel: SocketChannel)
+  case class Hangup(channel: SocketChannel)
   case class Select()
 
 
@@ -32,6 +33,7 @@ class Multiplex() extends Runnable {
       case Select => select()
       case Stream(channel, buf) => stream(channel, buf)
       case Read(channel) => ready(channel)
+      case Hangup(channel) => channel.close()
     }
   }}
 
@@ -41,6 +43,10 @@ class Multiplex() extends Runnable {
     selector.wakeup()
   }
 
+  def hangup(channel: SocketChannel){
+    reactor ! Hangup(channel)
+    selector.wakeup()
+  }
 
   def run() {
     //val port = Integer.parseInt(node.listen.split(":", 2)(1))
@@ -123,8 +129,10 @@ class Multiplex() extends Runnable {
       case 0 => ()
 
       case -1 => {
-        println("DISCONNECT END OF STREAM")
         key.cancel()
+
+         if(endpoints contains channel)
+           endpoints(channel) ! HangupSig
       }
 
       case m => {
