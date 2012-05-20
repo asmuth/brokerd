@@ -4,6 +4,10 @@ import java.util.Locale
 import java.util.Date
 import java.text.DateFormat
 
+// TODO:
+// close endpoint via timeout
+// conn-header: keepalive + safe_mode
+
 object Fyrehose{
 
   val CONN_IDLE_TIMEOUT   = 5000

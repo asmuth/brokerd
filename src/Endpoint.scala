@@ -23,13 +23,13 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   def act() = { 
-    Actor.loop{ reactWithin(Fyrehose.CONN_IDLE_TIMEOUT){
+    Actor.loop{ react{ 
       case HangupSig => { println("FIXPAUL: endpoint hangup"); hangup() }
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
       case evt: EventBody => Fyrehose.backbone ! evt
-      case TIMEOUT => if (cur_query == null) this ! HangupSig
+      // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }}
   }
 
