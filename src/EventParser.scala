@@ -8,6 +8,8 @@ class ParseException(msg: String) extends Exception{
 }
 
 object EventParser{
+
+  val json_parser = new JsonParser()
   
   def parse(raw: Array[Byte]) : JsonObject = try{
     parse_unsafe(raw)
@@ -18,7 +20,7 @@ object EventParser{
 
 
   private def parse_unsafe(raw: Array[Byte]) : JsonObject = {
-    (new JsonParser()).parse(
+    json_parser.parse(
       new InputStreamReader(
         new ByteArrayInputStream(raw)))
     match {
