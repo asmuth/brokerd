@@ -6,12 +6,17 @@ import java.io._
 class Event(raw: Array[Byte]){
   
   var touched = false 
-
   val root = parse()
+
 
   if (root.has("_time") unary_!){
     touched = true
     root.addProperty("_time", FyrehoseUtil.now)
+  }
+
+  if (root.has("_eid") unary_!){
+    touched = true
+    root.addProperty("_eid", FyrehoseUtil.get_uuid)
   }
 
 
