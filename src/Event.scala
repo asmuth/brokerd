@@ -3,14 +3,10 @@ package com.paulasmuth.fyrehose
 import com.google.gson._
 import java.io._
 
-class EventBody(raw: Array[Byte]){
-  def parse : Event = new Event(raw)  
-}
-
 class Event(raw: Array[Byte]){
   
   var touched = false 
-  val root = parse()
+  val root = EventParser.parse(raw)
 
 
   if (root.has("_time") unary_!){
@@ -31,15 +27,4 @@ class Event(raw: Array[Byte]){
   private def serialize() : Array[Byte] =
     root.toString.getBytes
 
-
-  private def parse() : JsonObject = {
-    (new JsonParser()).parse(
-      new InputStreamReader(
-        new ByteArrayInputStream(raw)))
-    match {
-      case obj: JsonObject => return obj
-      case _ => throw (new JsonParseException("not an json-object"))
-    }
-  }
-  
 }

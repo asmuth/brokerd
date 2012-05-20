@@ -4,6 +4,7 @@ import java.util.concurrent._
 import scala.actors.Actor
 import scala.actors.Actor._
 
+case class EventBody(raw: Array[Byte])
 
 class Backbone() extends Actor{
 
@@ -24,9 +25,9 @@ class Backbone() extends Actor{
   private def incoming(ev_body: EventBody) = 
     runner.execute(new Runnable { def run = {
       try{
-        Fyrehose.backbone ! ev_body.parse
+        Fyrehose.backbone ! new Event(ev_body.raw)
       } catch {
-        case e: com.google.gson.JsonParseException => Fyrehose.error("invalid json")
+        case e: ParseException => Fyrehose.error(e.toString)
       }
     }})
 
