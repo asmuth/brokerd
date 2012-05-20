@@ -3,6 +3,10 @@ package com.paulasmuth.fyrehose
 import com.google.gson._
 import java.io._
 
+class EventBody(raw: Array[Byte]){
+  def parse : Event = new Event(raw)  
+}
+
 class Event(raw: Array[Byte]){
   
   var touched = false 

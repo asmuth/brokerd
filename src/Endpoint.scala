@@ -15,15 +15,20 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   case class QueryMode
   var mode = StreamingMode
 
-  var buffer = new Array[Byte](4096)
+  var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
   var buffer_pos = 0
 
 
   def act() = { 
     Actor.loop{ react{
       case buf: Array[Byte] => read(buf)
+      case qry: QueryBody   => query(qry)
     }}
   }
+
+
+  private def query(qry: QueryBody) =
+    println("received query")
 
 
   private def write(buf: Array[Byte]) = 
@@ -112,18 +117,12 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
       Fyrehose.error("something went horribly wrong while parsing")
 
 
-  private def read_event(buf: Array[Byte]) = try{
-    // FIPAUL: parsing shouldn't be happening in the endpoint but 
-    // in a fixedThreadPool via Backbone
-    val event = new Event(buf)
-    //println("received: " + new String(event.bytes))
-  } catch {
-    case e: com.google.gson.JsonParseException => error("invalid json")
-  }
+  private def read_event(buf: Array[Byte]) = 
+    Fyrehose.backbone ! new EventBody(buf)
 
 
   private def read_query(buf: Array[Byte]) = 
-    println("received query: " + new String(buf))
+    self ! new QueryBody(buf)
 
 
   private def trim_buffer(trim_pos: Integer) = {

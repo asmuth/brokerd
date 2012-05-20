@@ -10,6 +10,13 @@ import java.text.DateFormat
 //   > kill endpoints on connection close!
 
 object Fyrehose{
+
+  val NUM_THREADS_PARSER  = 12
+  val BUFFER_SIZE_PARSER  = 4096
+  val BUFFER_SIZE_SOCKET  = 1024
+
+  val backbone = new Backbone()
+  backbone.start()
   
   def main(args: Array[String]) : Unit = {
     println("hello fyrehose")
