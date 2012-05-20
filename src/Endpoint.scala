@@ -113,8 +113,10 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def read_event(buf: Array[Byte]) = try{
+    // FIPAUL: parsing shouldn't be happening in the endpoint but 
+    // in a fixedThreadPool via Backbone
     val event = new Event(buf)
-    println("received: " + new String(event.bytes))
+    //println("received: " + new String(event.bytes))
   } catch {
     case e: com.google.gson.JsonParseException => error("invalid json")
   }
