@@ -45,21 +45,33 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
   private def read_chunked() : Unit = {
     var escape_seq = false
+    var query_seq = false
     var escape_char = 0
     var object_idx = 0
     var trim_pos = 0
 
-    if (buffer(0) != '{')
-      return ()
+    if (buffer(0) == '!')
+      query_seq = true
+    
+    else if (buffer(0) != '{')
+      trim_pos = 1
 
     for(pos <- 1 to buffer_pos){
 
-      if ((trim_pos > 0) && (buffer(pos) == 123))
+      if ((trim_pos > 0) && ((buffer(pos) == '{') || (buffer(pos) == '!')))
         return trim_buffer(pos)
 
       else if (trim_pos > 0)
         trim_pos = pos
 
+      else if ((query_seq) && (buffer(pos) == 10)) {
+        read_chunk(pos);
+        trim_pos = pos;
+      }
+
+      else if (query_seq)
+        ()
+      
       else if (buffer(pos) == 92)
         escape_seq = true
 
@@ -83,7 +95,6 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
         trim_pos = pos
       }
 
-      println(buffer(pos), object_idx, escape_seq)
     }
 
     if (trim_pos > 0)
@@ -92,26 +103,33 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   }
 
 
-  private def read_chunk(end_pos: Integer){
-    println("next length: " + end_pos.toString())
-    // try{
-    //   val event = new Event(buf)
-    //   println("received: " + new String(event.bytes))
-    // } catch {
-    //   case e: com.google.gson.JsonParseException => error("invalid json")
-    // }
+  private def read_chunk(end_pos: Integer) =
+    if (buffer(0) == '!')
+      read_query(java.util.Arrays.copyOfRange(buffer, 1, end_pos))
+    else if (buffer(0) == '{')
+      read_event(java.util.Arrays.copyOfRange(buffer, 0, end_pos + 1))
+    else
+      Fyrehose.error("something went horribly wrong while parsing")
+
+
+  private def read_event(buf: Array[Byte]) = try{
+    val event = new Event(buf)
+    println("received: " + new String(event.bytes))
+  } catch {
+    case e: com.google.gson.JsonParseException => error("invalid json")
   }
 
 
-  private def trim_buffer(trim_pos: Integer){
-    println("trim length: " + trim_pos.toString())
+  private def read_query(buf: Array[Byte]) = 
+    println("received query: " + new String(buf))
 
+
+  private def trim_buffer(trim_pos: Integer) = {
     System.arraycopy(buffer, trim_pos, buffer, 0, (buffer.length-trim_pos))
     buffer_pos -= trim_pos
 
-    //println("buffer after: " + new String(buffer))
-
-    read_chunked()
+    if (buffer_pos > 0)
+      read_chunked()
   }
 
 
