@@ -21,7 +21,7 @@ class Query(raw: Array[Byte]) extends Actor{
 
   def execute(endpoint: Actor) = {
     println("EXEC")
-    self ! Execute(endpoint)    
+    this ! Execute(endpoint)    
   }
 
 

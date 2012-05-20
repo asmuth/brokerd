@@ -3,7 +3,7 @@ package com.paulasmuth.fyrehose
 import scala.actors.Actor
 import scala.actors.Actor._
 
-class StreamParser(receiver: Actor){
+class StreamParser(recv: Endpoint){
 
   var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
   var buffer_pos = 0
@@ -97,15 +97,15 @@ class StreamParser(receiver: Actor){
       read_event(java.util.Arrays.copyOfRange(buffer, 0, end_pos))
     else
       throw new ParseException("something went horribly wrong while parsing")
-
+      
 
   private def read_event(buf: Array[Byte]) = 
-    receiver ! new EventBody(buf)
+    recv ! new EventBody(buf)
 
 
-  private def read_query(buf: Array[Byte]) = 
-    receiver ! new QueryBody(buf)
-
+  private def read_query(buf: Array[Byte]) =
+    recv ! new QueryBody(buf)
+  
 
   private def trim_buffer(trim_pos: Integer, check_pos: Integer) = {
     if (safe_mode)

@@ -3,9 +3,7 @@ package com.paulasmuth.fyrehose
 import scala.actors.Actor
 import scala.actors.Actor._
 
-class QueryBody(_raw: Array[Byte]){
-  def raw = _raw
-}
+case class QueryBody(raw: Array[Byte])
 
 object QueryParser{
   

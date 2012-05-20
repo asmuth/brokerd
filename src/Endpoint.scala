@@ -16,7 +16,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
   var cur_query : Query = null
 
-  var parser = new StreamParser(self)
+  var parser = new StreamParser(this)
   parser.set_safe_mode(safe_mode)
 
 
@@ -26,6 +26,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
+      case evt: EventBody => println("QUERY BODY RECVD.")
     }}
   }
 
@@ -47,8 +48,9 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def exec_query(qry: QueryBody) = try{
+    println("QUERY BODY RECVD.")
     cur_query = QueryParser.parse(qry)
-    cur_query.execute(self)
+    cur_query.execute(this)
   } catch {
     case e: ParseException => error(e.toString)
   }
