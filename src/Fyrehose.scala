@@ -4,18 +4,9 @@ import java.util.Locale
 import java.util.Date
 import java.text.DateFormat
 
-// todo:
-//   > move endpoints hash to main object since multiplex will have it's own thread
-//   > kill endpoint via idle timeout
-
-object HangupSig{}
-
-class ParseException(msg: String) extends Exception{
-  override def toString = msg
-}
-
 object Fyrehose{
 
+  val CONN_IDLE_TIMEOUT   = 5000
   val NUM_THREADS_PARSER  = 12
   val BUFFER_SIZE_PARSER  = 4096
   val BUFFER_SIZE_SOCKET  = 1024

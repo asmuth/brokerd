@@ -1,6 +1,6 @@
 package com.paulasmuth.fyrehose
 
-import scala.actors.Actor
+import scala.actors._
 import scala.actors.Actor._
 import java.net._
 import java.io._
@@ -8,6 +8,8 @@ import java.nio.channels.SocketChannel
 import java.nio.ByteBuffer
 import java.nio.charset.Charset
 import java.nio.CharBuffer
+
+object HangupSig{}
 
 class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
@@ -21,12 +23,13 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   def act() = { 
-    Actor.loop{ react{
+    Actor.loop{ reactWithin(Fyrehose.CONN_IDLE_TIMEOUT){
       case HangupSig => { println("FIXPAUL: endpoint hangup"); hangup() }
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
       case evt: EventBody => Fyrehose.backbone ! evt
+      case TIMEOUT => if (cur_query == null) this ! HangupSig
     }}
   }
 

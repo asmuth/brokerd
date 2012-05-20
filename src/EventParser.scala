@@ -3,9 +3,12 @@ package com.paulasmuth.fyrehose
 import com.google.gson._
 import java.io._
 
+class ParseException(msg: String) extends Exception{
+  override def toString = msg
+}
+
 object EventParser{
   
-
   def parse(raw: Array[Byte]) : JsonObject = try{
     parse_unsafe(raw)
   } catch {
@@ -23,6 +26,5 @@ object EventParser{
       case _ => throw new ParseException("not a json-object")
     }
   }
-
 
 }  
