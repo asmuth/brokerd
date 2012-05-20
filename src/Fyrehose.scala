@@ -12,8 +12,8 @@ object Fyrehose{
 
   val CONN_IDLE_TIMEOUT   = 5000
   val NUM_THREADS_PARSER  = 12
-  val BUFFER_SIZE_PARSER  = 4096
-  val BUFFER_SIZE_SOCKET  = 1024
+  val BUFFER_SIZE_PARSER  = 16276
+  val BUFFER_SIZE_SOCKET  = 4096
 
   val backbone = new Backbone()
   backbone.start()
