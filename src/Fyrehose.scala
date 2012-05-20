@@ -9,6 +9,10 @@ import java.text.DateFormat
 
 object HangupSig{}
 
+class ParseException(msg: String) extends Exception{
+  override def toString = msg
+}
+
 object Fyrehose{
 
   val NUM_THREADS_PARSER  = 12
