@@ -11,9 +11,9 @@ import java.nio.CharBuffer
 
 class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
-  case class StreamingMode
-  case class QueryMode
-  var mode = StreamingMode
+  var safe_mode = true // FIXPAUL: this should be disable-able for performance
+
+  var cur_query : Query = null
 
   var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
   var buffer_pos = 0
@@ -23,13 +23,10 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
     Actor.loop{ react{
       case HangupSig => { println("FIXPAUL: endpoint hangup"); hangup() }
       case buf: Array[Byte] => read(buf)
-      case qry: QueryBody   => query(qry)
+      case res: QueryResponseChunk => stream_query(res)
+      case qry: QueryBody => exec_query(qry)
     }}
   }
-
-
-  private def query(qry: QueryBody) =
-    multixplex.hangup(channel)
 
 
   private def write(buf: Array[Byte]) = 
@@ -132,11 +129,44 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def trim_buffer(trim_pos: Integer) = {
+    if (safe_mode)
+      check_buffer(trim_pos) 
+
     System.arraycopy(buffer, trim_pos, buffer, 0, (buffer.length-trim_pos))
     buffer_pos -= trim_pos
 
     if (buffer_pos > 0)
       read_chunked()
+  }
+
+
+  private def check_buffer(trim_pos: Integer) = {
+    for (pos <- 0 to trim_pos){
+      if (((buffer(pos) != 0) && (buffer(pos) != 10)) unary_!){
+        val buf = java.util.Arrays.copyOfRange(buffer, 0, pos)
+        error("read invalid data from buffer: " + new String(buf))
+      }
+    }
+  }
+
+
+  private def exec_query(qry: QueryBody) = try{
+    cur_query = QueryParser.parse(qry)
+    cur_query.execute(self)
+  } catch {
+    case e: com.google.gson.JsonParseException => Fyrehose.error("invalid json")
+  }
+
+
+  private def stream_query(resp: QueryResponseChunk) = {
+    if (resp.chunk != null)
+      write(resp.chunk)
+
+    if (resp.keepalive unary_!){
+      cur_query ! HangupSig
+      cur_query = null
+      multixplex.hangup(channel) // FIXPAUL: implement keepalive  
+    }    
   }
 
 
