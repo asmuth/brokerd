@@ -19,7 +19,7 @@ object Fyrehose{
   backbone.start()
   
   def main(args: Array[String]) : Unit = {
-    println("hello fyrehose")
+    log("fyerhosed v0.0.1-dev booting...")
 
     val multiplex = new Multiplex()
     multiplex.run()
