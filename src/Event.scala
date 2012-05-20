@@ -20,8 +20,8 @@ class Event(raw: Array[Byte]){
 
 
   private def serialize() : Array[Byte] =
-    "Fnord".getBytes
-    
+    root.toString.getBytes
+
 
   private def parse() : JsonObject = {
     (new JsonParser()).parse(
