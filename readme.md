@@ -20,7 +20,7 @@ To retrieve/subscribe, you also connect with TCP. Every query must be prefixed w
 bang ("!") and end with a newline ("\n"). The response consists of one or more newline-
 seperated json objects. Unless in keepalive-mode, Fyrehose will close the connection after 
 a query has finished. You can only run one query at a time. The order of events within a 
-response is not chronological. 
+response is guaranteed to be chronological. 
 
 
 _add a few example events:_
