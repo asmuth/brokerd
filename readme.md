@@ -27,14 +27,26 @@ add a few example events.
     echo '{ "action": "signup", "referrer": "ref3" }' | nc localhost 2323
 
 
+get the last 60 seconds of signups
+ 
+    echo "! stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
+
+
 subscribe to all signups from ref2 now on
  
     echo "! stream where(action = 'signup') and where(referrer = 'ref2')" | nc localhost 2323
 
 
-get the last 60 seconds of signups
- 
-    echo "! stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
+
+Usage
+-----
+
+    usage: fyerhose [options]
+      -l, --listen   <addr>    listen for clients on this tcp address
+      -p, --path     <path>    path to store data (default: /tmp/fyerhose/)
+      -x, --cluster  <addr>    address of the next upstream node (pull)
+
+
 
 
 
@@ -81,15 +93,6 @@ examples:
     stream where(channel & 'dawanda-firehose','dawanda-searchfeed')
     stream since(0) where(_channel = 'dawanda-tap') where(q_params.page > 150)
 
-
-
-Usage
------
-
-    usage: fyerhose [options]
-      -l, --listen   <addr>    listen for clients on this tcp address
-      -p, --path     <path>    path to datastore (default: /tmp/fyerhose/)
-      -x, --cluster  <addr>    address of the next upstream node (pull)
 
 
 
