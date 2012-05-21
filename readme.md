@@ -41,8 +41,10 @@ _subscribe to all signups from ref2 now on:_
 
 
 
-Usage
------
+Documentation
+-------------
+
+### Usage
 
     usage: fyerhose [options]
       -l, --listen   <addr>    listen for clients on this tcp address
@@ -50,11 +52,7 @@ Usage
       -x, --cluster  <addr>    address of the next upstream node (pull)
 
 
-
-
-
-Fyerhose Query Language
------------------------
+### Fyerhose Query Language
 
 format / syntax:
 
