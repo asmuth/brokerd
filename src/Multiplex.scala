@@ -158,7 +158,7 @@ class Multiplex() extends Runnable {
       case 0 => ()
 
       case -1 => {
-        key.cancel()
+        // key.cancel()
         println("END_OF_STREAM")
          // if(endpoints contains channel)
          //   endpoints(channel) ! HangupSig
