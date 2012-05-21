@@ -103,15 +103,15 @@ Advanced / Hacking
 
 ### keepalive mode:
 
-to enable keepalive mode, send this query: 
+to enable keepalive mode for a connection, send this query: 
 
-    !keepalive \n
+    !keepalive\n
 
 
 if in keepalive mode, the connection wont be closed after the query 
 completes. instead the server will sent this line:
 
-    !continue \n
+    !continue\n
 
 
 
