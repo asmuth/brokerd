@@ -1,111 +1,56 @@
 Fyrehose
 ========
 
-fyrehose is a scala-based, clusterable pub/sub daemon designed to stream json events. 
-it allows for server-side history replay, event filtering and a few more advanced queries.
+Fyrehose is a scala-based pub/sub daemon designed to stream JSON events. It allows 
+for server-side filtering and history replay.
 
 
 Synopsis
 --------
 
-Fyrehose opens up a tcp (and optionally udp) port to which you stream
-one event (an arbitrary json object/hash) per packet/message. Any message
-starting with an ASCII bang ("!") will set the connection into query-mode:
+To add data, you connect via TCP and send your events as arbitray (possibly nested) 
+json-objects. Fyrehose will add a "_time" key containing the timestamp at which the
+event was received if it doesn't exist already (you can use this to retroactively add
+events).
 
-add a few example events:
+To retrieve data, you also connect with TCP. Every query must be prefixed with an ASCII 
+bang ("!") and end with a newline ("\n"). The response consists of one or more newline-
+seperated json objects. Unless in keepalive-mode, Fyrehose will close the connection after 
+a query has finished. You can only run one query at a time. The order of events within a 
+response is random. 
+
+
+add a few example events.
 
     echo '{ "action": "signup", "referrer": "ref1" }' | nc localhost 2323
     echo '{ "action": "signup", "referrer": "ref2" }' | nc localhost 2323
     echo '{ "action": "signup", "referrer": "ref3" }' | nc localhost 2323
 
 
-get the last 60 seconds of signups
- 
-    echo "! stream() filter(action = 'signup') since(-60) until(now)" | nc localhost 2323
-
-
 subscribe to all signups from ref2 now on
  
-    echo "! stream() filter(action = 'signup') filter(referrer = 'ref2') since(now) until(*)" | nc localhost 2323
+    echo "! stream where(action = 'signup') and where(referrer = 'ref2')" | nc localhost 2323
 
 
-how many signups in the last hour?
+get the last 60 seconds of signups
  
-    echo "! count() filter(action = 'signup') since(-3600) until(now)" | nc localhost 2323
-
-
-
-Usage
------
-
-    usage: fyerhose [options]
-      -t, --listen-tcp <addr>    listen for clients on this tcp address
-      -u, --listen-udp <addr>    listen for incoming events on this address
-      -p, --path       <path>    path to datastore (default: /tmp/fyerhose/)
-      -x, --cluster    <addr>    address of the next upstream node (pull)
-
-
-
-JSON Format
------------
-
-fyerhose know three special json keys/fields:
-
-
-  **_time** 
-  
-  timestamp at which the event was emitted. will be automatically added if not set.
-
-
-  **_eid** 
-  
-  unique event-id. will be automatically added if not set.
-
-
-  **_volatile** 
-  
-  if set, the event will be published, but not logged to disk
-
+    echo "! stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
 
 
 
 Fyerhose Query Language
 -----------------------
 
-command/token order within a query is not significant. the order of events in the response is random!
+format / syntax:
 
-    stream()   
-      +only(KEY1,KEY2...)
-      +rename(KEY1,KEY2)
+    stream
+    stream where(...)
+    stream where(...) since(...) until(...)
+    stream where(...) and/or where(..) since(...) until(...)
+    stream where(...) and/or where_not(..) since(...) until(...)
 
-    count()
-    sum(KEY)
-    mean(KEY)
-    median(KEY)
-    mode(KEY)
-    min(KEY)
-    max(KEY)
-    range(KEY)
-      +window(SECONDS)
-    
-    filter(KEY = VALUE)
-    filter(KEY ! VALUE)
-    filter(KEY | ONE,TWO,THREE...)
 
-    filter(KEY $ /REGEX/)
-
-    filter(KEY < MAX)
-    filter(KEY > MIN)
-    filter(KEY ~ MIN-MAX)
-    filter(KEY % NUM)
-    filter(KEY ^ NUM)
-    filter(KEY & NUM)
-
-    filter(KEY any_in ANY_IN,TWO,THREE...)
-    filter(KEY all_in ALL_IN,TWO,THREE...)
-
-    filter(KEY)
-    filter(!KEY)
+specifing the time range
 
     since(TIMESTAMP)
     since(-SECONDS)
@@ -114,15 +59,37 @@ command/token order within a query is not significant. the order of events in th
     until(TIMESTAMP)
     until(-SECONDS)
     until(now)
-    until(*)
+
+
+filters for where / where_not
+    
+    where(KEY = VALUE)
+    where(KEY < MAX)
+    where(KEY > MIN)
+    where(KEY ~ MIN-MAX)
+    where(KEY INCLUDES VALUE)
+    where(KEY EXISTS)
+    where(KEY % NUM)
+    where(KEY ^ NUM)
+    where(KEY & NUM)
 
 
 examples:
 
-    filter(channel = 'dawanda-firehose') since(0) until(now)
-    filter(channel = 'dawanda-firehose') since(now) stream()
-    filter(channel & 'dawanda-firehose','dawanda-searchfeed') since(now) stream()
-    filter(_channel = 'dawanda-tap') filter(q_params.page > 150) since(0) stream()" 
+    stream since(0) until(now) where(channel = 'dawanda-firehose')
+    stream where(channel = 'dawanda-firehose')
+    stream where(channel & 'dawanda-firehose','dawanda-searchfeed')
+    stream since(0) where(_channel = 'dawanda-tap') where(q_params.page > 150)
+
+
+
+Usage
+-----
+
+    usage: fyerhose [options]
+      -l, --listen   <addr>    listen for clients on this tcp address
+      -p, --path     <path>    path to datastore (default: /tmp/fyerhose/)
+      -x, --cluster  <addr>    address of the next upstream node (pull)
 
 
 
@@ -131,16 +98,15 @@ Advanced / Hacking
 
 ### keepalive mode:
 
-to enable keepalive mode, you have to initiate the connection with
-this: 
+to enable keepalive mode, send this query: 
 
-    !json;keepalive
+    !keepalive \n
 
 
 if in keepalive mode, the connection wont be closed after the query 
 completes. instead the server will sent this line:
 
-    !keepalive \n
+    !continue \n
 
 
 
