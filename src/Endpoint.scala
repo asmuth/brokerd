@@ -11,7 +11,7 @@ import java.nio.CharBuffer
 
 object HangupSig{}
 
-class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
+class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
 
   var safe_mode = true  // FIXPAUL: this should be disable-able for performance
   var keepalive = false // FIXPAUL: this should be disable-able for performance
@@ -24,7 +24,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
   def act() = { 
     Actor.loop{ react{ 
-      case HangupSig => { println("FIXPAUL: endpoint hangup"); hangup() }
+      case HangupSig => { println("FIXPAUL: endpoint hangup"); exit() }
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
@@ -42,7 +42,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def write(buf: Array[Byte]) = 
-    multixplex.push(channel, buf)
+    multiplex.push(channel, buf)
 
 
   private def hangup() = {
@@ -66,7 +66,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
     if (resp.keepalive unary_!){
       cur_query ! HangupSig
       cur_query = null
-      multixplex.hangup(channel) // FIXPAUL: implement keepalive  
+      multiplex.hangup(channel) // FIXPAUL: implement keepalive  
     }    
   }
 
@@ -74,7 +74,7 @@ class Endpoint(multixplex: Multiplex, channel: SocketChannel) extends Actor{
   private def error(msg: String) = {
     Fyrehose.error("endpoint closed: " + msg)
     write(("{\"error\": \""+msg+"\"}").getBytes)
-    hangup()
+    multiplex.hangup(channel)
   }
 
 

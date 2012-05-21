@@ -33,7 +33,7 @@ class Multiplex() extends Runnable {
       case Select => select()
       case Stream(channel, buf) => stream(channel, buf)
       case Read(channel) => ready(channel)
-      case Hangup(channel) => channel.close()
+      case Hangup(channel) => close_connection(channel)
     }
   }}
 
@@ -61,10 +61,16 @@ class Multiplex() extends Runnable {
   }
 
 
-  private def stream(channel: SocketChannel, buf: Array[Byte]){
-    if(stack contains channel unary_!){
+  private def stream(channel: SocketChannel, buf: Array[Byte]) : Unit = {
+    println("stream called!")
+
+    if(endpoints contains channel unary_!)
+      return
+
+    println("stream executed")
+
+    if(stack contains channel unary_!)
       stack(channel) = ListBuffer[Array[Byte]]()
-    }
 
     stack(channel) += buf
 
@@ -116,6 +122,16 @@ class Multiplex() extends Runnable {
   }
 
 
+  def close_connection(channel: SocketChannel) {
+    if(endpoints contains channel){
+      endpoints(channel) ! HangupSig
+      endpoints -= channel      
+    }
+
+    channel.close()
+  }
+
+
   def read(key: SelectionKey) {
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
     val buf: ByteBuffer = ByteBuffer.allocate(Fyrehose.BUFFER_SIZE_SOCKET)
@@ -162,6 +178,7 @@ class Multiplex() extends Runnable {
 
     if(stack contains channel unary_!){
        println("CANT WRITE - NO ATTACHMENT")
+       key.cancel()
     }
 
     else {

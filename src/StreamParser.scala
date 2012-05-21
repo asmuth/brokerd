@@ -128,7 +128,8 @@ class StreamParser(recv: Endpoint){
           (buffer(pos) != 32))
       {
         val buf = java.util.Arrays.copyOfRange(buffer, from_pos, until_pos)
-        throw new ParseException("read invalid data from buffer: " + new String(buf))
+        val buf_str = new String(buf).replace('\n', ' ')
+        throw new ParseException("read invalid data from buffer: " + buf_str)
       }
     }
   }
