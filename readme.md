@@ -46,10 +46,10 @@ Documentation
 
 ### Usage
 
-    usage: fyerhose [options]
-      -l, --listen   <addr>    listen for clients on this tcp address
-      -p, --path     <path>    path to store data (default: /tmp/fyerhose/)
-      -x, --cluster  <addr>    address of the next upstream node (pull)
+    usage: fyrehose [options]
+      -l, --listen    <addr>    listen for clients on this tcp address
+      -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
+      -x, --upstream  <addr>    pull all events from this node
 
 
 ### Fyrehose Query Language
