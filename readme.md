@@ -1,7 +1,7 @@
 Fyrehose
 ========
 
-Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded "events". It allows subscribers
+Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded events. It allows subscribers
 to filter their event stream on the server side and to replay their event history.
 
 In simple streaming mode, it handles throughputs beyond 100mbit/s.
