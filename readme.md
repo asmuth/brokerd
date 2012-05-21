@@ -35,7 +35,7 @@ _get the last 60 seconds of signups:_
     echo "! stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
 
 
-_subscribe to all signups from ref2 now on:_
+_subscribe to all signups where referrer=ref2 from now on:_
  
     echo "! stream where(action = 'signup') and where(referrer = 'ref2')" | nc localhost 2323
 
