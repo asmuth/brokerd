@@ -92,18 +92,18 @@ class StreamParser(recv: Endpoint){
 
   private def read_chunk(end_pos: Integer) =
     if (buffer(0) == '!')
-      read_query(java.util.Arrays.copyOfRange(buffer, 1, end_pos))
+      emit_query(java.util.Arrays.copyOfRange(buffer, 1, end_pos))
     else if (buffer(0) == '{')
-      read_event(java.util.Arrays.copyOfRange(buffer, 0, end_pos))
+      emit_event(java.util.Arrays.copyOfRange(buffer, 0, end_pos))
     else
       throw new ParseException("something went horribly wrong while parsing")
       
 
-  private def read_event(buf: Array[Byte]) = 
+  private def emit_event(buf: Array[Byte]) = 
     recv ! new EventBody(buf)
 
 
-  private def read_query(buf: Array[Byte]) =
+  private def emit_query(buf: Array[Byte]) =
     recv ! new QueryBody(buf)
   
 
