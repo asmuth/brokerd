@@ -52,7 +52,7 @@ Documentation
       -x, --cluster  <addr>    address of the next upstream node (pull)
 
 
-### Fyerhose Query Language
+### Fyrehose Query Language
 
 format / syntax:
 
@@ -61,6 +61,7 @@ format / syntax:
     stream where(...) since(...) until(...)
     stream where(...) and/or where(..) since(...) until(...)
     stream where(...) and/or where_not(..) since(...) until(...)
+    stream where(...) and where_not(..) or where(...) since(...) until(...)
 
 
 specifing the time range
