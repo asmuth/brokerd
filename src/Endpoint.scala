@@ -24,7 +24,7 @@ class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
 
   def act() = { 
     Actor.loop{ react{ 
-      case HangupSig => { println("FIXPAUL: endpoint hangup"); exit() }
+      case HangupSig => { exit() }
       case buf: Array[Byte] => read(buf)
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)

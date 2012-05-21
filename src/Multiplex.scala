@@ -62,12 +62,8 @@ class Multiplex() extends Runnable {
 
 
   private def stream(channel: SocketChannel, buf: Array[Byte]) : Unit = {
-    println("stream called!")
-
     if(endpoints contains channel unary_!)
       return
-
-    println("stream executed")
 
     if(stack contains channel unary_!)
       stack(channel) = ListBuffer[Array[Byte]]()
@@ -80,13 +76,11 @@ class Multiplex() extends Runnable {
 
 
   def select() {
-    println("SELECT START")
     selector.select()
-    println("SELECT STOP")
     selector.selectedKeys().foreach { key =>
 
       if (key.isValid() unary_!)
-        println("DISCONNECT CHANNEL CLOSED")
+        Fyrehose.log("connection closed")
       
       else if (key.isAcceptable())
         accept(key)
@@ -108,7 +102,7 @@ class Multiplex() extends Runnable {
     socket.accept() match {
       case null => ()   
       case channel:SocketChannel => {
-        println("connection opened")
+        Fyrehose.log("connection opened")
         val endpoint = new Endpoint(this, channel)
         endpoint.start()
         endpoints += ((channel, endpoint))
@@ -127,14 +121,11 @@ class Multiplex() extends Runnable {
 
   def close_connection(channel: SocketChannel) : Unit = {
     if(stack contains channel){
-      println("not ready for close, requeueing (FIXPAUL: slowly)")
       channel.configureBlocking(false)
       channel.register(selector, SelectionKey.OP_WRITE, null)
       reactor ! Hangup(channel) 
       return
     } 
-
-    println("### close called!")
 
     if(endpoints contains channel){
       endpoints(channel) ! HangupSig
@@ -158,10 +149,8 @@ class Multiplex() extends Runnable {
       case 0 => ()
 
       case -1 => {
-        // key.cancel()
-        println("END_OF_STREAM")
-         // if(endpoints contains channel)
-         //   endpoints(channel) ! HangupSig
+        // if(endpoints contains channel)
+        //   endpoints(channel) ! HangupSig
       }
 
       case m => {
@@ -185,8 +174,6 @@ class Multiplex() extends Runnable {
 
 
   def write(key: SelectionKey){
-    println("### write called")
-
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
     val buf: ByteBuffer = ByteBuffer.allocate(Fyrehose.BUFFER_SIZE_SOCKET)
 
@@ -198,7 +185,6 @@ class Multiplex() extends Runnable {
     else {
       stack(channel).foreach{ chunk => buf.put(chunk) }
       stack -= channel
-      println("AFTER: " + (stack contains channel))
       buf.flip()
       channel.write(buf)
       ready(channel)
