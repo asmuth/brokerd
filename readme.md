@@ -1,17 +1,20 @@
 Fyrehose
 ========
 
-Fyrehose is a scala-based pub/sub daemon designed to stream JSON events. It allows 
-for server-side filtering and history replay.
+Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded "events". It allows subscribers
+to filter their event stream on the server side and to replay their event history.
+
+In simple streaming mode, it handles throughputs beyond 100mbit/s.
 
 
 Synopsis
 --------
 
-To add/publish, you connect via TCP and send your events as arbitray (possibly nested) 
-json-objects. Fyrehose will add a "_time" key containing the timestamp at which the
-event was received if it doesn't exist already (you can use this to retroactively add
-events).
+To add/publish events, you connect via TCP and send your data as arbitray (possibly nested) 
+json-objects. Consequent events/json-objects may be seperated by newline, whitespace, zero-byte
+or tab. The only constraint on the format of your json events is, that Fyrehose will add a "_time" 
+key containing the timestamp at which the event was received if it doesn't exist already (you can 
+also use this to retroactively add events).
 
 To retrieve/subscribe, you also connect with TCP. Every query must be prefixed with an ASCII 
 bang ("!") and end with a newline ("\n"). The response consists of one or more newline-
