@@ -80,7 +80,9 @@ class Multiplex() extends Runnable {
 
 
   def select() {
+    println("SELECT START")
     selector.select()
+    println("SELECT STOP")
     selector.selectedKeys().foreach { key =>
 
       if (key.isValid() unary_!)
@@ -96,6 +98,8 @@ class Multiplex() extends Runnable {
         write(key)
 
     }
+
+    reactor ! Select
   }
 
   def accept(key: SelectionKey) {
@@ -112,7 +116,6 @@ class Multiplex() extends Runnable {
       }
     }
 
-    reactor ! Select
   }
 
 
@@ -122,7 +125,17 @@ class Multiplex() extends Runnable {
   }
 
 
-  def close_connection(channel: SocketChannel) {
+  def close_connection(channel: SocketChannel) : Unit = {
+    if(stack contains channel){
+      println("not ready for close, requeueing (FIXPAUL: slowly)")
+      channel.configureBlocking(false)
+      channel.register(selector, SelectionKey.OP_WRITE, null)
+      reactor ! Hangup(channel) 
+      return
+    } 
+
+    println("### close called!")
+
     if(endpoints contains channel){
       endpoints(channel) ! HangupSig
       endpoints -= channel      
@@ -172,18 +185,20 @@ class Multiplex() extends Runnable {
 
 
   def write(key: SelectionKey){
+    println("### write called")
+
     val channel: SocketChannel = key.channel().asInstanceOf[SocketChannel]
     val buf: ByteBuffer = ByteBuffer.allocate(Fyrehose.BUFFER_SIZE_SOCKET)
 
-
     if(stack contains channel unary_!){
-       println("CANT WRITE - NO ATTACHMENT")
-       key.cancel()
+      println("CANT WRITE - NO ATTACHMENT")
+      key.cancel()
     }
 
     else {
       stack(channel).foreach{ chunk => buf.put(chunk) }
       stack -= channel
+      println("AFTER: " + (stack contains channel))
       buf.flip()
       channel.write(buf)
       ready(channel)
