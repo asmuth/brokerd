@@ -12,7 +12,7 @@ Synopsis
 
 To add/publish events, you connect via TCP and send your data as arbitray (possibly nested) 
 json-objects. Consequent events/json-objects may be seperated by newline, whitespace, zero-byte
-or tab. The only constraint on the format of your json events is, that Fyrehose will add a `_time` 
+or tab. The only constraint on the format of your json events is that Fyrehose will add a `_time` 
 key containing the timestamp at which the event was received if it doesn't exist already (you can 
 also use this to retroactively add events).
 
