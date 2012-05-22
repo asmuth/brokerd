@@ -16,7 +16,7 @@ or tab. The only constraint on the format of your json events is, that Fyrehose 
 key containing the timestamp at which the event was received if it doesn't exist already (you can 
 also use this to retroactively add events).
 
-To retrieve/subscribe, you send your query over the same connection. Every query must be prefixed 
+To retrieve/subscribe to events, you send your query over the same connection. Every query must be prefixed 
 with an ASCII bang ("!") and end with a newline ("\n"). The response consists of one or more 
 newline-seperated json objects. Unless in keepalive-mode, Fyrehose will close the connection after 
 a query has finished. You can only run one query at a time, but you can still publish events while
