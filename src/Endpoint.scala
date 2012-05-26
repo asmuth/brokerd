@@ -26,7 +26,7 @@ class Endpoint(socket: Socket) extends Runnable{
   val reactor = actor { loop {
     react{ 
       case HangupSig => { hangup(); exit() }
-      case res: QueryResponseChunk => stream_query(res)
+      case resp: QueryResponseChunk => write(resp.chunk)
       //case ext: QueryExitSig => finish_query()
       // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }
@@ -38,10 +38,11 @@ class Endpoint(socket: Socket) extends Runnable{
 
     try{
       while(in_stream.read(buffer) > -1){ 
-        read(buffer) 
+        parser.stream(buffer) 
       }  
     } catch {
       case e: SocketException => ()
+      case e: ParseException => error(e.toString)
     }
   }
 
@@ -59,31 +60,7 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def read(buf: Array[Byte]) : Unit = try{
-    parser.stream(buf)
-  } catch {
-    case e: ParseException => error(e.toString)
-  }
-
-
-  private def write(buf: Array[Byte]) = try{
-    out_stream.write(buf)
-  } catch {
-    case e: SocketException => reactor ! HangupSig
-  }
-
-
-  private def hangup() = {
-    if(cur_query != null)
-      println("FIXPAUL: abort query")
-
-    Fyrehose.log("connection closed")
-    
-    socket.close()
-  }
-
-
-  private def finish_query() = {
+  private def query_finished() = {
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
     
@@ -92,9 +69,23 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def stream_query(resp: QueryResponseChunk) : Unit = {
-    if (resp.chunk != null)
-      write(resp.chunk)
+  private def query_abort() = 
+    println("FIXPAUL: abort query")
+
+
+  private def write(buf: Array[Byte]) : Unit = try{
+    out_stream.write(buf)
+  } catch {
+    case e: SocketException => reactor ! HangupSig
+  }
+
+
+  private def hangup() = {
+    if(cur_query != null)
+      query_abort()
+    
+    Fyrehose.log("connection closed")
+    socket.close()
   }
 
 
