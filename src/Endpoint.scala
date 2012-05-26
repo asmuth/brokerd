@@ -29,7 +29,7 @@ class Endpoint(socket: Socket) extends Runnable{
       // case buf: Array[Byte] => read(buf)
       // case res: QueryResponseChunk => stream_query(res)
       // case qry: QueryBody => exec_query(qry)
-      // case evt: EventBody => Fyrehose.backbone ! evt
+      // case evt: EventBody => evt
       // case ext: QueryExitSig => finish_query()
       // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }
@@ -49,6 +49,14 @@ class Endpoint(socket: Socket) extends Runnable{
 
     println("end of stream")
   }
+
+
+  def event(evt_body: EventBody) =
+    Fyrehose.backbone ! evt_body
+
+
+  def query(qry_body: QueryBody) = 
+    ()
   
 
   private def read(buf: Array[Byte]) : Unit = try{
