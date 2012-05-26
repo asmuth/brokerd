@@ -51,9 +51,8 @@ class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
 
 
   private def exec_query(qry: QueryBody) = try{
-    println("QUERY BODY RECVD.")
     cur_query = QueryParser.parse(qry)
-    cur_query.execute(this)
+    cur_query ! QueryExecuteSig(this)
   } catch {
     case e: ParseException => error(e.toString)
   }
