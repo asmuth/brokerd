@@ -4,8 +4,17 @@ import scala.actors._
 
 class StreamQuery(raw: String) extends Query{
 
-  def execute(endpoint: Actor){}
+  var recv : Actor = null
 
-  def data(event: Event){}
+  def execute(endpoint: Actor) = 
+    recv = endpoint
+
+  def data(event: Event) = 
+    if (recv == null)
+      this ! event
+    else {
+      recv ! new QueryResponseChunk(event.bytes)
+      recv ! new QueryResponseChunk("\n".getBytes)        
+    }
     
 }
