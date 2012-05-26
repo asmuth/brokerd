@@ -1,7 +1,7 @@
 Fyrehose
 ========
 
-Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded "events". It allows subscribers
+Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded events. It allows subscribers
 to filter their event stream on the server side and to replay their event history.
 
 In simple streaming mode, it handles throughputs beyond 100mbit/s.
@@ -12,15 +12,15 @@ Synopsis
 
 To add/publish events, you connect via TCP and send your data as arbitray (possibly nested) 
 json-objects. Consequent events/json-objects may be seperated by newline, whitespace, zero-byte
-or tab. The only constraint on the format of your json events is, that Fyrehose will add a "_time" 
+or tab. The only constraint on the format of your json events is that Fyrehose will add a `_time` 
 key containing the timestamp at which the event was received if it doesn't exist already (you can 
 also use this to retroactively add events).
 
-To retrieve/subscribe, you also connect with TCP. Every query must be prefixed with an ASCII 
-bang ("!") and end with a newline ("\n"). The response consists of one or more newline-
-seperated json objects. Unless in keepalive-mode, Fyrehose will close the connection after 
-a query has finished. You can only run one query at a time. The order of events within a 
-response is random. 
+To retrieve/subscribe to events, you send your query over the same connection. Every query must be prefixed 
+with an ASCII bang ("!") and end with a newline ("\n"). The response consists of one or more 
+newline-seperated json objects. Unless in keepalive-mode, Fyrehose will close the connection after 
+a query has finished. You can only run one query at a time, but you can still publish events while
+the query is running. The order of events within a response is not guaranteed to be chronological. 
 
 
 _add a few example events:_
@@ -35,7 +35,7 @@ _get the last 60 seconds of signups:_
     echo "! stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
 
 
-_subscribe to all signups from ref2 now on:_
+_subscribe to all signups where referrer=ref2 from now on:_
  
     echo "! stream where(action = 'signup') and where(referrer = 'ref2')" | nc localhost 2323
 
@@ -46,13 +46,13 @@ Documentation
 
 ### Usage
 
-    usage: fyerhose [options]
-      -l, --listen   <addr>    listen for clients on this tcp address
-      -p, --path     <path>    path to store data (default: /tmp/fyerhose/)
-      -x, --cluster  <addr>    address of the next upstream node (pull)
+    usage: fyrehose [options]
+      -l, --listen    <addr>    listen for clients on this tcp address
+      -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
+      -x, --upstream  <addr>    pull all events from this node
 
 
-### Fyerhose Query Language
+### Fyrehose Query Language
 
 format / syntax:
 
@@ -61,6 +61,7 @@ format / syntax:
     stream where(...) since(...) until(...)
     stream where(...) and/or where(..) since(...) until(...)
     stream where(...) and/or where_not(..) since(...) until(...)
+    stream where(...) and where_not(..) or where(...) since(...) until(...)
 
 
 specifing the time range
@@ -102,15 +103,15 @@ Advanced / Hacking
 
 ### keepalive mode:
 
-to enable keepalive mode, send this query: 
+to enable keepalive mode for a connection, send this query: 
 
-    !keepalive \n
+    !keepalive\n
 
 
 if in keepalive mode, the connection wont be closed after the query 
 completes. instead the server will sent this line:
 
-    !continue \n
+    !continue\n
 
 
 
