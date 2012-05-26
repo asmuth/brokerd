@@ -12,8 +12,8 @@ object Fyrehose{
 
   val CONN_IDLE_TIMEOUT   = 5000
   val NUM_THREADS_PARSER  = 12
-  val BUFFER_SIZE_PARSER  = 16276 * 4 
-  val BUFFER_SIZE_SOCKET  = 4096 * 4
+  val BUFFER_SIZE_PARSER  = 4096 
+  val BUFFER_SIZE_SOCKET  = 512
 
   val backbone = new Backbone()
   backbone.start()
@@ -21,8 +21,10 @@ object Fyrehose{
   def main(args: Array[String]) : Unit = {
     log("fyerhosed v0.0.1-dev booting...")
 
-    val multiplex = new Multiplex()
-    multiplex.run()
+    // val multiplex = new Multiplex()
+    // multiplex.run()
+    val listener = new Listener()
+    listener.listen
   }
 
   def log(msg: String) = {

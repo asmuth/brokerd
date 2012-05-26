@@ -99,12 +99,12 @@ class StreamParser(recv: Endpoint){
       throw new ParseException("something went horribly wrong while parsing")
       
 
-  private def emit_event(buf: Array[Byte]) = 
-    recv ! new EventBody(buf)
+  private def emit_event(buf: Array[Byte]) = ()
+    //recv ! new EventBody(buf)
 
 
-  private def emit_query(buf: Array[Byte]) =
-    recv ! new QueryBody(buf)
+  private def emit_query(buf: Array[Byte]) = ()
+    //recv ! new QueryBody(buf)
   
 
   private def trim_buffer(trim_pos: Integer, check_pos: Integer) = {
