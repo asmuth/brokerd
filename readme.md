@@ -49,7 +49,6 @@ Documentation
     usage: fyrehose [options]
       -l, --listen    <addr>    listen for clients on this tcp address
       -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
-      -x, --upstream  <addr>    pull all events from this node
 
 
 ### Fyrehose Query Language
