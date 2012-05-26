@@ -21,9 +21,7 @@ object Fyrehose{
   def main(args: Array[String]) : Unit = {
     log("fyerhosed v0.0.1-dev booting...")
 
-    // val multiplex = new Multiplex()
-    // multiplex.run()
-    val listener = new Listener()
+    val listener = new Listener(2323)
     listener.listen
   }
 

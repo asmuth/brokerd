@@ -18,7 +18,7 @@ class Endpoint(socket: Socket) extends Runnable{
   val parser = new StreamParser(this)
   parser.set_safe_mode(safe_mode)
 
-  println("endpoint started")
+  Fyrehose.log("connection opened")
 
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
@@ -41,10 +41,8 @@ class Endpoint(socket: Socket) extends Runnable{
         read(buffer) 
       }  
     } catch {
-      case e: SocketException => println("socket closed")
+      case e: SocketException => ()
     }
-
-    println("end of stream")
   }
 
 
@@ -78,6 +76,8 @@ class Endpoint(socket: Socket) extends Runnable{
   private def hangup() = {
     if(cur_query != null)
       println("FIXPAUL: abort query")
+
+    Fyrehose.log("connection closed")
     
     socket.close()
   }

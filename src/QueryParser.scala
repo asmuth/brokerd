@@ -11,9 +11,7 @@ object QueryParser{
     val qry_str = new String(bdy.raw)
     var query: Query = null
 
-    if (qry_str.matches(""".*pingpong\(.*""")) {
-      query = new PingPongQuery(qry_str)
-    } else if (qry_str.matches(""".*stream\(.*""")) {
+    if (qry_str.matches(""".*stream\(.*""")) {
       query = new StreamQuery(qry_str)
     } else {
       throw new ParseException("invalid query: " + qry_str)
