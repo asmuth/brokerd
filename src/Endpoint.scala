@@ -26,11 +26,8 @@ class Endpoint(socket: Socket) extends Runnable{
   val reactor = actor { loop {
     react{ 
       case HangupSig => { hangup(); exit() }
-      // case buf: Array[Byte] => read(buf)
-      // case res: QueryResponseChunk => stream_query(res)
-      // case qry: QueryBody => exec_query(qry)
-      // case evt: EventBody => evt
-      // case ext: QueryExitSig => finish_query()
+      case res: QueryResponseChunk => stream_query(res)
+      //case ext: QueryExitSig => finish_query()
       // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }
   }}
@@ -55,9 +52,14 @@ class Endpoint(socket: Socket) extends Runnable{
     Fyrehose.backbone ! evt_body
 
 
-  def query(qry_body: QueryBody) = 
-    ()
-  
+  def query(qry: QueryBody) = try{
+    cur_query = QueryParser.parse(qry)
+    cur_query ! QueryExecuteSig(reactor)
+    Fyrehose.backbone ! cur_query
+  } catch {
+    case e: ParseException => error(e.toString)
+  }
+
 
   private def read(buf: Array[Byte]) : Unit = try{
     parser.stream(buf)
@@ -75,28 +77,19 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  // private def exec_query(qry: QueryBody) = try{
-  //   cur_query = QueryParser.parse(qry)
-  //   cur_query ! QueryExecuteSig(this)
-  //   Fyrehose.backbone ! cur_query
-  // } catch {
-  //   case e: ParseException => error(e.toString)
-  // }
-
-
-  // private def finish_query() = {
-  //   Fyrehose.backbone ! QueryExitSig(cur_query)
-  //   cur_query = null
+  private def finish_query() = {
+    Fyrehose.backbone ! QueryExitSig(cur_query)
+    cur_query = null
     
-  //   // if (resp.keepalive unary_!)
-  //     multiplex.hangup(channel) // FIXPAUL: implement keepalive  
-  // }
+    // if (resp.keepalive unary_!)
+     reactor ! HangupSig // FIXPAUL: implement keepalive  
+  }
 
 
-  // private def stream_query(resp: QueryResponseChunk) = {
-  //   if (resp.chunk != null)
-  //     write(resp.chunk)
-  // }
+  private def stream_query(resp: QueryResponseChunk) = {
+    if (resp.chunk != null)
+      write(resp.chunk)
+  }
 
 
   private def error(msg: String) = {
