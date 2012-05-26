@@ -11,9 +11,9 @@ import java.text.DateFormat
 object Fyrehose{
 
   val CONN_IDLE_TIMEOUT   = 5000
-  val NUM_THREADS_PARSER  = 12
-  val BUFFER_SIZE_PARSER  = 4096 
-  val BUFFER_SIZE_SOCKET  = 512
+  val NUM_THREADS_PARSER  = 8
+  val BUFFER_SIZE_PARSER  = 4096
+  val BUFFER_SIZE_SOCKET  = 2048
 
   val backbone = new Backbone()
   backbone.start()
