@@ -29,6 +29,7 @@ class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
       case res: QueryResponseChunk => stream_query(res)
       case qry: QueryBody => exec_query(qry)
       case evt: EventBody => Fyrehose.backbone ! evt
+      case ext: QueryExitSig => finish_query()
       // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }}
   }
@@ -53,8 +54,15 @@ class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
   private def exec_query(qry: QueryBody) = try{
     cur_query = QueryParser.parse(qry)
     cur_query ! QueryExecuteSig(this)
+    Fyrehose.backbone ! cur_query
   } catch {
     case e: ParseException => error(e.toString)
+  }
+
+
+  private def finish_query() = {
+    Fyrehose.backbone ! QueryExitSig(cur_query)
+    cur_query = null    
   }
 
 

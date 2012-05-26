@@ -14,7 +14,6 @@ object QueryParser{
   	  case x_stream => new PingPongQuery(bdy.raw)  
   	}
   	
-  	query.start()
     return query
   }
 
