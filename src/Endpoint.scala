@@ -68,11 +68,17 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def write(buf: Array[Byte]) = 
+  private def write(buf: Array[Byte]) = try{
     out_stream.write(buf)
+  } catch {
+    case e: SocketException => reactor ! HangupSig
+  }
 
 
   private def hangup() = {
+    if(cur_query != null)
+      println("FIXPAUL: abort query")
+    
     socket.close()
   }
 
@@ -86,7 +92,7 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def stream_query(resp: QueryResponseChunk) = {
+  private def stream_query(resp: QueryResponseChunk) : Unit = {
     if (resp.chunk != null)
       write(resp.chunk)
   }
