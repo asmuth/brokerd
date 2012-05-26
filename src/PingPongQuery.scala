@@ -2,11 +2,13 @@ package com.paulasmuth.fyrehose
 
 import scala.actors._
 
-class PingPongQuery(raw: Array[Byte]) extends Query{
+class PingPongQuery(str: String) extends Query{
 
   def execute(endpoint: Actor){
-    endpoint ! new QueryResponseChunk((new String(raw)).getBytes, false)
+    endpoint ! QueryResponseChunk(str.getBytes)
     endpoint ! QueryExitSig(this)
   }
+
+  def data(event: Event){}
     
 }

@@ -11,6 +11,8 @@ class Backbone() extends Actor{
   val runner  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_PARSER)
   val queries = scala.collection.mutable.Set[Query]()
 
+  var sequence = 0
+
   def act() = { 
     Actor.loop{ react{
       case ev_body: EventBody => parse(ev_body)
@@ -20,13 +22,15 @@ class Backbone() extends Actor{
   }
 
 
-  private def dispatch(event: Event) = 
-    println("received: " + new String(event.bytes))
-
-
+  private def dispatch(event: Event) = {
+    sequence += 1
+    queries.foreach(_ ! event)
+  }
+    
 
   private def execute(query: Query) = {
     queries += query
+    query.sequence = sequence
     query.start()
   }
 

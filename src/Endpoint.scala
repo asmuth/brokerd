@@ -62,19 +62,16 @@ class Endpoint(multiplex: Multiplex, channel: SocketChannel) extends Actor{
 
   private def finish_query() = {
     Fyrehose.backbone ! QueryExitSig(cur_query)
-    cur_query = null    
+    cur_query = null
+    
+    // if (resp.keepalive unary_!)
+      multiplex.hangup(channel) // FIXPAUL: implement keepalive  
   }
 
 
   private def stream_query(resp: QueryResponseChunk) = {
     if (resp.chunk != null)
       write(resp.chunk)
-
-    if (resp.keepalive unary_!){
-      cur_query ! HangupSig
-      cur_query = null
-      multiplex.hangup(channel) // FIXPAUL: implement keepalive  
-    }    
   }
 
 
