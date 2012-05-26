@@ -23,7 +23,7 @@ class Backbone() extends Actor{
 
 
   private def dispatch(event: Event) = {
-    sequence += 1
+    sequence += 1    
     queries.foreach(_ ! event)
   }
     
@@ -41,7 +41,7 @@ class Backbone() extends Actor{
   }
 
 
-  private def parse(ev_body: EventBody) = 
+  private def parse(ev_body: EventBody) =     
     runner.execute(new Runnable { def run = {
       try{
         Fyrehose.backbone ! new Event(ev_body.raw)
