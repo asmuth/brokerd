@@ -21,7 +21,7 @@ class Endpoint(socket: Socket) extends Runnable{
   val out_stream = socket.getOutputStream()
 
   val reactor = actor { loop {
-    react{ 
+    receive{ 
       case HangupSig => { hangup(); exit() }
       case resp: QueryResponseChunk => write(resp.chunk)
       //case ext: QueryExitSig => finish_query()
