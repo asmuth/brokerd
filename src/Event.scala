@@ -24,6 +24,10 @@ class Event(raw: Array[Byte]){
     if (touched) serialize() else raw
 
 
+  def time() : Long = 
+    root.get("_time").getAsLong()
+
+
   private def serialize() : Array[Byte] =
     root.toString.getBytes
 

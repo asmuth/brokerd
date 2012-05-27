@@ -14,6 +14,9 @@ object Fyrehose{
   val NUM_THREADS_PARSER  = 8
   val BUFFER_SIZE_PARSER  = 4096
   val BUFFER_SIZE_SOCKET  = 2048
+  val FILE_CHUNK_SIZE     = 3600 * 6
+
+  var out_dir = "/tmp/fyrehose"
 
   val backbone = new Backbone()
   backbone.start()

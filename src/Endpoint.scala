@@ -15,9 +15,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
   var cur_query : Query = null
 
-  val parser = new StreamParser(this)
-  parser.set_safe_mode(safe_mode)
-
   Fyrehose.log("connection opened")
 
   val in_stream  = socket.getInputStream()
@@ -34,6 +31,9 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   def run = {
+    val parser = new StreamParser(this)
+    parser.set_safe_mode(safe_mode)
+    
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
 
     try{

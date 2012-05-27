@@ -10,6 +10,9 @@ class Backbone() extends Actor{
 
   val runner  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_PARSER)
   val queries = scala.collection.mutable.Set[Query]()
+  
+  val writer  = new Writer()
+  writer.start()
 
   var sequence = 0
 
@@ -25,6 +28,7 @@ class Backbone() extends Actor{
   private def dispatch(event: Event) = {
     sequence += 1    
     queries.foreach(_ ! event)
+    writer ! event
   }
     
 
