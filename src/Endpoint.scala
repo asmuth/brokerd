@@ -35,11 +35,13 @@ class Endpoint(socket: Socket) extends Runnable{
     parser.set_safe_mode(safe_mode)
     
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
+    var next   = 0
 
     try{
-      while(in_stream.read(buffer) > -1){ 
-        parser.stream(buffer) 
-      }  
+      while (next > -1){ 
+        if(next > 0){ parser.stream(buffer, next) }
+        next = in_stream.read(buffer)
+      } 
     } catch {
       case e: SocketException => ()
       case e: ParseException => error(e.toString)

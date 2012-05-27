@@ -10,14 +10,15 @@ class StreamParser(recv: Endpoint){
   var safe_mode = true
 
 
-  def stream(buf: Array[Byte]) : Unit = {
-    if ((buf.length + buffer_pos) > buffer.length){
+  def stream(buf: Array[Byte], buf_len: Int) : Unit = {
+    if ((buf_len + buffer_pos) > buffer.length){
+      println(new String(buffer))
       throw new ParseException("endoint parser buffer overflow") 
       return ()
     }
 
-    System.arraycopy(buf, 0, buffer, buffer_pos, buf.length)
-    buffer_pos += buf.length
+    System.arraycopy(buf, 0, buffer, buffer_pos, buf_len)
+    buffer_pos += buf_len
 
     read_chunked()
   }
