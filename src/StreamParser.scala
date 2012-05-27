@@ -12,7 +12,6 @@ class StreamParser(recv: Endpoint){
 
   def stream(buf: Array[Byte], buf_len: Int) : Unit = {
     if ((buf_len + buffer_pos) > buffer.length){
-      println(new String(buffer))
       throw new ParseException("endoint parser buffer overflow") 
       return ()
     }
@@ -59,7 +58,7 @@ class StreamParser(recv: Endpoint){
       else if (query_seq)
         ()
       
-      else if (buffer(pos) == 92)
+      else if ((buffer(pos) == 92) && (escape_seq unary_!))
         escape_seq = true
 
       else if (((buffer(pos) == 39) || (buffer(pos) == 34)) && !escape_seq && (escape_char == 0))
@@ -74,7 +73,8 @@ class StreamParser(recv: Endpoint){
       else if (!escape_seq && (escape_char == 0) && (buffer(pos) == '}'))
         object_idx -= 1
 
-      else if (escape_seq && (buffer(pos) != 92))
+      //else if (escape_seq && (buffer(pos) != 92))
+      else if (escape_seq) 
         escape_seq = false
 
       if((trim_pos == 0) && (object_idx == -1)){
