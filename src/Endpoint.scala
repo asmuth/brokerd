@@ -71,8 +71,10 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def query_abort() = 
-    println("FIXPAUL: abort query")
+  private def query_abort() = {
+    Fyrehose.backbone ! QueryExitSig(cur_query)
+    cur_query = null
+  }    
 
 
   private def write(buf: Array[Byte]) : Unit = try{

@@ -15,7 +15,7 @@ trait Query extends Actor{
   def act() = { 
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)
-      case HangupSig => exit()
+      case HangupSig => { Fyrehose.log("query finished"); exit() }
       case event: Event => data(event)
     }}
   }
