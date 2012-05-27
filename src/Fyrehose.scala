@@ -10,11 +10,12 @@ import java.text.DateFormat
 
 object Fyrehose{
 
-  val CONN_IDLE_TIMEOUT   = 5000
-  val NUM_THREADS_PARSER  = 8
-  val BUFFER_SIZE_PARSER  = 4096
-  val BUFFER_SIZE_SOCKET  = 2048
-  val FILE_CHUNK_SIZE     = 3600 * 6
+  val CONN_IDLE_TIMEOUT    = 5000
+  val NUM_THREADS_PARSER   = 6
+  val NUM_THREADS_DISPATCH = 6
+  val BUFFER_SIZE_PARSER   = 4096
+  val BUFFER_SIZE_SOCKET   = 2048
+  val FILE_CHUNK_SIZE      = 3600 * 6
 
   var out_dir = "/tmp/fyrehose"
 

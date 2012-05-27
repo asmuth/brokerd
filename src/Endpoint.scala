@@ -50,7 +50,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   def event(evt_body: EventBody) =
-    Fyrehose.backbone ! evt_body
+    Fyrehose.backbone.announce(evt_body)
 
 
   def query(qry: QueryBody) = try{

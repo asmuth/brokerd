@@ -8,7 +8,9 @@ case class EventBody(raw: Array[Byte])
 
 class Backbone() extends Actor{
 
-  val runner  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_PARSER)
+  val parser_pool    = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_PARSER)
+  val dispatch_pool  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_DISPATCH)
+
   val queries = scala.collection.mutable.Set[Query]()
 
   val writer  = new Writer()
@@ -18,7 +20,6 @@ class Backbone() extends Actor{
 
   def act() = { 
     Actor.loop{ react{
-      case ev_body: EventBody => parse(ev_body)
       case event: Event => dispatch(event)
       case query: Query => execute(query)
       case QueryExitSig(query) => finish(query)
@@ -26,10 +27,22 @@ class Backbone() extends Actor{
   }
 
 
+  def announce(ev_body: EventBody) =     
+    parser_pool.execute(new Runnable { def run = {
+      try{
+        Fyrehose.backbone ! new Event(ev_body.raw)
+      } catch {
+        case e: ParseException => Fyrehose.error(e.toString)
+      }
+    }})
+
+
   private def dispatch(event: Event) = {
     sequence += 1    
-    //queries.foreach(_ ! event)
-    writer ! event
+    dispatch_pool.execute(new Runnable { def run = {
+      queries.foreach(_ ! event)
+      writer ! event
+    }})
   }
     
 
@@ -44,16 +57,5 @@ class Backbone() extends Actor{
     queries -= query
     query ! HangupSig
   }
-
-
-  private def parse(ev_body: EventBody) =     
-    runner.execute(new Runnable { def run = {
-      try{
-        Fyrehose.backbone ! new Event(ev_body.raw)
-      } catch {
-        case e: ParseException => Fyrehose.error(e.toString)
-      }
-    }})
-
 
 }
