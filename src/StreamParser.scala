@@ -12,7 +12,10 @@ class StreamParser(recv: Endpoint){
 
   def stream(buf: Array[Byte], buf_len: Int) : Unit = {
     if ((buf_len + buffer_pos) > buffer.length){
-      throw new ParseException("endoint parser buffer overflow") 
+      throw new ParseException(
+        "endoint parser buffer overflow: " +
+        new String(java.util.Arrays.copyOfRange(buf, 0, buf_len))
+      )
       return ()
     }
 
