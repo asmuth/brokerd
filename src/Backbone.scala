@@ -58,4 +58,9 @@ class Backbone() extends Actor{
     query ! HangupSig
   }
 
+
+  override def exceptionHandler = {
+    case e: Exception => Fyrehose.fatal(e.toString)
+  }
+  
 }

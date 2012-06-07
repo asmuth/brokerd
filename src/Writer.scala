@@ -26,4 +26,8 @@ class Writer extends Actor {
   def using[A <: {def close(): Unit}, B](param: A)(f: A => B): B =
     try { f(param) } finally { param.close() }
 
+  override def exceptionHandler = {
+    case e: Exception => Fyrehose.fatal(e.toString)
+  }
+
 }

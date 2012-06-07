@@ -37,4 +37,8 @@ object Fyrehose{
   def error(msg: String) =
     log("[ERROR] " + msg)
 
+  def fatal(msg: String) = {
+    error(msg); System.exit(1)
+  }
+
 }
