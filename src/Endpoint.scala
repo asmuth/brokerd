@@ -39,18 +39,22 @@ class Endpoint(socket: Socket) extends Runnable{
 
     try{
       while (next > -1){ 
-        if(next > 0){ parser.stream(buffer, next) }
+        if(next > 0){ parser.stream(buffer, next); println("parsing") }
         next = in_stream.read(buffer)
       } 
     } catch {
-      case e: SocketException => ()
-      case e: ParseException => error(e.toString)
+      case e: SocketException => error(e.toString, false)
+      case e: ParseException => error(e.toString, true)
     }
+
+    println("runnable terminated")
   }
 
 
-  def event(evt_body: EventBody) =
+  def event(evt_body: EventBody) = {
+    println("announcing")
     Fyrehose.backbone.announce(evt_body)
+  }
 
 
   def query(qry: QueryBody) = try{
@@ -58,7 +62,7 @@ class Endpoint(socket: Socket) extends Runnable{
     cur_query ! QueryExecuteSig(reactor)
     Fyrehose.backbone ! cur_query
   } catch {
-    case e: ParseException => error(e.toString)
+    case e: ParseException => error(e.toString, true)
   }
 
 
@@ -93,9 +97,12 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def error(msg: String) = {
+  private def error(msg: String, recoverable: Boolean) = {
     Fyrehose.error("endpoint closed: " + msg)
-    write(("{\"error\": \""+msg+"\"}").getBytes)
+
+    if (recoverable)
+      write(("{\"error\": \""+msg+"\"}").getBytes) // FIXPAUL
+
     reactor ! HangupSig
   }
 
