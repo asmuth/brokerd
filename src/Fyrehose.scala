@@ -5,7 +5,6 @@ import java.util.Date
 import java.text.DateFormat
 
 // TODO:
-// close endpoint via timeout
 // conn-header: keepalive + safe_mode
 
 object Fyrehose{

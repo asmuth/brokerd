@@ -17,6 +17,8 @@ class Endpoint(socket: Socket) extends Runnable{
 
   Fyrehose.log("connection opened")
 
+  socket.setSoTimeout(Fyrehose.CONN_IDLE_TIMEOUT)
+
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
@@ -25,7 +27,6 @@ class Endpoint(socket: Socket) extends Runnable{
       case HangupSig => { hangup(); exit() }
       case resp: QueryResponseChunk => write(resp.chunk)
       //case ext: QueryExitSig => finish_query()
-      // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
     }
   }}
 
@@ -43,8 +44,10 @@ class Endpoint(socket: Socket) extends Runnable{
         next = in_stream.read(buffer)
       } 
     } catch {
+      case e: SocketTimeoutException => error("read timeout", true)
       case e: SocketException => error(e.toString, false)
       case e: ParseException => error(e.toString, true)
+      case e: IOException => error(e.toString, false)
     }
 
     reactor ! HangupSig
