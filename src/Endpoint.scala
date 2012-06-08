@@ -47,7 +47,7 @@ class Endpoint(socket: Socket) extends Runnable{
       case e: ParseException => error(e.toString, true)
     }
 
-    println("runnable terminated")
+    reactor ! HangupSig
   }
 
 
