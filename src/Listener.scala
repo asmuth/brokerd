@@ -6,16 +6,22 @@ import java.net._
  
 class Listener(port: Int){
 
-   val sock = new ServerSocket(port)
-   val clients = Executors.newCachedThreadPool() // FIXPAUL: evil!!!
+  val clients = Executors.newCachedThreadPool() // FIXPAUL: evil!!!
+  var sock : ServerSocket = null
 
-   Fyrehose.log("listening on port " + port.toString())
+  try{
+    sock = new ServerSocket(port)
+  } catch {
+    case e: Exception => Fyrehose.fatal(e.toString)
+  }
 
-   def listen = {
-     while(true){
-       val conn = new Endpoint(sock.accept())
-       clients.execute(conn)
-     }
-   }
+  Fyrehose.log("listening on port " + port.toString())
+
+  def listen = {
+    while(true){
+      val conn = new Endpoint(sock.accept())
+      clients.execute(conn)
+    }
+  }
 
 }
