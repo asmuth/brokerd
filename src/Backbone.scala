@@ -8,7 +8,6 @@ case class EventBody(raw: Array[Byte])
 
 class Backbone() extends Actor{
 
-  val dispatch_pool  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_DISPATCH)
   val queries = scala.collection.mutable.Set[Query]()
   var sequence = new java.util.concurrent.atomic.AtomicInteger
 
@@ -25,13 +24,11 @@ class Backbone() extends Actor{
   }
 
   private def dispatch(event: Event) = {
-    println("dispatch scheduled")
+    println("dispatch: " + queries.size.toString)
     sequence.incrementAndGet();
-    dispatch_pool.execute(new Runnable { def run = {
-      println("dispatched: " + queries.size.toString)
-      queries.foreach(_ ! event)
-      writer ! event
-    }})
+    queries.foreach(_ ! event)
+    writer ! event
+    println("dispatch finish")
   }
 
 
