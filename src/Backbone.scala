@@ -8,15 +8,13 @@ case class EventBody(raw: Array[Byte])
 
 class Backbone() extends Actor{
 
-  val parser_pool    = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_PARSER)
   val dispatch_pool  = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_DISPATCH)
-
   val queries = scala.collection.mutable.Set[Query]()
+  var sequence = new java.util.concurrent.atomic.AtomicInteger
 
   val writer  = new Writer()
   writer.start()
 
-  var sequence = new java.util.concurrent.atomic.AtomicInteger
 
   def act() = {
     Actor.loop{ react{
@@ -25,16 +23,6 @@ class Backbone() extends Actor{
       case QueryExitSig(query) => finish(query)
     }}
   }
-
-//  def announce(ev_body: EventBody) = synchronized {
-//    parser_pool.execute(new Runnable { def run = {
-//      try{
-//        Fyrehose.backbone ! new Event(ev_body.raw)
-//      } catch {
-//        case e: ParseException => Fyrehose.error(e.toString)
-//      }
-//    }})
-//  }
 
   private def dispatch(event: Event) = {
     println("dispatch scheduled")
