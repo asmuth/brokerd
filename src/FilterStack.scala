@@ -1,13 +1,39 @@
 package com.paulasmuth.fyrehose
 
-trait FilterStackChainMode{}
-object FilterStackAndChain extends FilterStackChainMode
-object FilterStackOrChain extends FilterStackChainMode
+trait FilterStack{
+  def push(key: String)(lambda: String => Boolean) : Unit
+  def eval(key: String, value: String) : Boolean
+  def and() : FilterStack
+  def or() : FilterStack
+}
 
-class FilterStack(chain_mode: FilterStackChainMode, lst: List[FilterStack] = List[FilterStack]()){
+
+class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends FilterStack{
+
+  def push(key: String)(lambda: String => Boolean) : Unit =
+    lst.head.push(key)(lambda)
+
+
+  def and() : FilterStack =
+    new OrFilterStack(new AndFilterStack(lst.head) :: lst.tail)
+
+
+  def or() : FilterStack =
+    new OrFilterStack(new AndFilterStack() :: lst)
+
+
+  def eval(key: String, value: String) = {
+    true
+  }
+
+}
+
+
+class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
   var fkey    : String            = null
   var flambda : String => Boolean = null
+
 
   def push(key: String)(lambda: String => Boolean) : Unit = {
     if (fkey != null)
@@ -17,17 +43,24 @@ class FilterStack(chain_mode: FilterStackChainMode, lst: List[FilterStack] = Lis
     flambda = lambda
   }
 
-  def and() : FilterStack = {
+
+  def and() : FilterStack =
     if (fkey == null)
       throw new ParseException("invalid filter chain")
+    else
+      new AndFilterStack(this)
 
-    this
+
+  def or() : FilterStack =
+    if (fkey == null)
+      throw new ParseException("invalid filter chain")
+    else
+      new OrFilterStack(List(new AndFilterStack(), this))
+
+
+  def eval(key: String, value: String) = {
+    true
   }
 
-  def or() : FilterStack = {
-    /*if (filter == null)
-      throw new ParseException("invalid filter chain")*/
-    this
-  }
 
 }

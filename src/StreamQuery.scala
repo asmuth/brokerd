@@ -8,7 +8,7 @@ class StreamQuery(raw: String) extends Query{
   val X_EXTRACT  = """(([a-z]+)\(([^\)]*)\)|and|or)"""
 
   var recv : Actor = null
-  var fstack = new FilterStack(FilterStackAndChain)
+  var fstack : FilterStack = new AndFilterStack
 
 
   if (raw.matches(X_VALIDATE) unary_!)
