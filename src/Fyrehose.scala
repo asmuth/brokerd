@@ -8,6 +8,7 @@ import java.text.DateFormat
 //   conn-header: keepalive + safe_mode
 //   filter key recursion via dot
 //   query no kill on no match issue
+//   query leading whitespace issue
 
 object Fyrehose{
 
