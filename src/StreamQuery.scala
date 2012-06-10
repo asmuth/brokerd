@@ -19,7 +19,7 @@ class StreamQuery(raw: String) extends Query{
     .matcher(raw)
 
   while(xparse.find())
-    eval(raw.substring(xparse.start, xparse.end))
+    parse(raw.substring(xparse.start, xparse.end))
 
 
   def execute(endpoint: Actor) =
@@ -30,14 +30,14 @@ class StreamQuery(raw: String) extends Query{
     if (recv == null){
       println("reschedule query event")
       this ! event
-    } else {
+    } else if(eval(event)) {
       println("query outbound stream sent")
       recv ! new QueryResponseChunk(event.bytes)
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 
 
-  private def eval(part: String) = {
+  private def parse(part: String) = {
     println("parsing: " + part)
     //arg.gsub!("\\'", "\x7") # FIXPAUL: hack! ;)
 
@@ -69,6 +69,9 @@ class StreamQuery(raw: String) extends Query{
     }
 
   }
+
+  private def eval(event: Event) =
+    fstack.eval(event)
 
     //    key_clean = lambda{ |s| 
     //      s.gsub("\x7", "'")

@@ -2,7 +2,7 @@ package com.paulasmuth.fyrehose
 
 trait FilterStack{
   def push(key: String)(lambda: String => Boolean) : Unit
-  def eval(key: String, value: String) : Boolean
+  def eval(event: Event) : Boolean
   def and() : FilterStack
   def or() : FilterStack
 }
@@ -22,7 +22,7 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
     new OrFilterStack(new AndFilterStack() :: lst)
 
 
-  def eval(key: String, value: String) = {
+  def eval(event: Event) = {
     true
   }
 
@@ -58,7 +58,16 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
       new OrFilterStack(List(new AndFilterStack(), this))
 
 
-  def eval(key: String, value: String) = {
+  def eval(event: Event) : Boolean = {
+    if (fkey == null)
+      ()
+
+    else if(event.exists(fkey) unary_!)
+      return false
+
+    else if(flambda(event.getAsString(fkey)) unary_!)
+      return false
+
     true
   }
 
