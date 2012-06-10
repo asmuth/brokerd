@@ -24,6 +24,8 @@ object Fyrehose{
   val backbone = new Backbone()
   backbone.start()
 
+  System.setProperty("actors.enableForkJoin", "false")
+
   def main(args: Array[String]) : Unit = {
     log("fyerhosed v0.0.2-dev booting...")
 
