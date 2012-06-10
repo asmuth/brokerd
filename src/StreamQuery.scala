@@ -9,12 +9,14 @@ class StreamQuery(raw: String) extends Query{
   def execute(endpoint: Actor) = 
     recv = endpoint
 
-  def data(event: Event) = 
-    if (recv == null)
+  def data(event: Event) =
+    if (recv == null){
+      println("reschedule query event")
       this ! event
-    else {
+    } else {
+      println("query outbound stream sent")
       recv ! new QueryResponseChunk(event.bytes)
-      recv ! new QueryResponseChunk("\n".getBytes)        
+      recv ! new QueryResponseChunk("\n".getBytes)
     }
-    
+
 }

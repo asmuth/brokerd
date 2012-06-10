@@ -16,22 +16,20 @@ class Backbone() extends Actor{
   val writer  = new Writer()
   writer.start()
 
-  var sequence = 0
+  var sequence = new java.util.concurrent.atomic.AtomicInteger
 
-  def act() = { 
+  def act() = {
     Actor.loop{ react{
-      case event: Event => dispatch(event)
       case query: Query => execute(query)
+      case event: Event => dispatch(event)
       case QueryExitSig(query) => finish(query)
     }}
   }
 
 
   def announce(ev_body: EventBody) = synchronized {
-    println("announce received")
     parser_pool.execute(new Runnable { def run = {
       try{
-        println("announce executed")
         Fyrehose.backbone ! new Event(ev_body.raw)
       } catch {
         case e: ParseException => Fyrehose.error(e.toString)
@@ -39,32 +37,36 @@ class Backbone() extends Actor{
     }})
   }
 
-
   private def dispatch(event: Event) = {
-    println("dispatch executed")
-    sequence += 1    
+    println("dispatch scheduled")
+    sequence.incrementAndGet();
     dispatch_pool.execute(new Runnable { def run = {
+      println("dispatched: " + queries.size.toString)
       queries.foreach(_ ! event)
       writer ! event
     }})
   }
-    
+
 
   private def execute(query: Query) = {
+    println("EXECUTE EXEC START")
     queries += query
-    query.sequence = sequence
+    query.sequence = sequence.get()
     query.start()
+    println("EXECUTE EXEC STOP") 
   }
 
 
   private def finish(query: Query) = {
+    println("FINISH EXEC START")
     queries -= query
     query ! HangupSig
+    println("FINISH EXEC STOP")
   }
 
 
   override def exceptionHandler = {
     case e: Exception => Fyrehose.fatal(e.toString)
   }
-  
+
 }

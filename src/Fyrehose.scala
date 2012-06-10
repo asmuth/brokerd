@@ -6,6 +6,7 @@ import java.text.DateFormat
 
 // TODO:
 // conn-header: keepalive + safe_mode
+// dont kill conns via timeout while query running
 
 object Fyrehose{
 

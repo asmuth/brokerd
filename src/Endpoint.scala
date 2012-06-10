@@ -24,7 +24,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
   val reactor = actor { loop {
     receive{ 
-      case HangupSig => { hangup(); exit() }
+      case HangupSig => { hangup() }
       case resp: QueryResponseChunk => write(resp.chunk)
       //case ext: QueryExitSig => finish_query()
     }
@@ -34,13 +34,13 @@ class Endpoint(socket: Socket) extends Runnable{
   def run = {
     val parser = new StreamParser(this)
     parser.set_safe_mode(safe_mode)
-    
+
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
     var next   = 0
 
     try{
       while (next > -1){ 
-        if(next > 0){ parser.stream(buffer, next); println("parsing") }
+        if(next > 0){ parser.stream(buffer, next) }
         next = in_stream.read(buffer)
       } 
     } catch {
@@ -70,31 +70,34 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def query_finished() = {
+    println("query finish")
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
-    
+
     // if (resp.keepalive unary_!)
      reactor ! HangupSig // FIXPAUL: implement keepalive  
   }
 
 
   private def query_abort() = {
+    println("query abort")
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
-  }    
-
-
-  private def write(buf: Array[Byte]) : Unit = try{
-    out_stream.write(buf)
-  } catch {
-    case e: SocketException => reactor ! HangupSig
   }
 
 
-  private def hangup() = {
+  private def write(buf: Array[Byte]) : Unit = try{
+    println("write called")
+    out_stream.write(buf)
+  } catch {
+    case e: SocketException => close_connection()
+  }
+
+
+  private def hangup() : Unit = {
     if(cur_query != null)
-      query_abort()
-    
+      return ()
+
     Fyrehose.log("connection closed")
     socket.close()
   }
@@ -106,8 +109,13 @@ class Endpoint(socket: Socket) extends Runnable{
     if (recoverable)
       write(("{\"error\": \""+msg+"\"}").getBytes) // FIXPAUL
 
-    reactor ! HangupSig
+    close_connection()
   }
 
+
+  private def close_connection() = {
+    query_abort()
+    reactor ! HangupSig
+  }
 
 }
