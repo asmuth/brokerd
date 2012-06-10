@@ -27,15 +27,15 @@ class Backbone() extends Actor{
   }
 
 
-  def announce(ev_body: EventBody) = synchronized {
-    parser_pool.execute(new Runnable { def run = {
-      try{
-        Fyrehose.backbone ! new Event(ev_body.raw)
-      } catch {
-        case e: ParseException => Fyrehose.error(e.toString)
-      }
-    }})
-  }
+//  def announce(ev_body: EventBody) = synchronized {
+//    parser_pool.execute(new Runnable { def run = {
+//      try{
+//        Fyrehose.backbone ! new Event(ev_body.raw)
+//      } catch {
+//        case e: ParseException => Fyrehose.error(e.toString)
+//      }
+//    }})
+//  }
 
   private def dispatch(event: Event) = {
     println("dispatch scheduled")

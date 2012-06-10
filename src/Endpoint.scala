@@ -54,9 +54,10 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  def event(evt_body: EventBody) = {
-    println("announcing")
-    Fyrehose.backbone.announce(evt_body)
+  def event(ev_body: EventBody) = try{
+    Fyrehose.backbone ! new Event(ev_body.raw)
+  } catch {
+    case e: ParseException => error(e.toString, true)
   }
 
 
@@ -70,8 +71,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def query_finished() : Unit = {
-    println("query finish")
-
     if (cur_query == null)
       return ()
 
@@ -84,8 +83,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def query_abort() : Unit = {
-    println("query abort")
-
     if (cur_query == null)
       return ()
 
@@ -95,7 +92,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def write(buf: Array[Byte]) : Unit = try{
-    println("write called")
     out_stream.write(buf)
   } catch {
     case e: SocketException => close_connection()
