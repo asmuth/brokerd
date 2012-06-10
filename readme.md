@@ -77,14 +77,12 @@ specifing the time range
 filters for where / where_not
 
     where(KEY = VALUE)
-    where(KEY < MAX)
-    where(KEY > MIN)
-    where(KEY ~ MIN-MAX)
+    where(KEY ~ REGEX)
     where(KEY INCLUDES VALUE)
     where(KEY EXISTS)
-    where(KEY % NUM)
-    where(KEY ^ NUM)
-    where(KEY & NUM)
+    where(KEY < MAX)
+    where(KEY > MIN)
+    where(KEY % MOD)
 
 
 examples:

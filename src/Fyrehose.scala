@@ -4,8 +4,10 @@ import java.util.Locale
 import java.util.Date
 import java.text.DateFormat
 
-// TODO:
-// conn-header: keepalive + safe_mode
+// todo:
+//   conn-header: keepalive + safe_mode
+//   filter key recursion via dot
+//   query no kill on no match issue
 
 object Fyrehose{
 

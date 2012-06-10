@@ -42,12 +42,13 @@ class StreamQuery(raw: String) extends Query{
     //arg.gsub!("\\'", "\x7") # FIXPAUL: hack! ;)
 
     val x_stream = """^stream\(\)$""".r
+    val x_or     = """^or$""".r
+    val x_and    = """^and$""".r
+    val x_where  = """^where\(([^ ]+)"""
 
-    val x_or =  """^or$""".r
-    val x_and = """^and$""".r
-
-    val x_where = """^where\(([^ ]+)"""
     val x_where_equals_str = (x_where + """ *= *'([^']*)'\)$""").r
+    val x_where_equals_int = (x_where + """ *= *([0-9]+)\)$""").r
+    val x_where_equals_dbl = (x_where + """ *= *([0-9]+\.[0-9]+)\)$""").r
 
     part match {
 
@@ -60,8 +61,14 @@ class StreamQuery(raw: String) extends Query{
       case x_and() =>
         fstack = fstack.and()
 
-      case x_where_equals_str(k: String, v: String) => 
-        fstack.push(k)((x: String) => x == v )
+      case x_where_equals_str(k: String, v: String) =>
+        fstack.push(k)((x: String) => x == v)
+
+      case x_where_equals_int(k: String, v: String) =>
+        fstack.push(k)((x: String) => x.toInt == v.toInt)
+
+      case x_where_equals_dbl(k: String, v: String) =>
+        fstack.push(k)((x: String) => x.toDouble == v.toDouble)
 
       case _ =>
         throw new ParseException("invalid query part: " + part)
