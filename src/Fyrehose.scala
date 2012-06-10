@@ -6,7 +6,6 @@ import java.text.DateFormat
 
 // TODO:
 // conn-header: keepalive + safe_mode
-// dont kill conns via timeout while query running
 
 object Fyrehose{
 
@@ -21,7 +20,7 @@ object Fyrehose{
 
   val backbone = new Backbone()
   backbone.start()
-  
+
   def main(args: Array[String]) : Unit = {
     log("fyerhosed v0.0.1-dev booting...")
 

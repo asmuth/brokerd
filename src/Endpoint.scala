@@ -5,8 +5,8 @@ import scala.actors.Actor._
 import java.io._
 import java.net._
 
-
 object HangupSig{}
+object TimeoutSig{}
 
 class Endpoint(socket: Socket) extends Runnable{
 
@@ -24,12 +24,12 @@ class Endpoint(socket: Socket) extends Runnable{
 
   val reactor = actor { loop {
     receive{ 
-      case HangupSig => { hangup() }
+      case HangupSig  => hangup()
+      case TimeoutSig => timeout()
       case resp: QueryResponseChunk => write(resp.chunk)
       //case ext: QueryExitSig => finish_query()
     }
   }}
-
 
   def run = {
     val parser = new StreamParser(this)
@@ -44,7 +44,7 @@ class Endpoint(socket: Socket) extends Runnable{
         next = in_stream.read(buffer)
       } 
     } catch {
-      case e: SocketTimeoutException => error("read timeout", true)
+      case e: SocketTimeoutException => { reactor ! TimeoutSig; run }
       case e: SocketException => error(e.toString, false)
       case e: ParseException => error(e.toString, true)
       case e: IOException => error(e.toString, false)
@@ -104,6 +104,13 @@ class Endpoint(socket: Socket) extends Runnable{
 
     Fyrehose.log("connection closed")
     socket.close()
+  }
+
+  private def timeout() : Unit = {
+    if(cur_query != null)
+      return ()
+
+    error("read timeout", true)
   }
 
 
