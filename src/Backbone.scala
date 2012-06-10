@@ -9,7 +9,7 @@ case class EventBody(raw: Array[Byte])
 class Backbone() extends Actor{
 
   val queries = scala.collection.mutable.Set[Query]()
-  var sequence = new java.util.concurrent.atomic.AtomicInteger
+  var sequence = new java.util.concurrent.atomic.AtomicInteger // FIXPAUL: doesn't need to be atomic anymore
 
   val writer  = new Writer()
   writer.start()
