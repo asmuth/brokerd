@@ -69,8 +69,12 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def query_finished() = {
+  private def query_finished() : Unit = {
     println("query finish")
+
+    if (cur_query == null)
+      return ()
+
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
 
@@ -79,8 +83,12 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def query_abort() = {
+  private def query_abort() : Unit = {
     println("query abort")
+
+    if (cur_query == null)
+      return ()
+
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
   }
