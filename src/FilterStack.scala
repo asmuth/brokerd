@@ -22,9 +22,8 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
     new OrFilterStack(new AndFilterStack() :: lst)
 
 
-  def eval(event: Event) = {
-    true
-  }
+  def eval(event: Event) : Boolean =
+    lst.find(filter => filter.eval(event)).isEmpty unary_!
 
 }
 
@@ -59,16 +58,12 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
 
   def eval(event: Event) : Boolean =
-
     if ((fkey != null) && (event.exists(fkey) unary_!))
       return false
-
     else if ((fkey != null) && (flambda(event.getAsString(fkey)) unary_!))
       return false
-
     else if (next == null)
       return true
-
     else
       return next.eval(event)
 
