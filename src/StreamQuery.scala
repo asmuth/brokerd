@@ -8,7 +8,7 @@ class StreamQuery(raw: String) extends Query{
   val X_EXTRACT  = """(([a-z]+)\(([^\)]*)\)|and|or)"""
 
   var recv : Actor = null
-  var filters = List[String]()
+  var fstack = new FilterStack(FilterStackAndChain)
 
 
   if (raw.matches(X_VALIDATE) unary_!)
@@ -52,34 +52,22 @@ class StreamQuery(raw: String) extends Query{
     part match {
 
       case x_stream() =>
-        println("stream")
+        ()
 
       case x_or() =>
-        println("or")
+        fstack = fstack.or()
 
       case x_and() =>
-        println("and")
+        fstack = fstack.and()
 
       case x_where_equals_str(k: String, v: String) => 
-        println("where equals string")
+        fstack.push(k)((x: String) => x == v )
 
       case _ =>
         throw new ParseException("invalid query part: " + part)
 
     }
 
-  }
-
-  private def eval_and() = {
-    
-  }
-
-  private def eval_or() = {
-    
-  }
-
-  private def eval_filter() = {
-    
   }
 
     //    key_clean = lambda{ |s| 
