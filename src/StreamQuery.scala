@@ -7,6 +7,16 @@ class StreamQuery(raw: String) extends Query{
   val X_VALIDATE = """^(([a-z]+\([^\)]*\)|and|or) *)+$"""
   val X_EXTRACT  = """(([a-z]+)\(([^\)]*)\)|and|or)"""
 
+  val x_stream = """^stream\(\)$""".r
+  val x_or     = """^or$""".r
+  val x_and    = """^and$""".r
+  val x_where  = """^where\(([^ ]+)"""
+
+  val x_where_equals_str = (x_where + """ *= *'([^']*)'\)$""").r
+  val x_where_equals_int = (x_where + """ *= *([0-9]+)\)$""").r
+  val x_where_equals_dbl = (x_where + """ *= *([0-9]+\.[0-9]+)\)$""").r
+
+
   var recv : Actor = null
   var fstack : FilterStack = new AndFilterStack
 
@@ -40,15 +50,6 @@ class StreamQuery(raw: String) extends Query{
   // fixpaul: where_not, since(), until(), less/greater-than, regex, include exists
   private def parse(part: String) = {
     println("parsing: " + part)
-
-    val x_stream = """^stream\(\)$""".r
-    val x_or     = """^or$""".r
-    val x_and    = """^and$""".r
-    val x_where  = """^where\(([^ ]+)"""
-
-    val x_where_equals_str = (x_where + """ *= *'([^']*)'\)$""").r
-    val x_where_equals_int = (x_where + """ *= *([0-9]+)\)$""").r
-    val x_where_equals_dbl = (x_where + """ *= *([0-9]+\.[0-9]+)\)$""").r
 
     part match {
 
