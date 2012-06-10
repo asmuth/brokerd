@@ -16,7 +16,7 @@ class Backbone() extends Actor{
 
 
   def act() = {
-    Actor.loop{ react{
+    Actor.loop{ receive{
       case query: Query => execute(query)
       case event: Event => dispatch(event)
       case QueryExitSig(query) => finish(query)
