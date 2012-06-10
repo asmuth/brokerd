@@ -24,7 +24,7 @@ object Fyrehose{
   backbone.start()
 
   def main(args: Array[String]) : Unit = {
-    log("fyerhosed v0.0.1-dev booting...")
+    log("fyerhosed v0.0.2-dev booting...")
 
     val listener = new Listener(2323)
     listener.listen
