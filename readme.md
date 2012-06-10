@@ -75,7 +75,7 @@ specifing the time range
 
 
 filters for where / where_not
-    
+
     where(KEY = VALUE)
     where(KEY < MAX)
     where(KEY > MIN)
