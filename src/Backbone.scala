@@ -26,7 +26,6 @@ class Backbone() extends Actor{
     }}
   }
 
-
 //  def announce(ev_body: EventBody) = synchronized {
 //    parser_pool.execute(new Runnable { def run = {
 //      try{

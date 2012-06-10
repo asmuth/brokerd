@@ -11,7 +11,7 @@ case class QueryExitSig(query: Query)
 trait Query extends Actor{
 
   var sequence : Int = 0
-  
+
   def act() = { 
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)

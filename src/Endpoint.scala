@@ -27,7 +27,7 @@ class Endpoint(socket: Socket) extends Runnable{
       case HangupSig  => hangup()
       case TimeoutSig => timeout()
       case resp: QueryResponseChunk => write(resp.chunk)
-      //case ext: QueryExitSig => finish_query()
+      case xsig: QueryExitSig => query_finished()
     }
   }}
 
@@ -40,12 +40,15 @@ class Endpoint(socket: Socket) extends Runnable{
 
     try{
       while (next > -1){ 
-        if(next > 0){ parser.stream(buffer, next) }
+
+        if(next > 0)
+          parser.stream(buffer, next)
+
         next = in_stream.read(buffer)
-      } 
+      }
     } catch {
       case e: SocketTimeoutException => { reactor ! TimeoutSig; run }
-      case e: SocketException => error(e.toString, false)
+      case e: SocketException => close_connection()
       case e: ParseException => error(e.toString, true)
       case e: IOException => error(e.toString, false)
     }
