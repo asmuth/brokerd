@@ -4,7 +4,7 @@ name := "Fyrehose"
 
 organization := "com.paulasmuth"
 
-version := "0.0.1"
+version := "0.0.2"
 
 scalaSource in Compile <<= baseDirectory(_ / "src")
 

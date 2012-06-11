@@ -4,13 +4,15 @@ import java.util.Locale
 import java.util.Date
 import java.text.DateFormat
 
-// TODO:
-// close endpoint via timeout
-// conn-header: keepalive + safe_mode
+// todo:
+//   conn-header: keepalive + safe_mode
+//   filter key recursion via dot
+//   query no kill on no match issue
+//   query leading whitespace issue
 
 object Fyrehose{
 
-  val CONN_IDLE_TIMEOUT    = 5000
+  val CONN_IDLE_TIMEOUT    = 1000
   val NUM_THREADS_PARSER   = 6
   val NUM_THREADS_DISPATCH = 6
   val BUFFER_SIZE_PARSER   = 8192 * 4
@@ -21,9 +23,11 @@ object Fyrehose{
 
   val backbone = new Backbone()
   backbone.start()
-  
+
+  System.setProperty("actors.enableForkJoin", "false")
+
   def main(args: Array[String]) : Unit = {
-    log("fyerhosed v0.0.1-dev booting...")
+    log("fyerhosed v0.0.2-dev booting...")
 
     val listener = new Listener(2323)
     listener.listen

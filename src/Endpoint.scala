@@ -5,8 +5,9 @@ import scala.actors.Actor._
 import java.io._
 import java.net._
 
-
 object HangupSig{}
+object TimeoutSig{}
+object EOFSig{}
 
 class Endpoint(socket: Socket) extends Runnable{
 
@@ -17,40 +18,52 @@ class Endpoint(socket: Socket) extends Runnable{
 
   Fyrehose.log("connection opened")
 
+  socket.setSoTimeout(Fyrehose.CONN_IDLE_TIMEOUT)
+
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
   val reactor = actor { loop {
     receive{ 
-      case HangupSig => { hangup(); exit() }
+      case HangupSig  => { hangup(); exit() }
+      case TimeoutSig => timeout()
+      case EOFSig     => if (cur_query == null) self ! HangupSig
       case resp: QueryResponseChunk => write(resp.chunk)
-      //case ext: QueryExitSig => finish_query()
-      // case TIMEOUT => if (cur_query == null) this ! HangupSig // FIXPAUL implement w/o reactWithin
+      case xsig: QueryExitSig => query_finished()
     }
   }}
-
 
   def run = {
     val parser = new StreamParser(this)
     parser.set_safe_mode(safe_mode)
-    
+
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
     var next   = 0
 
     try{
       while (next > -1){ 
-        if(next > 0){ parser.stream(buffer, next) }
+
+        if(next > 0)
+          parser.stream(buffer, next)
+
         next = in_stream.read(buffer)
-      } 
+      }
     } catch {
-      case e: SocketException => ()
-      case e: ParseException => error(e.toString)
+      case e: SocketTimeoutException => { reactor ! TimeoutSig; run }
+      case e: SocketException => close_connection()
+      case e: ParseException => error(e.toString, true)
+      case e: IOException => error(e.toString, false)
     }
+
+    reactor ! EOFSig
   }
 
 
-  def event(evt_body: EventBody) =
-    Fyrehose.backbone.announce(evt_body)
+  def event(ev_body: EventBody) = try{
+    Fyrehose.backbone ! new Event(ev_body.raw)
+  } catch {
+    case e: ParseException => error(e.toString, true)
+  }
 
 
   def query(qry: QueryBody) = try{
@@ -58,46 +71,64 @@ class Endpoint(socket: Socket) extends Runnable{
     cur_query ! QueryExecuteSig(reactor)
     Fyrehose.backbone ! cur_query
   } catch {
-    case e: ParseException => error(e.toString)
+    case e: ParseException => error(e.toString, true)
   }
 
 
-  private def query_finished() = {
+  private def query_finished() : Unit = {
+    if (cur_query == null)
+      return ()
+
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
-    
+
     // if (resp.keepalive unary_!)
      reactor ! HangupSig // FIXPAUL: implement keepalive  
   }
 
 
-  private def query_abort() = {
+  private def query_abort() : Unit = {
+    if (cur_query == null)
+      return ()
+
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
-  }    
+  }
 
 
   private def write(buf: Array[Byte]) : Unit = try{
     out_stream.write(buf)
   } catch {
-    case e: SocketException => reactor ! HangupSig
+    case e: SocketException => close_connection()
   }
 
 
-  private def hangup() = {
-    if(cur_query != null)
-      query_abort()
-    
+  private def hangup() : Unit = {
     Fyrehose.log("connection closed")
     socket.close()
   }
 
+  private def timeout() : Unit = {
+    if(cur_query != null)
+      return ()
 
-  private def error(msg: String) = {
-    Fyrehose.error("endpoint closed: " + msg)
-    write(("{\"error\": \""+msg+"\"}").getBytes)
-    reactor ! HangupSig
+    error("read timeout", true)
   }
 
+
+  private def error(msg: String, recoverable: Boolean) = {
+    Fyrehose.error("endpoint closed: " + msg)
+
+    if (recoverable)
+      write(("{\"error\": \""+msg+"\"}").getBytes) // FIXPAUL
+
+    close_connection()
+  }
+
+
+  private def close_connection() = {
+    query_abort()
+    reactor ! HangupSig
+  }
 
 }
