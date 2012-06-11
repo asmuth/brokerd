@@ -16,14 +16,11 @@ class Endpoint(socket: Socket) extends Runnable{
   var cur_query : Query = null
   var idle_status       = true
 
-  Fyrehose.log("connection opened")
-  Fyrehose.listener.conn_opened.incrementAndGet()
-
   socket.setSoTimeout(Fyrehose.CONN_IDLE_TIMEOUT)
-
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
+  Fyrehose.log("connection opened")
 
   val reactor = actor { loop {
     receive{ 
@@ -88,8 +85,8 @@ class Endpoint(socket: Socket) extends Runnable{
     Fyrehose.backbone ! QueryExitSig(cur_query)
     cur_query = null
 
-    // if (resp.keepalive unary_!)
-     reactor ! HangupSig // FIXPAUL: implement keepalive  
+    if (keepalive unary_!)
+     reactor ! HangupSig
   }
 
 
@@ -112,7 +109,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
   private def hangup() : Unit = {
     Fyrehose.log("connection closed")
-    Fyrehose.listener.conn_closed.incrementAndGet()
     socket.close()
   }
 

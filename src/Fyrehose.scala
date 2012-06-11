@@ -23,9 +23,8 @@ object Fyrehose{
   val FILE_CHUNK_SIZE      = 3600 * 6
   val DEFAULT_OUT_DIR      = "/tmp/fyrehose"
 
-  var listener : Listener  = null
   var backbone : Backbone  = null
-
+  var writer   : Writer    = null
 
   def main(args: Array[String]) : Unit = {
     var n = 0
@@ -82,6 +81,9 @@ object Fyrehose{
     backbone = new Backbone()
     backbone.start()
 
+    writer = new Writer()
+    writer.start()
+
     if (CONFIG contains 'listen_tcp) {
       try{
         CONFIG('listen_tcp).toInt
@@ -89,8 +91,8 @@ object Fyrehose{
         return println("error: invalid port: " + CONFIG('listen_tcp))
       }
 
-      listener = new Listener(CONFIG('listen_tcp).toInt)
-      listener.listen
+      val tcp_listener = new Listener(CONFIG('listen_tcp).toInt)
+      tcp_listener.listen
     }
 
   }

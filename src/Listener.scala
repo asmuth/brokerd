@@ -11,18 +11,9 @@ class Listener(port: Int){
 
   Fyrehose.log("listening on port " + port.toString())
 
-  var conn_opened = new java.util.concurrent.atomic.AtomicInteger;
-  var conn_closed = new java.util.concurrent.atomic.AtomicInteger;
-
   def listen = {
     clients.execute(new Runnable{ def run = {
       while(true){
-        println(
-          "[STATUS] open: " + conn_opened.get.toString + 
-          ", closed: " + conn_closed.get.toString +
-          ", diff: " + (conn_opened.get - conn_closed.get).toString
-        )
-
         try{
           val conn = new Endpoint(sock.accept())
           clients.execute(conn)
