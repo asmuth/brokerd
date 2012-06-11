@@ -28,7 +28,7 @@ class Endpoint(socket: Socket) extends Runnable{
     receive{ 
       case HangupSig  => { hangup(); exit() }
       case TimeoutSig => timeout()
-      case EOFSig     => if (cur_query == null) self ! HangupSig
+      case EOFSig     => eof()
       case resp: QueryResponseChunk => write(resp.chunk)
       case xsig: QueryExitSig => query_finished()
     }
@@ -115,6 +115,15 @@ class Endpoint(socket: Socket) extends Runnable{
       return ()
 
     error("read timeout", true)
+  }
+
+  private def eof() : Unit = {
+    if (cur_query == null) {
+      println("eof killer")
+      self ! HangupSig
+    } else {
+      println("eof keepalive")
+    }
   }
 
 
