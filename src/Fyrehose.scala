@@ -29,7 +29,7 @@ object Fyrehose{
   System.setProperty("actors.enableForkJoin", "false")
 
   def main(args: Array[String]) : Unit = {
-    log("fyerhosed v0.0.2-dev booting...")
+    log("fyerhosed v0.0.3-dev booting...")
 
     listener.listen
   }
