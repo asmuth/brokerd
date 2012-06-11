@@ -24,12 +24,13 @@ object Fyrehose{
   val backbone = new Backbone()
   backbone.start()
 
+  val listener = new Listener(2323)
+
   System.setProperty("actors.enableForkJoin", "false")
 
   def main(args: Array[String]) : Unit = {
     log("fyerhosed v0.0.2-dev booting...")
 
-    val listener = new Listener(2323)
     listener.listen
   }
 

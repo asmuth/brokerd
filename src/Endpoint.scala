@@ -17,6 +17,7 @@ class Endpoint(socket: Socket) extends Runnable{
   var cur_query : Query = null
 
   Fyrehose.log("connection opened")
+  Fyrehose.listener.conn_opened.incrementAndGet()
 
   socket.setSoTimeout(Fyrehose.CONN_IDLE_TIMEOUT)
 
@@ -105,6 +106,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
   private def hangup() : Unit = {
     Fyrehose.log("connection closed")
+    Fyrehose.listener.conn_closed.incrementAndGet()
     socket.close()
   }
 
