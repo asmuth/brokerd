@@ -7,7 +7,6 @@ import java.net._
 
 object HangupSig{}
 object TimeoutSig{}
-object EOFSig{}
 
 class Endpoint(socket: Socket) extends Runnable{
 
@@ -24,15 +23,16 @@ class Endpoint(socket: Socket) extends Runnable{
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
+
   val reactor = actor { loop {
     receive{ 
       case HangupSig  => { hangup(); exit() }
       case TimeoutSig => timeout()
-      case EOFSig     => eof()
       case resp: QueryResponseChunk => write(resp.chunk)
       case xsig: QueryExitSig => query_finished()
     }
   }}
+
 
   def run = {
     val parser = new StreamParser(this)
@@ -56,7 +56,7 @@ class Endpoint(socket: Socket) extends Runnable{
       case e: IOException => error(e.toString, false)
     }
 
-    reactor ! EOFSig
+    reactor ! HangupSig
   }
 
 
@@ -110,20 +110,12 @@ class Endpoint(socket: Socket) extends Runnable{
     socket.close()
   }
 
+
   private def timeout() : Unit = {
     if(cur_query != null)
       return ()
 
     error("read timeout", true)
-  }
-
-  private def eof() : Unit = {
-    if (cur_query == null) {
-      println("eof killer")
-      self ! HangupSig
-    } else {
-      println("eof keepalive")
-    }
   }
 
 
