@@ -7,6 +7,7 @@ import java.net._
 
 object HangupSig{}
 object TimeoutSig{}
+object EOFSig{}
 
 class Endpoint(socket: Socket) extends Runnable{
 
@@ -24,8 +25,9 @@ class Endpoint(socket: Socket) extends Runnable{
 
   val reactor = actor { loop {
     receive{ 
-      case HangupSig  => hangup()
+      case HangupSig  => { hangup(); exit() }
       case TimeoutSig => timeout()
+      case EOFSig     => if (cur_query == null) self ! HangupSig
       case resp: QueryResponseChunk => write(resp.chunk)
       case xsig: QueryExitSig => query_finished()
     }
@@ -53,7 +55,7 @@ class Endpoint(socket: Socket) extends Runnable{
       case e: IOException => error(e.toString, false)
     }
 
-    reactor ! HangupSig
+    reactor ! EOFSig
   }
 
 
@@ -102,9 +104,6 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def hangup() : Unit = {
-    if(cur_query != null)
-      return ()
-
     Fyrehose.log("connection closed")
     socket.close()
   }
