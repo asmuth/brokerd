@@ -14,7 +14,7 @@ class Writer extends Actor {
 
   def persist(event: Event) = {
     val file = 
-      Fyrehose.out_dir + "/" + ((event.time() / 
+      Fyrehose.CONFIG('out_dir) + "/" + ((event.time() / 
       Fyrehose.FILE_CHUNK_SIZE) * 
       Fyrehose.FILE_CHUNK_SIZE).toString
 
