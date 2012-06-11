@@ -9,11 +9,7 @@ case class EventBody(raw: Array[Byte])
 class Backbone() extends Actor{
 
   val queries = scala.collection.mutable.Set[Query]()
-  var sequence = new java.util.concurrent.atomic.AtomicInteger // FIXPAUL: doesn't need to be atomic anymore
-
-  val writer  = new Writer()
-  writer.start()
-
+  var sequence = 0
 
   def act() = {
     Actor.loop{ receive{
@@ -24,28 +20,22 @@ class Backbone() extends Actor{
   }
 
   private def dispatch(event: Event) = {
-    println("dispatch: " + queries.size.toString)
-    sequence.incrementAndGet();
+    sequence += 1
     queries.foreach(_ ! event)
-    writer ! event
-    println("dispatch finish")
+    Fyrehose.writer ! event
   }
 
 
   private def execute(query: Query) = {
-    println("EXECUTE EXEC START")
     queries += query
-    query.sequence = sequence.get()
+    query.sequence = sequence
     query.start()
-    println("EXECUTE EXEC STOP") 
   }
 
 
   private def finish(query: Query) = {
-    println("FINISH EXEC START")
     queries -= query
     query ! HangupSig
-    println("FINISH EXEC STOP")
   }
 
 

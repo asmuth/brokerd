@@ -38,10 +38,8 @@ class StreamQuery(raw: String) extends Query{
 
   def data(event: Event) =
     if (recv == null){
-      println("reschedule query event")
       this ! event
     } else if(fstack.eval(event)) {
-      println("query outbound stream sent")
       recv ! new QueryResponseChunk(event.bytes)
       recv ! new QueryResponseChunk("\n".getBytes)
     }
@@ -49,8 +47,6 @@ class StreamQuery(raw: String) extends Query{
 
   // fixpaul: where_not, since(), until(), less/greater-than, regex, include exists
   private def parse(part: String) = {
-    println("parsing: " + part)
-
     part match {
 
       case x_stream() =>
