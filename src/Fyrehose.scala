@@ -9,6 +9,7 @@ import java.text.DateFormat
 //   filter key recursion via dot
 //   query no kill on no match issue
 //   query leading whitespace issue
+//   make conn_idle_timeout configurable
 
 object Fyrehose{
 

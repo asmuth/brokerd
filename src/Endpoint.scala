@@ -14,6 +14,7 @@ class Endpoint(socket: Socket) extends Runnable{
   var keepalive = false // FIXPAUL: this should be disable-able for performance
 
   var cur_query : Query = null
+  var idle_status       = true
 
   Fyrehose.log("connection opened")
   Fyrehose.listener.conn_opened.incrementAndGet()
@@ -42,12 +43,16 @@ class Endpoint(socket: Socket) extends Runnable{
     var next   = 0
 
     try{
-      while (next > -1){ 
-
-        if(next > 0)
+      while ((next > -1) || (idle_status == false)){
+        if (next > 0)
           parser.stream(buffer, next)
 
         next = in_stream.read(buffer)
+
+        if (next == -1){
+          idle_status = true
+          Thread.sleep(Fyrehose.CONN_IDLE_TIMEOUT)
+        }
       }
     } catch {
       case e: SocketTimeoutException => { reactor ! TimeoutSig; run }
@@ -98,6 +103,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def write(buf: Array[Byte]) : Unit = try{
+    idle_status = false
     out_stream.write(buf)
   } catch {
     case e: SocketException => close_connection()
