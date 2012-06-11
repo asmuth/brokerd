@@ -56,7 +56,7 @@ class Endpoint(socket: Socket) extends Runnable{
       case e: IOException => error(e.toString, false)
     }
 
-    reactor ! HangupSig
+    close_connection()
   }
 
 
