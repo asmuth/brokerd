@@ -7,7 +7,7 @@ import java.net._
 class Listener(port: Int){
 
   val sock = new ServerSocket(port)
-  val clients = Executors.newFixedThreadPool(Fyrehose.NUM_THREADS_DISPATCH)
+  val clients = Executors.newCachedThreadPool() // evil ~paul
 
   Fyrehose.log("listening on port " + port.toString())
 

@@ -14,8 +14,6 @@ import java.text.DateFormat
 object Fyrehose{
 
   val CONN_IDLE_TIMEOUT    = 1000
-  val NUM_THREADS_PARSER   = 6
-  val NUM_THREADS_DISPATCH = 6
   val BUFFER_SIZE_PARSER   = 8192 * 4
   val BUFFER_SIZE_SOCKET   = 2048
   val FILE_CHUNK_SIZE      = 3600 * 6
