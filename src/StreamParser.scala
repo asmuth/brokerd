@@ -5,10 +5,16 @@ import scala.actors.Actor._
 
 class StreamParser(recv: Endpoint){
 
-  var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
-  var buffer_pos = 0
+  // if safe_mode is disabled, non-json input is silently
+  // ignored. safe_mode=false requires strict_mode=true
   var safe_mode = true
 
+  // if strict_mode is enabled all queries must start with
+  // an ASCII bang character ('!')
+  var strict_mode = false
+
+  var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
+  var buffer_pos = 0
 
   def stream(buf: Array[Byte], buf_len: Int) : Unit = {
     if ((buf_len + buffer_pos) > buffer.length){
@@ -30,6 +36,10 @@ class StreamParser(recv: Endpoint){
     safe_mode = m
 
 
+  def set_strict_mode(m: Boolean) =
+    strict_mode = m
+
+
   private def read_chunked() : Unit = {
     var escape_seq = false
     var query_seq = false
@@ -40,7 +50,7 @@ class StreamParser(recv: Endpoint){
 
     if (buffer(0) == '!')
       query_seq = true
-    
+
     else if (buffer(0) != '{')
       trim_pos = 1
 
@@ -60,7 +70,7 @@ class StreamParser(recv: Endpoint){
 
       else if (query_seq)
         ()
-      
+
       else if ((buffer(pos) == 92) && (escape_seq unary_!))
         escape_seq = true
 
@@ -113,7 +123,7 @@ class StreamParser(recv: Endpoint){
 
   private def trim_buffer(trim_pos: Integer, check_pos: Integer) = {
     if (safe_mode)
-      check_buffer(check_pos, trim_pos) 
+      seek_buffer(check_pos, trim_pos) 
 
     System.arraycopy(buffer, trim_pos, buffer, 0, (buffer.length-trim_pos))
     buffer_pos -= trim_pos
@@ -123,7 +133,7 @@ class StreamParser(recv: Endpoint){
   }
 
 
-  private def check_buffer(from_pos: Integer, until_pos: Integer) = {
+  private def seek_buffer(from_pos: Integer, until_pos: Integer) : Unit = {
     for (pos <- new Range(from_pos, until_pos, 1)){
       if ((buffer(pos) != 0)  && 
           (buffer(pos) != 9)  && 
@@ -133,9 +143,15 @@ class StreamParser(recv: Endpoint){
       {
         val buf = java.util.Arrays.copyOfRange(buffer, from_pos, until_pos)
         val buf_str = new String(buf).replace('\n', ' ')
-        throw new ParseException("read invalid data from buffer: " + buf_str)
+
+        if (strict_mode)
+          throw new ParseException("read invalid data from buffer: " + buf_str)
+
+        else
+          return recv.query(new QueryBody(buf_str.getBytes))
       }
     }
   }
+
 
 }
