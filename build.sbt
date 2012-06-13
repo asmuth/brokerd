@@ -4,13 +4,15 @@ name := "Fyrehose"
 
 organization := "com.paulasmuth"
 
-version := "0.0.3"
+version := "0.0.4"
 
 scalaSource in Compile <<= baseDirectory(_ / "src")
 
 mainClass in (Compile, run) := Some("com.paulasmuth.fyrehose.Fyrehose")
 
 assemblySettings
+
+jarName in assembly <<= (version) { v => "fyrehose_" + v + ".jar" }
 
 scalaVersion := "2.9.1"
 
