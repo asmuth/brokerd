@@ -21,32 +21,30 @@ class StreamQuery() extends Query{
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 
-  def eval(token: X_TOKEN) = () /*= match {
+  def eval(token: X_TOKEN) = token.name match {
 
-        case part: String =>
-          throw new ParseException("invalid query part: " + part)
-    //case X_STREAM() =>
-    // ()
+    case 'or =>
+      fstack = fstack.or()
 
-    //case X_OR() =>
-    //  fstack = fstack.or()
+    case 'and =>
+      fstack = fstack.and()
 
-    //case X_AND() =>
-    //  fstack = fstack.and()
-
-    case 'equals_str => ()
-      //(fstack.push _).tupled(token.udata)
-
-    //case X_EQUALS_INT(k: String, l: (String => Boolean)) =>
-    // fstack.push(k)(l)
-
-    //case X_EQUALS_DBL(k: String, l: (String => Boolean)) =>
-    //  fstack.push(k)(l)
+    case 'where =>
+      fstack.push(token.key.name)(eval_filter(token))
 
     case _ =>
-      throw new ParseException("invalid query token: " + token.symbol.toString)
+      throw new ParseException("invalid query token: " + token.name.toString)
 
-  }*/
+  }
 
 
+  def eval_filter(token: X_TOKEN) = token.key match {
+
+    case 'equals_str =>
+      (x: String) => x == token.value.asInstanceOf[String]
+
+    case _ =>
+      throw new ParseException("invalid query token: " + token.name.toString)
+
+  }
 }

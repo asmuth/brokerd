@@ -4,10 +4,7 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.util.matching.Regex
 
-object QueryParser extends FQL{
-
-  X_KEYWORD.define('and)
-  X_KEYWORD.define('or)
+object QueryParser extends FQL {
 
   def parse(bdy: QueryBody) : Query = {
     val raw = new String(bdy.raw)
@@ -23,21 +20,24 @@ object QueryParser extends FQL{
     while(xparse.find())
       raw.substring(xparse.start, xparse.end) match {
 
-    /*    case X_QUERY(q: Query) =>
+        case X_COMMAND(t: X_TOKEN) =>
           if (query == null)
-            query = q
+            query = t.value.asInstanceOf[Class[_ <: Any]]
+              .newInstance.asInstanceOf[Query]
           else
             throw new ParseException("query can only contain one of stream, info, etc")
 
-*/
         case X_KEYWORD(t: X_TOKEN) =>
-          println("TOKEN! " + t.key)
-
-        /*
           if (query == null) 
             throw new ParseException("invalid query: must start with stream, info, etc.")
           else
-            query.eval(t)*/
+            query.eval(t)
+
+        case X_WHERE(t: X_TOKEN) =>
+          if (query == null)
+            throw new ParseException("invalid query: must start with stream, info, etc.")
+          else
+            query.eval(t)
 
         case part: String =>
           throw new ParseException("invalid query token: " + part)
