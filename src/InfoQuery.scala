@@ -2,7 +2,7 @@ package com.paulasmuth.fyrehose
 
 import scala.actors._
 
-class InfoQuery(raw: String) extends Query{
+class InfoQuery() extends Query{
 
   var recv : Actor = null
 
@@ -14,5 +14,8 @@ class InfoQuery(raw: String) extends Query{
   }
 
   def data(event: Event) = ()
+
+  def eval(token: X_TOKEN) =
+    throw new ParseException("invalid query token: " + token.key.name)
 
 }

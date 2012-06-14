@@ -71,6 +71,10 @@ class Endpoint(socket: Socket) extends Runnable{
 
   def query(qry: QueryBody) = try{
     cur_query = QueryParser.parse(qry)
+
+    if (cur_query == null)
+      throw new ParseException("invalid query")
+
     cur_query ! QueryExecuteSig(reactor)
     Fyrehose.backbone ! cur_query
   } catch {

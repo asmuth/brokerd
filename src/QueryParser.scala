@@ -4,21 +4,45 @@ import scala.actors.Actor
 import scala.actors.Actor._
 import scala.util.matching.Regex
 
-object QueryParser{
+object QueryParser extends FQL{
+
+  X_KEYWORD.define('and)
+  X_KEYWORD.define('or)
 
   def parse(bdy: QueryBody) : Query = {
-
-    val qry_str = new String(bdy.raw)
+    val raw = new String(bdy.raw)
     var query: Query = null
 
-    if (qry_str.matches(""".*stream\(.*"""))
-      query = new StreamQuery(qry_str)
+    if (raw.matches(X_VALIDATE) unary_!)
+      throw new ParseException("invalid query: " + raw)
 
-    else if (qry_str.matches(""".*info\(.*"""))
-      query = new InfoQuery(qry_str)
+    val xparse = java.util.regex.Pattern
+      .compile(X_EXTRACT)
+      .matcher(raw)
 
-    else
-      throw new ParseException("invalid query: " + qry_str)
+    while(xparse.find())
+      raw.substring(xparse.start, xparse.end) match {
+
+    /*    case X_QUERY(q: Query) =>
+          if (query == null)
+            query = q
+          else
+            throw new ParseException("query can only contain one of stream, info, etc")
+
+*/
+        case X_KEYWORD(t: X_TOKEN) =>
+          println("TOKEN! " + t.key)
+
+        /*
+          if (query == null) 
+            throw new ParseException("invalid query: must start with stream, info, etc.")
+          else
+            query.eval(t)*/
+
+        case part: String =>
+          throw new ParseException("invalid query token: " + part)
+
+      }
 
     return query
   }
