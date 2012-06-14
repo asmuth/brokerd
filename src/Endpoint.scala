@@ -70,7 +70,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   def query(qry: QueryBody) = try{
-    cur_query = QueryParser.parse(qry)
+    cur_query = (new QueryParser).parse(qry)
 
     if (cur_query == null)
       throw new ParseException("invalid query")
