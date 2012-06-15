@@ -6,35 +6,46 @@ import scala.util.matching.Regex
 import scala.collection.mutable.ListBuffer
 
 trait FQL_TOKEN {
-  val p_whitespace = true
-  val p_braces = true
+  def buffer(cur: Char, buf: String) : String
   def ready : Boolean
-  def next(p: QueryParser) : FQL_TOKEN
+  def next(cur: Char, buf: String) : FQL_TOKEN
 }
 
-class FQL_ATOM extends FQL_TOKEN {
-  def ready = false
-  def next(p: QueryParser) =
-    if ((p.cursor != ' ') && (p.cursor != '(')) this
-    else p.buffer match {
+trait FQL_MTOKEN extends FQL_TOKEN {
+  var cur : Char = 0
+  var buf : String = null
+  def buffer(cur: Char, buf: String) : String =
+    if (ready) "" else buf + cur
+  def next(_cur: Char, _buf: String) : FQL_TOKEN =
+    { cur=_cur; buf = _buf; next }
+  def next : FQL_TOKEN
+}
+
+class FQL_ATOM extends FQL_MTOKEN {
+  def ready =
+    (cur == ' ') || (cur == '(')
+  def next =
+    if ((cur != ' ') && (cur != '('))
+      this
+    else buf match {
       case "stream"    => new FQL_STREAM
       case "where"     => new FQL_WHERE(true)
       case "where_not" => new FQL_WHERE(false)
     }
 }
 
-class FQL_STREAM extends FQL_TOKEN {
+class FQL_STREAM extends FQL_MTOKEN {
   def ready = true
-  def next(p: QueryParser) = this
+  def next = this
 }
 
-class FQL_WHERE(negated: Boolean) extends FQL_TOKEN {
+class FQL_WHERE(negated: Boolean) extends FQL_MTOKEN {
   var key : String = null
   var value : String = null
 
   def ready = false
 
-  def next(p: QueryParser) =
+  def next =
     if (key == null){ key = "fooabr"; this }
     else this
 }
@@ -43,105 +54,61 @@ class QueryParser extends FQL {
 
   var buffer : String = ""
   var cursor : Char = 0
-
-  val stack = ListBuffer[FQL_TOKEN]()
-
-  def ready(token: FQL_TOKEN){
-    buffer = ""
-    println("EMIT: " + token.getClass.getName)
-  }
-
-  def push(token: FQL_TOKEN){
-    buffer = ""
-    stack.prepend(token)
-  }
+  var query  : Query = null
+  val stack  = ListBuffer[FQL_TOKEN]()
 
   def parse(bdy: QueryBody) = {
 
     new FQL_ATOM +=: stack
 
-    /*def next = {
-      println("next: " + buf_str)
-      cur = cur.next(buf_str)
-      buf_str = ""
-
-      if (cur.ready) {
-        println("PPPPARSED: " + cur.getClass.getName)
-        cur = new FQL_ATOM
-      }
-    }*/
-
     for (pos <- new Range(0, bdy.raw.size - 1, 1)) {
       cursor  = bdy.raw(pos).toChar
 
+      val next = stack.head.next(cursor, buffer)
       println( stack.head.getClass.getName + " - " + buffer + " - " + cursor )
 
-      val next = stack.head.next(this)
+      if (next != stack.head)
+        stack.prepend(next)
 
-      if (next.ready)
-        ready(next)
+      if (stack.head.ready)
+        emit(stack.remove(0)) // fixpaul unroll stack
 
-      else if(next != stack.head)
-        push(next)
-
-      else if ((cursor != ' ') || (buffer.length > 0))
-        buffer  = buffer + cursor
+      if ((cursor != ' ') || (buffer.length > 0))
+        buffer  = stack.head.buffer(cursor, buffer)
 
     }
 
-    new StreamQuery()
+    if (query == null)
+      throw new ParseException("query must contain one of stream, info, etc.")
+
+    query
   }
 
 
-      /*if ((bdy.raw(pos) == ' ') && (cur.p_whitespace))
-        next
+  def emit(token: FQL_TOKEN) : Unit = {
+    println("emit: " + token.getClass.getName)
+    token match {
 
-      else if (
-        ((bdy.raw(pos) == '(') || (bdy.raw(pos) == '(')) &&
-        ((pos == 0) || (bdy.raw(pos - 1) != '\\')) &&
-        cur.p_braces)
-        next
+    case t: FQL_STREAM  =>
+      if (query == null)
+        query = build_query(t)
+      else
+        throw new ParseException("query can only contain one of stream, info, etc.")
 
-        */
-  def parsed(bdy: QueryBody) : Query = {
-    val raw = new String(bdy.raw)
-    var query: Query = null
+    case t: FQL_TOKEN =>
+      if (query == null)
+        throw new ParseException("invalid query: must start with stream, info, etc.")
+      else
+        query.eval(t)
 
-    if (raw.matches(X_VALIDATE) unary_!)
-      throw new ParseException("invalid query: " + raw)
+  } }
 
-    val xparse = java.util.regex.Pattern
-      .compile(X_EXTRACT)
-      .matcher(raw)
 
-    while(xparse.find())
-      raw.substring(xparse.start, xparse.end) match {
+  def build_query(token: FQL_TOKEN) : Query = token match {
 
-        case X_COMMAND(t: X_TOKEN) =>
-          if (query == null)
-            query = t.value.asInstanceOf[Class[_ <: Any]]
-              .newInstance.asInstanceOf[Query]
-          else
-            throw new ParseException("query can only contain one of stream, info, etc")
+    case t: FQL_STREAM =>
+      new StreamQuery()
 
-        case X_KEYWORD(t: X_TOKEN) =>
-          if (query == null) 
-            throw new ParseException("invalid query: must start with stream, info, etc.")
-          else
-            query.eval(t)
-
-        case X_WHERE(t: X_TOKEN) =>
-          if (query == null)
-            throw new ParseException("invalid query: must start with stream, info, etc.")
-          else
-            query.eval(t)
-
-        case part: String =>
-          throw new ParseException("invalid query token: " + part)
-
-      }
-
-    return query
   }
 
 }

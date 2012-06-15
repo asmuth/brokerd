@@ -15,7 +15,7 @@ class InfoQuery() extends Query{
 
   def data(event: Event) = ()
 
-  def eval(token: X_TOKEN) =
-    throw new ParseException("invalid query token: " + token.key.name)
+  def eval(token: FQL_TOKEN) =
+    throw new ParseException("invalid query token: " + token.getClass.getName)
 
 }

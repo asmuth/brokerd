@@ -21,8 +21,8 @@ class StreamQuery() extends Query{
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 
-  def eval(token: X_TOKEN) = token.name match {
-
+  def eval(part: FQL_TOKEN) = ()
+/*
     case 'or =>
       fstack = fstack.or()
 
@@ -36,6 +36,7 @@ class StreamQuery() extends Query{
       throw new ParseException("invalid query token: " + token.name.toString)
 
   }
+*/
 
 
   def eval_filter(token: X_TOKEN) = token.key match {

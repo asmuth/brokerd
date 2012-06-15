@@ -24,6 +24,6 @@ trait Query extends Actor{
 
   def data(event: Event)
 
-  def eval(part: X_TOKEN)
+  def eval(part: FQL_TOKEN)
 
 }
