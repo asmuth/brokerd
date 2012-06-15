@@ -23,19 +23,19 @@ of messages within a response is not guaranteed to be chronological.
 
 _add a few example messages:_
 
-    echo '{ "action": "signup", "referrer": "ref1" }' | nc localhost 2323
-    echo '{ "action": "signup", "referrer": "ref2" }' | nc localhost 2323
-    echo '{ "action": "signup", "referrer": "ref3" }' | nc localhost 2323
+    echo '{ "action": "signup", "referrer": "ref1" }' | nc -w0 localhost 2323
+    echo '{ "action": "signup", "referrer": "ref2" }' | nc -w0 localhost 2323
+    echo '{ "action": "signup", "referrer": "ref3" }' | nc -w0 localhost 2323
 
 
 _get the last 60 seconds of signups:_
  
-    echo "stream where(action = 'signup') since(-60) until(now)" | nc localhost 2323
+    echo "stream where(action = 'signup') since(-60) until(now)" | nc -w0 localhost 2323
 
 
 _subscribe to all signups where referrer=ref2 from now on:_
  
-    echo "stream where(action = 'signup') and where(referrer = 'ref2')" | nc localhost 2323
+    echo "stream where(action = 'signup') and where(referrer = 'ref2')" | nc -w0 localhost 2323
 
 
 
@@ -98,16 +98,35 @@ Advanced / Hacking
 
 ### keepalive mode:
 
-to enable keepalive mode for a connection, send this query: 
+to enable keepalive mode for a connection add `keepalive()` to your query:
 
-    !keepalive\n
+    stream [...] keepalive\n
 
 
-if in keepalive mode, the connection wont be closed after the query 
-completes. instead the server will sent this line:
+if in keepalive mode, the connection wont be closed after the query
+completes. instead the server will sent this message:
 
-    !continue\n
+    { "_keepalive": 0, "_time": (...) }
 
+
+the value of the `_keepalive` key indicates the number of running queries.
+even in keepalive mode connections will be closed after a specified idle
+timeout. to prevent this and keep the connection opened indefinitely, you
+must periodically issue a  `keepalive`. the server will always respond
+with the message from above, with the exception that the number of running
+queries can be non-zero.
+
+    keepalive\n
+
+
+### microsecond timestamps
+
+  here be dragons
+
+
+### strict_mode
+
+  here be dragons
 
 
 License
