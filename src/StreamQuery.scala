@@ -39,7 +39,7 @@ class StreamQuery() extends Query{
 */
 
 
-  def eval_filter(token: X_TOKEN) = token.key match {
+/*  def eval_filter(token: X_TOKEN) = token.key match {
 
     case 'equals_str =>
       (x: String) => x == token.value.asInstanceOf[String]
@@ -47,5 +47,5 @@ class StreamQuery() extends Query{
     case _ =>
       throw new ParseException("invalid query token: " + token.name.toString)
 
-  }
+  }*/
 }
