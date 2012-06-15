@@ -109,7 +109,10 @@ completes. instead the server will sent this message:
     { "_keepalive": 0, "_time": (...) }
 
 
-the value of the `_keepalive` key indicates the number of running queries.
+the value of the `_keepalive` key indicates the number of running queries,
+which will (in this case) always be zero.
+
+
 even in keepalive mode connections will be closed after a specified idle
 timeout. to prevent this and keep the connection opened indefinitely, you
 must periodically issue a  `keepalive`. the server will always respond
