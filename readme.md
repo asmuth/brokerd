@@ -1,29 +1,27 @@
 Fyrehose
 ========
 
-Fyrehose is a scala-based pub/sub daemon that distributes JSON encoded events. It allows subscribers
-to filter their event stream on the server side and to replay their event history.
-
-In simple streaming mode, it handles throughputs beyond 100mbit/s.
+Fyrehose is a scala-based pub/sub daemon for JSON messages. It allows subscribers to filter
+messages on the server side and to replay their message history.
 
 
 Synopsis
 --------
 
-To add/publish events, you connect via TCP and send your data as arbitray (possibly nested) 
-json-objects. Consequent events/json-objects may be seperated by newline, whitespace, zero-byte
-or tab. The only constraint on the format of your json events is that Fyrehose will add a `_time`
-key containing the timestamp at which the event was received if it doesn't exist already (you can
-also use this to retroactively add events).
+To add/publish messages, you connect via TCP and send your data as arbitray (possibly nested) 
+json-objects. Consequent messages/json-objects may be seperated by newline, whitespace, zero-byte
+or tab. The only constraint on the format of your json messages is that Fyrehose will add a `_time`
+key containing the timestamp at which the message was received if it doesn't exist already (you can
+also use this to retroactively add messages).
 
-To retrieve/subscribe to events, you send your query over the same connection. Every query must end
+To retrieve/subscribe to messages, you send your query over the same connection. Every query must end
 with a newline ("\n"). The response consists of one or more newline-seperated json objects.
 Unless in keepalive-mode, Fyrehose will close the connection after a query has finished. You can
-only run one query at a time, but you can still publish events while the query is running. The order 
-of events within a response is not guaranteed to be chronological. 
+only run one query at a time, but you can still publish messages while the query is running. The order 
+of messages within a response is not guaranteed to be chronological. 
 
 
-_add a few example events:_
+_add a few example messages:_
 
     echo '{ "action": "signup", "referrer": "ref1" }' | nc localhost 2323
     echo '{ "action": "signup", "referrer": "ref2" }' | nc localhost 2323
