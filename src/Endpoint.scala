@@ -15,6 +15,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
   var cur_query : Query = null
   var idle_status       = true
+  var async_kill        = false
 
   socket.setSoTimeout(Fyrehose.CONN_IDLE_TIMEOUT)
   val in_stream  = socket.getInputStream()
@@ -25,8 +26,9 @@ class Endpoint(socket: Socket) extends Runnable{
 
   Fyrehose.log("connection opened")
 
-  val reactor = actor { loop {
-    receive{ 
+  val reactor = new Actor {
+    def qsize = mailboxSize
+    def act = loop { receive{ 
       case HangupSig  => { hangup(); exit() }
       case TimeoutSig => timeout()
       case resp: QueryResponseChunk => write(resp.chunk)
@@ -35,16 +37,14 @@ class Endpoint(socket: Socket) extends Runnable{
     }
   }}
 
+  reactor.start()
 
   def run = {
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
     var next   = 0
 
     try{
-      while ((next > -1) || (idle_status == false)){
-        //if (next > 0)
-          //stream.read(buffer, next)
-
+      while (((next > -1) || (idle_status unary_!)) && (async_kill unary_!)){
         if (next > 0)
           reactor ! java.util.Arrays.copyOfRange(buffer, 0, next)
 
@@ -66,8 +66,15 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  def recv(data: Array[Byte]) =
-    stream.read(data, data.size)
+  def recv(data: Array[Byte]) : Unit =
+    if (async_kill) return ()
+    else if (reactor.qsize > Fyrehose.CONN_MAX_QUEUE_SIZE)
+      error("queue too big: " + reactor.qsize.toString, true)
+    else try {
+      stream.read(data, data.size)
+    } catch {
+      case e: ParseException => error(e.toString, true)
+    }
 
 
   def event(ev_body: MessageBody) = try{
@@ -133,7 +140,10 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  private def error(msg: String, recoverable: Boolean) = {
+  private def error(msg: String, recoverable: Boolean) : Unit = {
+    if(async_kill)
+      return ()
+
     Fyrehose.error("endpoint closed: " + msg)
 
     if (recoverable)
@@ -144,6 +154,7 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   private def close_connection() = {
+    async_kill = true
     query_abort()
     reactor ! HangupSig
   }
