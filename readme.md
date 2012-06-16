@@ -63,6 +63,8 @@ Documentation
 
 **NUMBERS**: number don't need to be enclosed. numbers may contain a single dot if they are floating-point. numbers must not start with a dot.
 
+**BOOLEAN**: the strings `true` or `false` are treated as boolean values. they must not be enclosed in quotes.
+
 **TIME**: time values may be formatted like positive integers, in which case they are treated as timestamps. time values starting with a minus symbol (`-`) are treated as "seconds since now", if they end with one of `m`, `h`, `s` or `d` they are respectively treated as minutes, hours, seconds or days since now. the string `now` is also a valid time value.
 
 
