@@ -26,9 +26,20 @@ class QueryLexer(recv: QueryParser) {
   }
 
 
-  def emit() : Unit = {
-    recv.emit(stack.remove(0)) // fixpaul unroll stack
-  }
+  def emit() : Unit = do {
+
+    stack(1) match {
+      case statement: FQL_STATEMENT =>
+        statement.next(stack.head)
+      case _ => ()
+    }
+
+    recv.emit(stack.remove(0))
+
+  } while(
+    (stack.size > 1) &&
+    (stack.head.ready)
+  )
 
 
 }

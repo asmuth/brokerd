@@ -6,6 +6,10 @@ trait FQL_TOKEN {
   def next(cur: Char, buf: String) : FQL_TOKEN
 }
 
+trait FQL_STATEMENT {
+  def next(token: FQL_TOKEN)
+}
+
 trait FQL_MTOKEN extends FQL_TOKEN {
   var cur : Char = 0
   var buf : String = null
@@ -48,10 +52,8 @@ class FQL_WHERE(negated: Boolean) extends FQL_MTOKEN {
 
 
 class FQL_KEY() extends FQL_MTOKEN {
-  def ready =
-    cur == ' '
-  def next =
-    {println("key: " + buf); this}
+  def ready = cur == ' '
+  def next = this
 }
 
 class FQL_OPERATOR extends FQL_TOKEN {
