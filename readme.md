@@ -8,20 +8,21 @@ messages on the server side and to replay their message history.
 Synopsis
 --------
 
-To publish a message, open a TCP connection and just send your message as a JSON object
+To publish a message, open a TCP connection and just send your message as a JSON object.
 Subsequent messages may be seperated by newline, whitespace, zero-byte or tab.
 
-Messages may be nested JSON objects. The only constraint on the message's schema is that
-fyrehose will always add a `_time` key containing the unix timestamp at which the message was
-received to the root object unless it exists already. (you can also use this to retroactively
-add messages).
+The only constraint on the message's schema is that fyrehose will always add a `_time` key
+containing the unix timestamp at which the message was received to the root object unless it
+exists already (you can also use this to retroactively add messages). Nested messages/objects
+are allowed.
 
 To subscribe to messages, send your query over the same connection. Every query must end
 with a newline ("\n"). The response consists of one or more newline-seperated json objects.
 The order of messages within a response is not guaranteed to be chronological.
 
 You can run multiple queries at the same time. You can also publish messages while queries are
-running. Unless in keepalive-mode, Fyrehose will close the connection after all queries have finished.
+running. Unless in keepalive-mode, Fyrehose will close the connection after all queries have
+finished.
 
 
 _add a few example messages:_
