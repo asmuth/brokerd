@@ -8,17 +8,20 @@ messages on the server side and to replay their message history.
 Synopsis
 --------
 
-To add/publish messages, you connect via TCP and send your data as arbitray (possibly nested) 
-json-objects. Consequent messages/json-objects may be seperated by newline, whitespace, zero-byte
-or tab. The only constraint on the format of your json messages is that Fyrehose will add a `_time`
-key containing the timestamp at which the message was received if it doesn't exist already (you can
-also use this to retroactively add messages).
+To publish a message, open a TCP connection and just send your message as a JSON object
+Subsequent messages may be seperated by newline, whitespace, zero-byte or tab.
 
-To retrieve/subscribe to messages, you send your query over the same connection. Every query must end
+Messages may be nested JSON objects. The only constraint on the message's schema is that
+fyrehose will always add a `_time` key containing the unix timestamp at which the message was
+received to the root object unless it exists already. (you can also use this to retroactively
+add messages).
+
+To subscribe to messages, send your query over the same connection. Every query must end
 with a newline ("\n"). The response consists of one or more newline-seperated json objects.
-Unless in keepalive-mode, Fyrehose will close the connection after a query has finished. You can
-only run one query at a time, but you can still publish messages while the query is running. The order 
-of messages within a response is not guaranteed to be chronological. 
+The order of messages within a response is not guaranteed to be chronological.
+
+You can run multiple queries at the same time. You can also publish messages while queries are
+running. Unless in keepalive-mode, Fyrehose will close the connection after all queries have finished.
 
 
 _add a few example messages:_
@@ -28,14 +31,14 @@ _add a few example messages:_
     echo '{ "action": "signup", "referrer": "ref3" }' | nc -w0 localhost 2323
 
 
-_get the last 60 seconds of signups:_
- 
-    echo "stream where(action = 'signup') since(-60) until(now)" | nc -w0 localhost 2323
+_get the last 5 minutes of signups:_
+
+    echo "stream where(action = 'signup') since(-5m) until(now)" | nc -w0 localhost 2323
 
 
-_subscribe to all signups where referrer=ref2 from now on:_
- 
-    echo "stream where(action = 'signup') and where(referrer = 'ref2')" | nc -w0 localhost 2323
+_subscribe to all signups where referrer matches /^ref/ from now on:_
+
+    echo "stream where(action = 'signup') and where(referrer = /^ref/)" | nc -w0 localhost 2323
 
 
 
