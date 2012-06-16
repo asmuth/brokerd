@@ -15,6 +15,12 @@ trait FQL_STATEMENT {
   def next(token: FQL_TOKEN) : FQL_TOKEN
 }
 
+trait FQL_KEYWORD {
+  def ready : Boolean = true
+  def next : FQL_TOKEN =
+    this.asInstanceOf[FQL_TOKEN]
+}
+
 class FQL_ATOM extends FQL_TOKEN {
   def ready =
     (cur == ' ') || (cur == '(')
@@ -23,16 +29,17 @@ class FQL_ATOM extends FQL_TOKEN {
       this
     else buf match {
       case "stream"    => new FQL_STREAM
+      case "and"       => new FQL_AND
+      case "or"        => new FQL_OR
       case "where"     => new FQL_WHERE(true)
       case "where_not" => new FQL_WHERE(false)
       case _ => throw new ParseException("invalid atom: " + buf)
     }
 }
 
-class FQL_STREAM extends FQL_TOKEN {
-  def ready = true
-  def next = this
-}
+class FQL_STREAM extends FQL_TOKEN with FQL_KEYWORD {}
+class FQL_OR extends FQL_TOKEN with FQL_KEYWORD {}
+class FQL_AND extends FQL_TOKEN with FQL_KEYWORD {}
 
 class FQL_KEY extends FQL_TOKEN {
   def ready =
