@@ -1,6 +1,10 @@
 package com.paulasmuth.fyrehose;
 
 // todo: since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+trait FQL_VAL {}
+trait FQL_META {}
+trait FQL_OP {}
+trait FQL_HEAD {}
 
 trait FQL_BUFFER {
   var cur : Char = 0
@@ -16,13 +20,10 @@ trait FQL_TOKEN extends FQL_BUFFER {
     { cur=_cur; buf = _buf; next }
 }
 
-trait FQL_VAL {}
-trait FQL_META {}
-trait FQL_OP {}
-
-class FQL_ATOM extends FQL_TOKEN {
+class FQL_ATOM extends FQL_TOKEN with FQL_META {
   def ready =
-    ((cur == ' ') || (cur == '(')) && (buf.size > 0)
+    ((cur == ' ') || (cur == '(') || (cur == ')') ||
+    (cur == '=') || (cur == '.')) && (buf.size > 0)
   def next =
     if (ready unary_!)
       this
@@ -32,7 +33,7 @@ class FQL_ATOM extends FQL_TOKEN {
       case "or"        => new FQL_OR
       case "where"     => new FQL_WHERE(true)
       case "where_not" => new FQL_WHERE(false)
-      case _ => throw new ParseException("invalid atom: " + buf)
+      case _           => new FQL_KEY(buf)
     }
 }
 
@@ -61,7 +62,7 @@ class FQL_VALUE extends FQL_TOKEN with FQL_VAL with FQL_META {
     case '7'  => new FQL_NUMBER
     case '8'  => new FQL_NUMBER
     case '9'  => new FQL_NUMBER
-    case _    => new FQL_KEY
+    case _    => new FQL_ATOM
   }
 }
 
@@ -146,13 +147,11 @@ class FQL_STRING extends FQL_TOKEN with FQL_VAL {
 
 }
 
-class FQL_KEY extends FQL_TOKEN with FQL_VAL {
-  var value: String = ""
+class FQL_KEY(_buf: String = "") extends FQL_TOKEN with FQL_VAL {
   def ready =
     (cur == ' ') || (cur == ')') || (cur == '=')
-  def next =
-    { if (buf.size > 0) value = buf; this }
-  def get = value
+  def next = this
+  def get = _buf
 }
 
 class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {

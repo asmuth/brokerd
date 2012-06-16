@@ -9,7 +9,7 @@ class QueryLexer(recv: QueryParser) {
   val stack  = ListBuffer[FQL_TOKEN]()
   val args   = ListBuffer[FQL_TOKEN]()
 
-  new FQL_ATOM +=: stack
+  new FQL_ATOM with FQL_HEAD +=: stack
 
   def next(cur: Char) : Unit = 
     { cursor = cur; next }
@@ -29,7 +29,7 @@ class QueryLexer(recv: QueryParser) {
 
     stack(1) match {
 
-      case a: FQL_ATOM =>
+      case a: FQL_HEAD =>
         recv.next(stack.remove(0))
 
       case m: FQL_META =>
