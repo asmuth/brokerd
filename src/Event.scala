@@ -33,8 +33,17 @@ class Event(raw: Array[Byte]){
 
 
   def getAsString(key: FQL_KEY) : String =
-    root.get(key.get).getAsString() // FIXPAUL: recurse
+    getAsGsonPrimitive(key).getAsString()
 
+  def getAsInteger(key: FQL_KEY) : Int =
+    getAsGsonPrimitive(key).getAsInt()
+
+  def getAsDouble(key: FQL_KEY) : Double =
+    getAsGsonPrimitive(key).getAsDouble()
+
+
+  private def getAsGsonPrimitive(key: FQL_KEY) =
+    root.get(key.get) // FIXPAUL: recurse
 
   private def serialize() : Array[Byte] =
     root.toString.getBytes

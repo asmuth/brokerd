@@ -72,7 +72,7 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
       return next.eval(event)
 
   } catch {
-    case e: RuntimeException => return false
+    case e: NumberFormatException => return false
   }
 
 }

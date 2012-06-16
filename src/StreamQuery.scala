@@ -56,6 +56,12 @@ class StreamQuery() extends Query{
       case v: FQL_KEY =>
         (m: Event) => m.getAsString(key) == m.getAsString(v)
 
+      case v: FQL_INTEGER =>
+        (m: Event) => { println("get: " + key.get + " -> " +  m.getAsInteger(key).toString + " vs " + v.get.toString); m.getAsInteger(key) == v.get }
+
+      case v: FQL_FLOAT =>
+        (m: Event) => m.getAsDouble(key) == v.get
+
     }
 
     case _ =>

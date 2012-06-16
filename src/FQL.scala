@@ -49,6 +49,16 @@ class FQL_VALUE extends FQL_TOKEN with FQL_VAL with FQL_META {
     case '\'' => new FQL_STRING
     case '"'  => new FQL_STRING
     case '`'  => new FQL_STRING
+    case '0'  => new FQL_NUMBER
+    case '1'  => new FQL_NUMBER
+    case '2'  => new FQL_NUMBER
+    case '3'  => new FQL_NUMBER
+    case '4'  => new FQL_NUMBER
+    case '5'  => new FQL_NUMBER
+    case '6'  => new FQL_NUMBER
+    case '7'  => new FQL_NUMBER
+    case '8'  => new FQL_NUMBER
+    case '9'  => new FQL_NUMBER
     case _    => new FQL_KEY
   }
 }
@@ -88,6 +98,29 @@ trait FQL_OPERATOR_BINARY extends FQL_OPERATOR_VARARG {
 
 class FQL_OPERATOR_EQUALS extends FQL_OPERATOR_BINARY {}
 
+
+class FQL_NUMBER extends FQL_TOKEN with FQL_META {
+
+  def ready =
+    (cur < 48) || (cur > 57)
+
+  def next =
+    if (ready unary_!) this
+    else new FQL_INTEGER(buf)
+
+}
+
+class FQL_INTEGER(_buf: String) extends FQL_TOKEN with FQL_VAL {
+  def ready = true
+  def next = this
+  def get = _buf.toInt
+}
+
+class FQL_FLOAT(_buf: String) extends FQL_TOKEN with FQL_VAL {
+  def ready = true
+  def next = this
+  def get = _buf.toDouble
+}
 
 class FQL_STRING extends FQL_TOKEN with FQL_VAL {
   var quot : Char = 0
