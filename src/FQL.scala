@@ -9,8 +9,8 @@ trait FQL_TOKEN {
 trait FQL_MTOKEN extends FQL_TOKEN {
   var cur : Char = 0
   var buf : String = null
-  def buffer(cur: Char, buf: String) : String =
-    if (ready) "" else buf + cur
+  def buffer(_cur: Char, _buf: String) : String =
+    if (ready) "" else _buf + _cur
   def next(_cur: Char, _buf: String) : FQL_TOKEN =
     { cur=_cur; buf = _buf; next }
   def next : FQL_TOKEN
@@ -35,12 +35,27 @@ class FQL_STREAM extends FQL_MTOKEN {
 }
 
 class FQL_WHERE(negated: Boolean) extends FQL_MTOKEN {
-  var key : String = null
+  var key : FQL_KEY = null
   var value : String = null
-
+  override def buffer(_cur: Char, _buf: String) = ""
   def ready = false
-
   def next =
-    if (key == null){ key = "fooabr"; this }
-    else this
+    if (key == null)
+      new FQL_KEY
+    else
+      new FQL_OPERATOR
+}
+
+
+class FQL_KEY() extends FQL_MTOKEN {
+  def ready =
+    cur == ' '
+  def next =
+    {println("key: " + buf); this}
+}
+
+class FQL_OPERATOR extends FQL_TOKEN {
+  def ready = true
+  def buffer(cur: Char, buf: String) = ""
+  def next(cur: Char, buf: String) = this
 }
