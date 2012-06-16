@@ -25,11 +25,11 @@ class QueryParser {
       if (query == null)
         query = eval_query(t)
       else
-        throw new ParseException("query can only contain one of stream, info, etc.")
+        unexpected_token(t, "query to only contain one of stream, info, etc.")
 
     case t: FQL_TOKEN =>
       if (query == null)
-        throw new ParseException("invalid query: must start with stream, info, etc.")
+        unexpected_token(t, "query to start with stream, info, etc.")
       else
         eval_token(t)
 

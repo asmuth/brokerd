@@ -19,7 +19,7 @@ object Fyrehose{
 
   var CONN_IDLE_TIMEOUT    = 5000
   val BUFFER_SIZE_PARSER   = 8192 * 4
-  val BUFFER_SIZE_SOCKET   = 2048
+  val BUFFER_SIZE_SOCKET   = 4096
   val FILE_CHUNK_SIZE      = 3600 * 6
   val DEFAULT_OUT_DIR      = "/tmp/fyrehose"
 
