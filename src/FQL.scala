@@ -45,8 +45,11 @@ class FQL_OPERATOR extends FQL_TOKEN with FQL_OP with FQL_META {
 class FQL_VALUE extends FQL_TOKEN with FQL_VAL with FQL_META {
   def ready = next != this
   def next = cur match {
-    case ' ' => this
-    case _   => new FQL_KEY
+    case ' '  => this
+    case '\'' => new FQL_STRING
+    case '"'  => new FQL_STRING
+    case '`'  => new FQL_STRING
+    case _    => new FQL_KEY
   }
 }
 
@@ -85,6 +88,22 @@ trait FQL_OPERATOR_BINARY extends FQL_OPERATOR_VARARG {
 
 class FQL_OPERATOR_EQUALS extends FQL_OPERATOR_BINARY {}
 
+
+class FQL_STRING extends FQL_TOKEN with FQL_VAL {
+  var quot : Char = 0
+
+  override def buffer(_cur: Char, _buf: String) =
+    if (ready) _buf else (_buf + _cur)
+
+  def ready =
+    (buf.size > 1) &&
+    (buf(buf.size - 1) == quot) &&
+    (buf(buf.size - 2) != '\\')
+
+  def next =
+    if (quot == 0) { quot = cur; this }
+    else this
+}
 
 class FQL_KEY extends FQL_TOKEN with FQL_VAL {
   def ready =
