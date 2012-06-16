@@ -3,7 +3,7 @@ package com.paulasmuth.fyrehose
 import scala.actors.Actor
 import scala.actors.Actor._
 
-class StreamParser(recv: Endpoint){
+class InboundStream(recv: Endpoint){
 
   // if safe_mode is disabled, non-json input is silently
   // ignored. safe_mode=false requires strict_mode=true
@@ -16,7 +16,16 @@ class StreamParser(recv: Endpoint){
   var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
   var buffer_pos = 0
 
-  def stream(buf: Array[Byte], buf_len: Int) : Unit = {
+
+  def set_safe_mode(m: Boolean) =
+    safe_mode = m
+
+
+  def set_strict_mode(m: Boolean) =
+    strict_mode = m
+
+
+  def read(buf: Array[Byte], buf_len: Int) : Unit = {
     if ((buf_len + buffer_pos) > buffer.length){
       throw new ParseException(
         "endoint parser buffer overflow: " +
@@ -30,14 +39,6 @@ class StreamParser(recv: Endpoint){
 
     read_chunked()
   }
-
-
-  def set_safe_mode(m: Boolean) =
-    safe_mode = m
-
-
-  def set_strict_mode(m: Boolean) =
-    strict_mode = m
 
 
   private def read_chunked() : Unit = {
@@ -100,7 +101,7 @@ class StreamParser(recv: Endpoint){
 
     if (trim_pos > 0)
       trim_buffer(trim_pos, trim_check)
-    
+
   }
 
 
@@ -111,7 +112,7 @@ class StreamParser(recv: Endpoint){
       emit_event(java.util.Arrays.copyOfRange(buffer, 0, end_pos))
     else
       throw new ParseException("something went horribly wrong while parsing")
-      
+
 
   private def emit_event(buf: Array[Byte]) =
     recv.event(new EventBody(buf))
@@ -119,11 +120,11 @@ class StreamParser(recv: Endpoint){
 
   private def emit_query(buf: Array[Byte]) =
     recv.query(new QueryBody(buf))
-  
+
 
   private def trim_buffer(trim_pos: Integer, check_pos: Integer) = {
     if (safe_mode)
-      seek_buffer(check_pos, trim_pos) 
+      seek_buffer(check_pos, trim_pos)
 
     System.arraycopy(buffer, trim_pos, buffer, 0, (buffer.length-trim_pos))
     buffer_pos -= trim_pos
@@ -135,10 +136,10 @@ class StreamParser(recv: Endpoint){
 
   private def seek_buffer(from_pos: Integer, until_pos: Integer) : Unit = {
     for (pos <- new Range(from_pos, until_pos, 1)){
-      if ((buffer(pos) != 0)  && 
-          (buffer(pos) != 9)  && 
-          (buffer(pos) != 10) && 
-          (buffer(pos) != 13) && 
+      if ((buffer(pos) != 0)  &&
+          (buffer(pos) != 9)  &&
+          (buffer(pos) != 10) &&
+          (buffer(pos) != 13) &&
           (buffer(pos) != 32))
       {
         val buf = java.util.Arrays.copyOfRange(buffer, from_pos, until_pos)

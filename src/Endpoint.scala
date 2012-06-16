@@ -33,8 +33,8 @@ class Endpoint(socket: Socket) extends Runnable{
 
 
   def run = {
-    val parser = new StreamParser(this)
-    parser.set_safe_mode(safe_mode)
+    val stream = new InboundStream(this)
+    stream.set_safe_mode(safe_mode)
 
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
     var next   = 0
@@ -42,7 +42,7 @@ class Endpoint(socket: Socket) extends Runnable{
     try{
       while ((next > -1) || (idle_status == false)){
         if (next > 0)
-          parser.stream(buffer, next)
+          stream.read(buffer, next)
 
         next = in_stream.read(buffer)
 
