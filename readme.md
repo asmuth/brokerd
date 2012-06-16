@@ -5,7 +5,7 @@ Fyrehose is a scala-based pub/sub daemon for JSON messages. It allows subscriber
 messages on the server side and to replay their message history.
 
 
-### Synopsis
+**Synopsis / Example:**
 
 _add a few example messages:_
 
@@ -53,19 +53,6 @@ finished.
 
 ### Fyrehose Query Language
 
-**KEYS**: non-enclosed strings are treated as keys. you can descend into objects using the dot (`.`) operator. (e.g. params.user.first_name). if your keys contain dots, you must escape dots in your keys with a with a leading backslash. keys must not start with a number or dash symbol.
-
-**STRINGS**: strings can be enclosed in single-quotes (`'`), double-quotes (`"`) or backticks (`\`).
-
-**REGEX**: regular expressions must be enclosed in forward slashes (`/`). if your regex contains slashes, you must escape them with a leading backslash.
-
-**NUMBERS**: number don't need to be enclosed. numbers may contain a single dot if they are floating-point. numbers must not start with a dot.
-
-**BOOLEAN**: the strings `true` or `false` are treated as boolean values. they must not be enclosed in quotes.
-
-**TIME**: time values may be formatted like positive integers, in which case they are treated as timestamps. time values starting with a minus symbol (`-`) are treated as "seconds since now", if they end with one of `m`, `h`, `s` or `d` they are respectively treated as minutes, hours, seconds or days since now. the string `now` is also a valid time value.
-
-
 keywords / commands:
 
     stream
@@ -107,6 +94,18 @@ examples:
     stream since(0) until(now) where(channel = 'dawanda-firehose')
     stream since(-12h) where(channel = 'dawanda-tap') and where(q_params.page > 150)
 
+
+**KEYS**: non-enclosed strings are treated as keys. you can descend into objects using the dot (`.`) operator. (e.g. params.user.first_name). if your keys contain dots, you must escape dots in your keys with a with a leading backslash. keys must not start with a number or dash symbol.
+
+**STRINGS**: strings can be enclosed in single-quotes `'`, double-quotes `"` or backticks `\``.
+
+**REGEX**: regular expressions must be enclosed in forward slashes `/`. if your regex contains slashes, you must escape them with a leading backslash.
+
+**NUMBERS**: number don't need to be enclosed. numbers may contain a single dot if they are floating-point. numbers must not start with a dot.
+
+**BOOLEAN**: the strings `true` or `false` are treated as boolean values. they must not be enclosed in quotes.
+
+**TIME**: time values may be formatted like positive integers, in which case they are treated as timestamps. time values starting with a minus symbol `-` are treated as "seconds since now", if they end with one of `m`, `h`, `s` or `d` they are respectively treated as minutes, hours, seconds or days since now. the string `now` is also a valid time value.
 
 
 Advanced / Hacking
