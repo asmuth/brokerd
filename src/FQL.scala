@@ -1,26 +1,21 @@
 package com.paulasmuth.fyrehose;
 
 trait FQL_TOKEN {
-  def buffer(cur: Char, buf: String) : String
   def ready : Boolean
-  def next(cur: Char, buf: String) : FQL_TOKEN
-}
-
-trait FQL_STATEMENT {
-  def next(token: FQL_TOKEN) : FQL_TOKEN
-}
-
-trait FQL_MTOKEN extends FQL_TOKEN {
+  def next : FQL_TOKEN
   var cur : Char = 0
   var buf : String = null
   def buffer(_cur: Char, _buf: String) : String =
     if (ready) "" else _buf + _cur
   def next(_cur: Char, _buf: String) : FQL_TOKEN =
     { cur=_cur; buf = _buf; next }
-  def next : FQL_TOKEN
 }
 
-class FQL_ATOM extends FQL_MTOKEN {
+trait FQL_STATEMENT {
+  def next(token: FQL_TOKEN) : FQL_TOKEN
+}
+
+class FQL_ATOM extends FQL_TOKEN {
   def ready =
     (cur == ' ') || (cur == '(')
   def next =
@@ -33,28 +28,30 @@ class FQL_ATOM extends FQL_MTOKEN {
     }
 }
 
-class FQL_STREAM extends FQL_MTOKEN {
+class FQL_STREAM extends FQL_TOKEN {
   def ready = true
   def next = this
 }
 
-class FQL_KEY() extends FQL_MTOKEN {
-  def ready = cur == ' '
+class FQL_KEY extends FQL_TOKEN {
+  def ready =
+    (cur == ' ') || (cur == ')')
   def next = this
 }
 
 class FQL_OPERATOR extends FQL_TOKEN {
-  def ready = true
-  def buffer(cur: Char, buf: String) = ""
-  def next(cur: Char, buf: String) = this
+  def ready = cur == ' '
+  def next = this
 }
 
-class FQL_WHERE(negated: Boolean) extends FQL_MTOKEN with FQL_STATEMENT {
-  var key : FQL_KEY = null
-  var value : String = null
+class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
+  var key : FQL_KEY      = null
+  var op  : FQL_OPERATOR = null
 
   override def buffer(_cur: Char, _buf: String) = ""
-  def ready = false
+
+  def ready =
+    (key != null) && (op != null)
 
   def next =
     new FQL_KEY
@@ -62,6 +59,8 @@ class FQL_WHERE(negated: Boolean) extends FQL_MTOKEN with FQL_STATEMENT {
   def next(t: FQL_TOKEN) = t match {
     case k: FQL_KEY =>
       { key = k; new FQL_OPERATOR }
+    case o: FQL_OPERATOR =>
+      { op = o; this }
   }
 
 }

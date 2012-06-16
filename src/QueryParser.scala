@@ -13,6 +13,8 @@ class QueryParser {
     if (query == null)
       throw new ParseException("query must contain one of stream, info, etc.")
 
+    lexer.ready
+
     query
   }
 

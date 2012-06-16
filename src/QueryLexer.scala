@@ -26,7 +26,7 @@ class QueryLexer(recv: QueryParser) {
   }
 
 
-  def pop : Unit =
+  def emit : Unit =
     recv.emit(stack.remove(0))
 
 
@@ -34,11 +34,11 @@ class QueryLexer(recv: QueryParser) {
     (stack.size > 1) && (stack.head.ready)
 
 
-  def ready : Unit = 
+  def ready : Unit =
     while (next_ready) stack(1) match {
 
-      case a: FQL_ATOM => 
-        pop
+      case a: FQL_ATOM =>
+        emit
 
       case s: FQL_STATEMENT =>
         statement(s.next(stack.head))
@@ -46,11 +46,14 @@ class QueryLexer(recv: QueryParser) {
     }
 
 
-  def statement(next: FQL_TOKEN) =
+  def statement(next: FQL_TOKEN) = {
+    stack.remove(0)
+
     if (next != stack.head)
-      { pop; next +=: stack } 
-    else
-      pop
+      next +=: stack
+
+  }
+
 
 }
 
