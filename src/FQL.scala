@@ -1,6 +1,7 @@
 package com.paulasmuth.fyrehose;
 
-// todo: since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+// todo: where_not, mkeyops, allcaps, since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+
 trait FQL_VAL {}
 trait FQL_META {}
 trait FQL_OP {}

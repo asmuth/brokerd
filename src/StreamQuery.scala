@@ -35,12 +35,13 @@ class StreamQuery() extends Query{
         fstack.push(k)(eval_filter(k, t))
 
       case _ =>
-        throw new ParseException("left hand operator of a where clause must be a FQL_KEY")
+        unexpected_token(t.left.asInstanceOf[FQL_TOKEN],
+          "left hand operator of a where clause to be a FQL_KEY")
 
     }
 
     case _ =>
-      throw new ParseException("invalid token: " + token.getClass.getName)
+      unexpected_token(token, "FQL_ATOM")
 
   }
 
@@ -56,7 +57,7 @@ class StreamQuery() extends Query{
         (m: Event) => m.getAsString(key) == m.getAsString(v)
 
       case v: FQL_INTEGER =>
-        (m: Event) => { println("get: " + key.get + " -> " +  m.getAsInteger(key).toString + " vs " + v.get.toString); m.getAsInteger(key) == v.get }
+        (m: Event) => m.getAsInteger(key) == v.get
 
       case v: FQL_FLOAT =>
         (m: Event) => m.getAsDouble(key) == v.get
@@ -64,12 +65,19 @@ class StreamQuery() extends Query{
       case v: FQL_BOOL =>
         (m: Event) => m.getAsBoolean(key) == v.get
 
+      case _ =>
+        unexpected_token(token.right.asInstanceOf[FQL_TOKEN], "FQL_VAL")
+
     }
 
     case _ =>
-      throw new ParseException("invalid token: " + token.getClass.getName)
+      unexpected_token(token.op.asInstanceOf[FQL_TOKEN], "FQL_OPERATOR")
 
   }
 
+
+  private def unexpected_token(found: FQL_TOKEN, expected: String) =
+    throw new ParseException("unexpected token: " +  found.getClass.getName
+      .replaceAll("[^A-Z_]", "") + ", expected: " + expected)
 
 }
