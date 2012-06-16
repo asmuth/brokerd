@@ -13,7 +13,7 @@ class QueryParser {
     if (query == null)
       throw new ParseException("query must contain one of stream, info, etc.")
 
-    lexer.ready
+    lexer.finish
 
     query
   }
@@ -38,7 +38,7 @@ class QueryParser {
   } }
 
 
-  def build_query(token: FQL_TOKEN) : Query = token match {
+  private def build_query(token: FQL_TOKEN) : Query = token match {
 
     case t: FQL_STREAM =>
       new StreamQuery()

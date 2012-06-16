@@ -25,6 +25,7 @@ class FQL_ATOM extends FQL_TOKEN {
       case "stream"    => new FQL_STREAM
       case "where"     => new FQL_WHERE(true)
       case "where_not" => new FQL_WHERE(false)
+      case _ => throw new ParseException("invalid atom: " + buf)
     }
 }
 
@@ -51,10 +52,10 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   override def buffer(_cur: Char, _buf: String) = ""
 
   def ready =
-    (key != null) && (op != null)
+    (key != null) && (op != null) && (cur == ')')
 
   def next =
-    new FQL_KEY
+    if (ready) this else new FQL_KEY
 
   def next(t: FQL_TOKEN) = t match {
     case k: FQL_KEY =>

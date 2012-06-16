@@ -11,8 +11,12 @@ class QueryLexer(recv: QueryParser) {
 
   def next(cursor: Char) : Unit = {
 
-    val next = stack.head.next(cursor, buffer)
     println( stack.head.getClass.getName + " - " + buffer + " - " + cursor )
+
+    if ((cursor == ' ') && (buffer.size == 0))
+      return ()
+
+    val next = stack.head.next(cursor, buffer)
 
     if (next != stack.head)
       next +=: stack
@@ -20,21 +24,28 @@ class QueryLexer(recv: QueryParser) {
     if (stack.head.ready)
       ready
 
-    if ((cursor != ' ') || (buffer.length > 0))
-      buffer  = stack.head.buffer(cursor, buffer)
+    buffer  = stack.head.buffer(cursor, buffer)
 
   }
 
 
-  def emit : Unit =
+  def finish : Unit = {
+    next(' ')
+
+    if (stack.size > 1)
+      throw new ParseException("unfinished statement")
+  }
+
+
+  private def emit : Unit =
     recv.emit(stack.remove(0))
 
 
-  def next_ready : Boolean =
+  private def next_ready : Boolean =
     (stack.size > 1) && (stack.head.ready)
 
 
-  def ready : Unit =
+  private def ready : Unit =
     while (next_ready) stack(1) match {
 
       case a: FQL_ATOM =>
@@ -46,7 +57,7 @@ class QueryLexer(recv: QueryParser) {
     }
 
 
-  def statement(next: FQL_TOKEN) = {
+  private def statement(next: FQL_TOKEN) = {
     stack.remove(0)
 
     if (next != stack.head)
