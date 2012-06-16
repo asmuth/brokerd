@@ -41,7 +41,8 @@ class FQL_OPERATOR extends FQL_TOKEN with FQL_OP with FQL_META {
   def ready = next != this
   def next = buf.trim match {
     case "=" => new FQL_OPERATOR_EQUALS
-    case _   => this
+    case ""  => this
+    case _   => new FQL_ATOM
   }
 }
 
