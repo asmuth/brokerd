@@ -19,7 +19,7 @@ class QueryParser {
   }
 
 
-  def emit(token: FQL_TOKEN) : Unit = {
+  def next(token: FQL_TOKEN) : Unit = {
     println("emit: " + token.getClass.getName)
     token match {
 

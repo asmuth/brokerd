@@ -30,7 +30,7 @@ class QueryLexer(recv: QueryParser) {
     stack(1) match {
 
       case a: FQL_ATOM =>
-        recv.emit(stack.remove(0))
+        recv.next(stack.remove(0))
 
       case m: FQL_META =>
         stack.remove(1)

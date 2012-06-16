@@ -45,43 +45,48 @@ class FQL_ATOM extends FQL_TOKEN {
 }
 
 class FQL_STREAM extends FQL_TOKEN with FQL_KEYWORD {}
-class FQL_OR extends FQL_TOKEN with FQL_KEYWORD{}
+class FQL_OR extends FQL_TOKEN with FQL_KEYWORD {}
 class FQL_AND extends FQL_TOKEN with FQL_KEYWORD {}
 
 
 class FQL_KEY extends FQL_TOKEN {
   def ready =
-    ((cur == ' ') || (cur == ')')) && (buf.size > 1)
+    ((cur == ' ') || (cur == ')') || (cur == '=')) && (buf.size > 1)
   def next = this
 }
 
-class FQL_OPERATOR extends FQL_TOKEN {
-  override def buffer(c: Char, s: String) = ""
-  def ready =
-    (cur == '=')
-  def next =
-    if (ready) cur match {
-      case '=' => new FQL_OP_EQUALS
-    } else this
-}
 
-trait FQL_OP_UNARY extends FQL_OPERATOR {
-  override def next = this
+
+trait FQL_OPERATOR extends FQL_TOKEN {
+  //override def buffer(c: Char, b: String) = ""
 }
 
 trait FQL_OP_VARARG extends FQL_OPERATOR {
   var args : Int
-  override def ready = args == 0
-  override def next = if (args == 0) this else
+  def ready = args == 0
+  def next = if (args == 0) this else
     { args -= 1; new FQL_KEY }
+}
+
+trait FQL_OP_UNARY extends FQL_OPERATOR {
+  def ready = true
+  def next = this
+}
+
+class FQL_OP_META extends FQL_OPERATOR with FQL_META {
+  def ready = next != this
+  def next = buf.trim match {
+    case "=" => new FQL_OP_EQUALS
+    case _   => this
+  }
 }
 
 class FQL_OP_EQUALS extends FQL_OP_VARARG {
   var args : Int = 1
 }
 
-class FQL_OP_META extends FQL_OPERATOR with FQL_META {}
 class FQL_OP_EXISTS extends FQL_OP_UNARY { }
+
 
 class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   var key : FQL_KEY      = null
@@ -97,7 +102,7 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
     (key != null) && (op != null) && (buf == ")")
 
   def next =
-    if ((key == null) && (buf == "(")) 
+    if ((key == null) && (buf == "("))
       new FQL_KEY
     else
       this
