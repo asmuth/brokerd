@@ -105,7 +105,7 @@ class FQL_STRING extends FQL_TOKEN with FQL_VAL {
     else this
 
   def get =
-    buf
+    buf.substring(1, buf.size - 1)
 
 }
 

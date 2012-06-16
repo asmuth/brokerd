@@ -19,9 +19,7 @@ class QueryParser {
   }
 
 
-  def next(token: FQL_TOKEN) : Unit = {
-    println("emit: " + token.getClass.getName)
-    token match {
+  def next(token: FQL_TOKEN) : Unit = token match {
 
     case t: FQL_STREAM  =>
       if (query == null)
@@ -35,7 +33,7 @@ class QueryParser {
       else
         query.eval(t)
 
-  } }
+  }
 
 
   private def build_query(token: FQL_TOKEN) : Query = token match {

@@ -32,9 +32,8 @@ class StreamQuery() extends Query{
 
     case t: FQL_WHERE => t.left match {
 
-      case k: FQL_KEY => {
-        println("push key: " + k.get)
-        fstack.push(k)(eval_filter(t)) }
+      case k: FQL_KEY =>
+        fstack.push(k)(eval_filter(t))
 
       case _ =>
         throw new ParseException("left hand operator of a where clause must be a FQL_KEY")
@@ -52,7 +51,7 @@ class StreamQuery() extends Query{
     case o: FQL_OPERATOR_EQUALS => token.right match {
 
       case v: FQL_STRING =>
-        (x: String) => { println("filter: " + v.get + " vs " + x); v.get == x }
+        (x: String) => v.get == x
 
     }
 

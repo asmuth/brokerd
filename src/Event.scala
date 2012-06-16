@@ -32,10 +32,8 @@ class Event(raw: Array[Byte]){
     root.get(key.get) != null // FIXPAUL: recurse
 
 
-  def getAsString(key: FQL_KEY) : String = {
-    println("gettasstring: " + key.get)
+  def getAsString(key: FQL_KEY) : String =
     root.get(key.get).getAsString() // FIXPAUL: recurse
-  }
 
 
   private def serialize() : Array[Byte] =
