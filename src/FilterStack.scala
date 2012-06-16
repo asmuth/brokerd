@@ -1,7 +1,7 @@
 package com.paulasmuth.fyrehose
 
 trait FilterStack{
-  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit
+  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit
   def eval(event: Event) : Boolean
   def and() : FilterStack
   def or() : FilterStack
@@ -10,7 +10,7 @@ trait FilterStack{
 
 class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends FilterStack{
 
-  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit =
+  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit =
     lst.head.push(key)(lambda)
 
 
@@ -30,11 +30,11 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
 
 class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
-  var fkey    : FQL_KEY           = null
-  var flambda : String => Boolean = null
+  var fkey    : FQL_KEY          = null
+  var flambda : Event => Boolean = null
 
 
-  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit = {
+  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit = {
     if (fkey != null)
       throw new ParseException("invalid filter chain")
 
@@ -62,7 +62,7 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
     if ((fkey != null) && (event.exists(fkey) unary_!))
       return false
 
-    else if ((fkey != null) && (flambda(event.getAsString(fkey)) unary_!))
+    else if ((fkey != null) && (flambda(event) unary_!))
       return false
 
     else if (next == null)

@@ -10,10 +10,10 @@ class QueryParser {
     for (pos <- new Range(0, bdy.raw.size - 1, 1))
       lexer.next(bdy.raw(pos).toChar)
 
+    lexer.finish
+
     if (query == null)
       throw new ParseException("query must contain one of stream, info, etc.")
-
-    lexer.finish
 
     query
   }
