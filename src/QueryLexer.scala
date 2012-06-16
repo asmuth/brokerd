@@ -33,7 +33,7 @@ class QueryLexer(recv: QueryParser) {
         recv.emit(stack.remove(0))
 
       case m: FQL_META =>
-        { println("REPLACE"); stack.remove(1); next }
+        { println("REPLACE"); stack.remove(1) }
 
       case s: FQL_STATEMENT =>
         (stack.remove(0) :: args.toList).foreach
@@ -48,7 +48,7 @@ class QueryLexer(recv: QueryParser) {
   }
 
   def finish : Unit = {
-    next(' '); next(' ')
+    next(' ')
 
     if (stack.size > 1)
       throw new ParseException("invalid query, expected " +

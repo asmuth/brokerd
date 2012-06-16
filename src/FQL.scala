@@ -87,13 +87,17 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   var key : FQL_KEY      = null
   var op  : FQL_OPERATOR = null
 
-  override def buffer(_cur: Char, _buf: String) = ""
+  override def buffer(_cur: Char, _buf: String) =
+    if ((buf == "(") || (buf == ")"))
+      ""
+    else
+      _buf + _cur
 
   def ready =
-    (key != null) && (op != null) && (cur == ')')
+    (key != null) && (op != null) && (buf == ")")
 
   def next =
-    if ((key == null) && (cur == '(')) 
+    if ((key == null) && (buf == "(")) 
       new FQL_KEY
     else
       this
