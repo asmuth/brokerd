@@ -20,6 +20,9 @@ class Endpoint(socket: Socket) extends Runnable{
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
+  val stream = new InboundStream(this)
+  stream.set_safe_mode(safe_mode)
+
   Fyrehose.log("connection opened")
 
   val reactor = actor { loop {
@@ -28,21 +31,22 @@ class Endpoint(socket: Socket) extends Runnable{
       case TimeoutSig => timeout()
       case resp: QueryResponseChunk => write(resp.chunk)
       case xsig: QueryExitSig => query_finished()
+      case data: Array[Byte] => recv(data)
     }
   }}
 
 
   def run = {
-    val stream = new InboundStream(this)
-    stream.set_safe_mode(safe_mode)
-
     var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
     var next   = 0
 
     try{
       while ((next > -1) || (idle_status == false)){
+        //if (next > 0)
+          //stream.read(buffer, next)
+
         if (next > 0)
-          stream.read(buffer, next)
+          reactor ! java.util.Arrays.copyOfRange(buffer, 0, next)
 
         next = in_stream.read(buffer)
 
@@ -60,6 +64,10 @@ class Endpoint(socket: Socket) extends Runnable{
 
     close_connection()
   }
+
+
+  def recv(data: Array[Byte]) =
+    stream.read(data, data.size)
 
 
   def event(ev_body: MessageBody) = try{
