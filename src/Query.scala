@@ -11,6 +11,7 @@ case class QueryExitSig(query: Query)
 trait Query extends Actor{
 
   var sequence : Int = 0
+  var fstack : FilterStack = new AndFilterStack
 
   def act() = { 
     Actor.loop{ react{
