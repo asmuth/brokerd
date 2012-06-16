@@ -10,16 +10,15 @@ class QueryLexer(recv: QueryParser) {
 
   new FQL_ATOM +=: stack
 
-  def next(cur: Char) : Unit =
-    //if (trim(cursor) unary_!)
-      { cursor = cur; next }
+  def next(cur: Char) : Unit = 
+    { cursor = cur; next }
 
   def next : Unit = {
 
-    println( stack.head.getClass.getName + " - " + buffer + " - " + cursor )
-
     val head = stack.head.next(cursor, buffer)
     buffer   = stack.head.buffer(cursor, buffer)
+
+    debug
 
     if (head != stack.head)
       { head +=: stack; next }
@@ -33,7 +32,7 @@ class QueryLexer(recv: QueryParser) {
     next(' '); next(' ')
 
     if (stack.size > 1)
-      throw new ParseException("unfinished statement")
+      error
   }
 
 
@@ -41,17 +40,28 @@ class QueryLexer(recv: QueryParser) {
     (stack.size > 1) && (stack.head.ready)
 
 
-  private def ready : Unit =
+  private def ready() : Unit = {
+    val args  = ListBuffer[FQL_TOKEN]()
+
     while (next_ready) stack(1) match {
 
       case a: FQL_ATOM =>
         recv.emit(stack.remove(0))
 
       case s: FQL_STATEMENT =>
-        statement(s.next(stack.head))
+        if (args.size == 0)
+          statement(s.next(stack.head))
+        else
+          statement(s.next(args.remove(0)))
+
+      case m: FQL_META =>
+        { println("REPLACE"); stack.remove(1); next }
+
+      case t: FQL_TOKEN =>
+        stack.remove(0) +=: args; next
 
     }
-
+  }
 
   private def statement(head: FQL_TOKEN) = {
     stack.remove(0)
@@ -63,11 +73,17 @@ class QueryLexer(recv: QueryParser) {
   }
 
 
-  private def trim(cursor: Char) : Boolean =
-    (cursor == ' ') && 
-    (buffer.length > 0) && 
-    (buffer.charAt(buffer.size - 1) == ' ')
+  private def error =
+    throw new ParseException("invalid query, expected " +
+      stack.head.getClass.getName.replaceFirst(""".*\.""", "") + 
+      " but found: >>" + buffer + "<<")
 
 
+  private def debug =
+    println(
+      " " + (if (stack.head.ready) "X" else " ") +
+      " | " + cursor + " | " + buffer + 
+      (" " * (15 - buffer.size)) + " | " + 
+      (stack.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) )
 }
 
