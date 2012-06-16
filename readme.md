@@ -51,14 +51,21 @@ Documentation
 
 ### Fyrehose Query Language
 
-format / syntax:
+**KEYS**: non-enclosed strings are treated as keys. you can descend into objects using the dot (`.`) operator. (e.g. params.user.first_name). if your keys contain dots, you must escape dots in your keys with a with a leading backslash. keys must not start with a number or dash symbol.
+
+**STRINGS**: strings can be enclosed in single-quotes (`'`), double-quotes (`"`) or backticks (`\`).
+
+**REGEX**: regular expressions must be enclosed in forward slashes (`/`). if your regex contains slashes, you must escape them with a leading backslash.
+
+**NUMBERS**: number don't need to be enclosed. numbers may contain a single dot if they are floating-point. numbers must not start with a dot.
+
+**TIME**: time values may be formatted like positive integers, in which case they are treated as timestamps. time values starting with a minus symbol (`-`) are treated as "seconds since now", if they end with one of `m`, `h`, `s` or `d` they are respectively treated as minutes, hours, seconds or days since now. the string `now` is also a valid time value.
+
+
+keywords / commands:
 
     stream
-    stream where(...)
-    stream where(...) since(...) until(...)
-    stream where(...) and/or where(..) since(...) until(...)
-    stream where(...) and/or where_not(..) since(...) until(...)
-    stream where(...) and where_not(..) or where(...) since(...) until(...)
+    info
 
 
 specifing the time range
@@ -74,22 +81,27 @@ specifing the time range
 
 filters for where / where_not
 
-    where(KEY = VALUE)
-    where(KEY ~ REGEX)
-    where(KEY INCLUDES VALUE)
-    where(KEY EXISTS)
+    where(KEY = "VALUE")
+    where(KEY = /REGEX/)
+    where(KEY = OTHER_KEY)
+
     where(KEY < MAX)
     where(KEY > MIN)
     where(KEY % MOD)
 
+    where(KEY exists)
+
+    where(KEY includes "VALUE")
+    where(KEY includes /REGEX/)
+
 
 examples:
 
-    stream since(0) until(now) where(channel = 'dawanda-firehose')
+    stream
     stream where(channel = 'dawanda-firehose')
-    stream where(channel & 'dawanda-firehose','dawanda-searchfeed')
-    stream since(0) where(_channel = 'dawanda-tap') where(q_params.page > 150)
-
+    stream where_not(params.query = /^fnord/) or where(params.important = true)
+    stream since(0) until(now) where(channel = 'dawanda-firehose')
+    stream since(-12h) where(channel = 'dawanda-tap') and where(q_params.page > 150)
 
 
 
