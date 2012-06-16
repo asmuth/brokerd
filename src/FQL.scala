@@ -1,10 +1,13 @@
 package com.paulasmuth.fyrehose;
 
-trait FQL_TOKEN {
-  def ready : Boolean
-  def next : FQL_TOKEN
+trait FQL_BUFFER {
   var cur : Char = 0
   var buf : String = null
+}
+
+trait FQL_TOKEN extends FQL_BUFFER {
+  def ready : Boolean
+  def next : FQL_TOKEN
   def buffer(_cur: Char, _buf: String) : String =
     if (ready) "" else _buf + _cur
   def next(_cur: Char, _buf: String) : FQL_TOKEN =
@@ -15,19 +18,20 @@ trait FQL_STATEMENT {
   def next(token: FQL_TOKEN) : FQL_TOKEN
 }
 
-trait FQL_KEYWORD {
-  def ready : Boolean = true
+trait FQL_KEYWORD extends FQL_BUFFER {
+  def ready : Boolean =
+    (cur == ' ' && ((buf.size == 0) || buf == "()"))
   def next : FQL_TOKEN =
     this.asInstanceOf[FQL_TOKEN]
 }
 
 class FQL_ATOM extends FQL_TOKEN {
   def ready =
-    (cur == ' ') || (cur == '(')
+    ((cur == ' ') || (cur == '(')) && (buf.size > 0)
   def next =
-    if ((cur != ' ') && (cur != '('))
+    if (ready unary_!)
       this
-    else buf match {
+    else buf.trim match {
       case "stream"    => new FQL_STREAM
       case "and"       => new FQL_AND
       case "or"        => new FQL_OR
@@ -38,7 +42,7 @@ class FQL_ATOM extends FQL_TOKEN {
 }
 
 class FQL_STREAM extends FQL_TOKEN with FQL_KEYWORD {}
-class FQL_OR extends FQL_TOKEN with FQL_KEYWORD {}
+class FQL_OR extends FQL_TOKEN with FQL_KEYWORD{}
 class FQL_AND extends FQL_TOKEN with FQL_KEYWORD {}
 
 class FQL_KEY extends FQL_TOKEN {
@@ -62,7 +66,7 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
     (key != null) && (op != null) && (cur == ')')
 
   def next =
-    if (ready) this else new FQL_KEY
+    if ((ready) || (cur == '(')) this else new FQL_KEY
 
   def next(t: FQL_TOKEN) = t match {
     case k: FQL_KEY =>

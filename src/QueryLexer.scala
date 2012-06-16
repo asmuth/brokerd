@@ -5,40 +5,36 @@ import scala.collection.mutable.ListBuffer
 class QueryLexer(recv: QueryParser) {
 
   var buffer : String = ""
+  var cursor : Char   = 0
   val stack  = ListBuffer[FQL_TOKEN]()
 
   new FQL_ATOM +=: stack
 
-  def next(cursor: Char) : Unit = {
+  def next(cur: Char) : Unit =
+    //if (trim(cursor) unary_!)
+      { cursor = cur; next }
+
+  def next : Unit = {
 
     println( stack.head.getClass.getName + " - " + buffer + " - " + cursor )
 
-    if ((cursor == ' ') && (buffer.size == 0))
-      return ()
-
-    val next = stack.head.next(cursor, buffer)
-
-    if (next != stack.head)
-      next +=: stack
-
-    if (stack.head.ready)
-      ready
-
+    val cur = stack.head.next(cursor, buffer)
     buffer  = stack.head.buffer(cursor, buffer)
+
+    if (cur != stack.head)
+      { cur +=: stack; next }
+
+    else if (stack.head.ready)
+      ready
 
   }
 
-
   def finish : Unit = {
-    next(' ')
+    next(' '); next(' ')
 
     if (stack.size > 1)
       throw new ParseException("unfinished statement")
   }
-
-
-  private def emit : Unit =
-    recv.emit(stack.remove(0))
 
 
   private def next_ready : Boolean =
@@ -49,7 +45,7 @@ class QueryLexer(recv: QueryParser) {
     while (next_ready) stack(1) match {
 
       case a: FQL_ATOM =>
-        emit
+        recv.emit(stack.remove(0))
 
       case s: FQL_STATEMENT =>
         statement(s.next(stack.head))
@@ -64,6 +60,12 @@ class QueryLexer(recv: QueryParser) {
       next +=: stack
 
   }
+
+
+  private def trim(cursor: Char) : Boolean =
+    (cursor == ' ') && 
+    (buffer.length > 0) && 
+    (buffer.charAt(buffer.size - 1) == ' ')
 
 
 }
