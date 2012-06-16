@@ -119,7 +119,7 @@ class InboundStream(recv: Endpoint){
 
 
   private def emit_query(buf: Array[Byte]) =
-    recv.query(new QueryBody(buf))
+    recv.query(new QueryBody(buf ++ "\n".getBytes))
 
 
   private def trim_buffer(trim_pos: Integer, check_pos: Integer) = {
