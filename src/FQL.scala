@@ -47,12 +47,13 @@ class FQL_AND extends FQL_TOKEN with FQL_KEYWORD {}
 
 class FQL_KEY extends FQL_TOKEN {
   def ready =
-    (cur == ' ') || (cur == ')')
+    ((cur == ' ') || (cur == ')')) && (buf.size > 1)
   def next = this
 }
 
 class FQL_OPERATOR extends FQL_TOKEN {
-  def ready = cur == ' '
+  def ready = 
+    (cur == ' ') && (buf.size > 1)
   def next = this
 }
 
@@ -70,7 +71,10 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
 
   def next(t: FQL_TOKEN) = t match {
     case k: FQL_KEY =>
-      { key = k; new FQL_OPERATOR }
+      if (key == null)
+        { key = k; new FQL_OPERATOR }
+      else
+        { /* is value */ this }
     case o: FQL_OPERATOR =>
       { op = o; this }
   }

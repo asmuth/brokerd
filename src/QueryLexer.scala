@@ -18,11 +18,11 @@ class QueryLexer(recv: QueryParser) {
 
     println( stack.head.getClass.getName + " - " + buffer + " - " + cursor )
 
-    val cur = stack.head.next(cursor, buffer)
-    buffer  = stack.head.buffer(cursor, buffer)
+    val head = stack.head.next(cursor, buffer)
+    buffer   = stack.head.buffer(cursor, buffer)
 
-    if (cur != stack.head)
-      { cur +=: stack; next }
+    if (head != stack.head)
+      { head +=: stack; next }
 
     else if (stack.head.ready)
       ready
@@ -53,12 +53,13 @@ class QueryLexer(recv: QueryParser) {
     }
 
 
-  private def statement(next: FQL_TOKEN) = {
+  private def statement(head: FQL_TOKEN) = {
     stack.remove(0)
 
-    if (next != stack.head)
-      next +=: stack
+    if (head != stack.head)
+      head +=: stack
 
+    next
   }
 
 
