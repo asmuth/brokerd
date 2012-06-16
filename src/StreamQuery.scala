@@ -2,7 +2,6 @@ package com.paulasmuth.fyrehose
 
 import scala.actors._
 
-// fixpaul: since(), until(), less/greater-than, regex, include exists
 class StreamQuery() extends Query{
 
   var recv : Actor = null

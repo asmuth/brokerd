@@ -1,5 +1,7 @@
 package com.paulasmuth.fyrehose;
 
+// todo: since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+
 trait FQL_BUFFER {
   var cur : Char = 0
   var buf : String = null
@@ -102,10 +104,12 @@ class FQL_OPERATOR_EQUALS extends FQL_OPERATOR_BINARY {}
 class FQL_NUMBER extends FQL_TOKEN with FQL_META {
 
   def ready =
-    (cur < 48) || (cur > 57)
+    ((cur < 48) || (cur > 57)) &&
+    ((cur != '.') || (buf.indexOf('.') != -1))
 
   def next =
     if (ready unary_!) this
+    else if (buf.indexOf('.') != -1) new FQL_FLOAT(buf)
     else new FQL_INTEGER(buf)
 
 }

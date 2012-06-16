@@ -129,7 +129,7 @@ class Endpoint(socket: Socket) extends Runnable{
     Fyrehose.error("endpoint closed: " + msg)
 
     if (recoverable)
-      write(("{\"error\": \""+msg+"\"}").getBytes) // FIXPAUL
+      write(("{\"error\": \""+msg+"\"}\n").getBytes) // FIXPAUL
 
     close_connection()
   }

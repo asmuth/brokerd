@@ -56,8 +56,8 @@ class QueryLexer(recv: QueryParser) {
 
     if (stack.size > 1)
       throw new ParseException("invalid query, expected " +
-        stack.head.getClass.getName.replaceFirst(""".*\.""", "") + 
-        " but found: >>" + buffer + "<<")
+        stack.head.getClass.getName.replaceFirst(""".*\.""", "") +
+        " but found: " + buffer)
   }
 
 
