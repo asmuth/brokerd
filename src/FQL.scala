@@ -33,6 +33,10 @@ class FQL_ATOM extends FQL_TOKEN with FQL_META {
       case "or"        => new FQL_OR
       case "where"     => new FQL_WHERE(true)
       case "where_not" => new FQL_WHERE(false)
+      case "includes"  => new FQL_OPERATOR_INCLUDES
+      case "exists"    => new FQL_OPERATOR_EXISTS
+      case "true"      => new FQL_TRUE
+      case "false"     => new FQL_FALSE
       case _           => new FQL_KEY(buf)
     }
 }
@@ -101,7 +105,22 @@ trait FQL_OPERATOR_BINARY extends FQL_OPERATOR_VARARG {
 }
 
 class FQL_OPERATOR_EQUALS extends FQL_OPERATOR_BINARY {}
+class FQL_OPERATOR_INCLUDES extends FQL_OPERATOR_BINARY {}
+class FQL_OPERATOR_EXISTS extends FQL_OPERATOR_UNARY {}
 
+
+trait FQL_BOOL extends FQL_TOKEN with FQL_VAL {
+  def get : Boolean
+  def next = this
+  def ready = true
+}
+
+class FQL_TRUE extends FQL_BOOL {
+  def get = true
+}
+class FQL_FALSE extends FQL_BOOL {
+  def get = false
+}
 
 class FQL_NUMBER extends FQL_TOKEN with FQL_META {
 

@@ -41,6 +41,9 @@ class Event(raw: Array[Byte]){
   def getAsDouble(key: FQL_KEY) : Double =
     getAsGsonPrimitive(key).getAsDouble()
 
+  def getAsBoolean(key: FQL_KEY) : Boolean =
+    getAsGsonPrimitive(key).getAsBoolean()
+
 
   private def getAsGsonPrimitive(key: FQL_KEY) =
     root.get(key.get) // FIXPAUL: recurse

@@ -61,6 +61,9 @@ class StreamQuery() extends Query{
       case v: FQL_FLOAT =>
         (m: Event) => m.getAsDouble(key) == v.get
 
+      case v: FQL_BOOL =>
+        (m: Event) => m.getAsBoolean(key) == v.get
+
     }
 
     case _ =>
