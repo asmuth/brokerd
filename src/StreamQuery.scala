@@ -21,31 +21,45 @@ class StreamQuery() extends Query{
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 
-  def eval(part: FQL_TOKEN) = ()
-/*
-    case 'or =>
+
+  def eval(token: FQL_TOKEN) = token match {
+
+    case t: FQL_OR =>
       fstack = fstack.or()
 
-    case 'and =>
+    case t: FQL_AND =>
       fstack = fstack.and()
 
-    case 'where =>
-      fstack.push(token.key.name)(eval_filter(token))
+    case t: FQL_WHERE => t.left match {
+
+      case k: FQL_KEY => {
+        println("push key: " + k.get)
+        fstack.push(k)(eval_filter(t)) }
+
+      case _ =>
+        throw new ParseException("left hand operator of a where clause must be a FQL_KEY")
+
+    }
 
     case _ =>
-      throw new ParseException("invalid query token: " + token.name.toString)
+      throw new ParseException("invalid token: " + token.getClass.getName)
 
   }
-*/
 
 
-/*  def eval_filter(token: X_TOKEN) = token.key match {
+  def eval_filter(token: FQL_WHERE) = token.op match {
 
-    case 'equals_str =>
-      (x: String) => x == token.value.asInstanceOf[String]
+    case o: FQL_OPERATOR_EQUALS => token.right match {
+
+      case v: FQL_STRING =>
+        (x: String) => { println("filter: " + v.get + " vs " + x); v.get == x }
+
+    }
 
     case _ =>
-      throw new ParseException("invalid query token: " + token.name.toString)
+      throw new ParseException("invalid token: " + token.getClass.getName)
 
-  }*/
+  }
+
+
 }

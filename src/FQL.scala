@@ -103,12 +103,19 @@ class FQL_STRING extends FQL_TOKEN with FQL_VAL {
   def next =
     if (quot == 0) { quot = cur; this }
     else this
+
+  def get =
+    buf
+
 }
 
 class FQL_KEY extends FQL_TOKEN with FQL_VAL {
+  var value: String = ""
   def ready =
     (cur == ' ') || (cur == ')') || (cur == '=')
-  def next = this
+  def next =
+    { if (buf.size > 0) value = buf; this }
+  def get = value
 }
 
 class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {

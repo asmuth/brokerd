@@ -4,7 +4,7 @@ import com.google.gson._
 import java.io._
 
 class Event(raw: Array[Byte]){
-  
+
   var touched = false 
   val root = EventParser.parse(raw)
 
@@ -28,12 +28,14 @@ class Event(raw: Array[Byte]){
     root.get("_time").getAsLong()
 
 
-  def exists(key: String) : Boolean = 
-    root.get(key) != null // FIXPAUL: recurse with dot operator
+  def exists(key: FQL_KEY) : Boolean = 
+    root.get(key.get) != null // FIXPAUL: recurse
 
 
-  def getAsString(key: String) : String =
-    root.get(key).getAsString() // FIXPAUL: recurse with dot operator
+  def getAsString(key: FQL_KEY) : String = {
+    println("gettasstring: " + key.get)
+    root.get(key.get).getAsString() // FIXPAUL: recurse
+  }
 
 
   private def serialize() : Array[Byte] =

@@ -1,7 +1,7 @@
 package com.paulasmuth.fyrehose
 
 trait FilterStack{
-  def push(key: String)(lambda: String => Boolean) : Unit
+  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit
   def eval(event: Event) : Boolean
   def and() : FilterStack
   def or() : FilterStack
@@ -10,7 +10,7 @@ trait FilterStack{
 
 class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends FilterStack{
 
-  def push(key: String)(lambda: String => Boolean) : Unit =
+  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit =
     lst.head.push(key)(lambda)
 
 
@@ -30,11 +30,11 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
 
 class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
-  var fkey    : String            = null
+  var fkey    : FQL_KEY           = null
   var flambda : String => Boolean = null
 
 
-  def push(key: String)(lambda: String => Boolean) : Unit = {
+  def push(key: FQL_KEY)(lambda: String => Boolean) : Unit = {
     if (fkey != null)
       throw new ParseException("invalid filter chain")
 
@@ -74,6 +74,5 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
   } catch {
     case e: RuntimeException => return false
   }
-
 
 }
