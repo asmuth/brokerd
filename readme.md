@@ -104,9 +104,18 @@ examples:
 
 ### Usage
 
+fixpaul: journal (chunksize), idle-timeout, tcp/udp
+
     usage: fyrehose [options]
       -l, --listen    <addr>    listen for clients on this tcp address
       -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
+
+
+### Installation
+
+  here be dragons
+
+
 
 
 Advanced / Hacking
