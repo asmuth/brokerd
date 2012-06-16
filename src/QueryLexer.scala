@@ -16,7 +16,7 @@ class QueryLexer(recv: QueryParser) {
 
   def next : Unit = {
 
-    val head = stack.head.next(cursor, buffer)
+    var head = stack.head.next(cursor, buffer)
     buffer   = stack.head.buffer(cursor, buffer)
 
     debug
@@ -33,19 +33,23 @@ class QueryLexer(recv: QueryParser) {
         recv.emit(stack.remove(0))
 
       case m: FQL_META =>
-        { println("REPLACE"); stack.remove(1) }
+        stack.remove(1)
 
       case s: FQL_STATEMENT =>
-        (stack.remove(0) :: args.toList).foreach
-          { arg => statement(s, arg); args -= arg }
+        (stack.remove(0) :: args.toList).foreach { arg =>
+          head = s.next(arg)
+          if (head != stack.head) head +=: stack
+          args -= arg 
+        }
 
       case t: FQL_TOKEN =>
-        { println("ARGSTACK"); stack.remove(0) +=: args }
+        stack.remove(0) +=: args
 
     }
 
     next
   }
+
 
   def finish : Unit = {
     next(' ')
@@ -57,17 +61,6 @@ class QueryLexer(recv: QueryParser) {
   }
 
 
-  private def statement(statement: FQL_STATEMENT, arg: FQL_TOKEN) = {
-
-    val head = statement.next(arg)
-    println("statement: " + arg.getClass.getName + " => " + head.getClass.getName)
-
-    if (head != stack.head)
-      head +=: stack
-
-  }
-
-
   private def debug =
     println(
       " " + (if (stack.head.ready) "X" else " ") +
@@ -75,5 +68,6 @@ class QueryLexer(recv: QueryParser) {
       (" " * (15 - buffer.size)) + " | " +
       (stack.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) + " (" +
       (args.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) + ")")
+
 }
 
