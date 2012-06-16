@@ -63,7 +63,7 @@ class QueryLexer(recv: QueryParser) {
 
   private def debug =
     println(
-      " " + (if (stack.head.ready) "X" else " ") +
+      " " + (if (stack.head.ready) ">" else " ") +
       " | " + cursor + " | " + buffer +
       (" " * (15 - buffer.size)) + " | " +
       (stack.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) + " (" +

@@ -100,7 +100,7 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
     if ((buf == "(") || (buf == ")"))
       ""
     else
-      _buf + _cur
+      (_buf + _cur).trim
 
   def ready =
     (key != null) && (op != null) && (buf == ")")
