@@ -115,7 +115,7 @@ class InboundStream(recv: Endpoint){
 
 
   private def emit_event(buf: Array[Byte]) =
-    recv.event(new EventBody(buf))
+    recv.event(new MessageBody(buf))
 
 
   private def emit_query(buf: Array[Byte]) =

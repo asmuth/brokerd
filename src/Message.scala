@@ -3,10 +3,10 @@ package com.paulasmuth.fyrehose
 import com.google.gson._
 import java.io._
 
-class Event(raw: Array[Byte]){
+class Message(raw: Array[Byte]){
 
   var touched = false 
-  val root = EventParser.parse(raw)
+  val root = MessageParser.parse(raw)
 
 
   if (root.has("_time") unary_!){

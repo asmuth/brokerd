@@ -3,14 +3,10 @@ package com.paulasmuth.fyrehose
 import com.google.gson._
 import java.io._
 
-class ParseException(msg: String) extends Exception{
-  override def toString = msg
-}
-
-object EventParser{
+object MessageParser {
 
   val json_parser = new JsonParser()
-  
+
   def parse(raw: Array[Byte]) : JsonObject = try{
     parse_unsafe(raw)
   } catch {

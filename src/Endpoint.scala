@@ -62,8 +62,8 @@ class Endpoint(socket: Socket) extends Runnable{
   }
 
 
-  def event(ev_body: EventBody) = try{
-    Fyrehose.backbone ! new Event(ev_body.raw)
+  def event(ev_body: MessageBody) = try{
+    Fyrehose.backbone ! new Message(ev_body.raw)
   } catch {
     case e: ParseException => error(e.toString, true)
   }

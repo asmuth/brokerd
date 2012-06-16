@@ -4,7 +4,7 @@ import java.util.concurrent._
 import scala.actors.Actor
 import scala.actors.Actor._
 
-case class EventBody(raw: Array[Byte])
+case class MessageBody(raw: Array[Byte])
 
 class Backbone() extends Actor{
 
@@ -14,15 +14,15 @@ class Backbone() extends Actor{
   def act() = {
     Actor.loop{ receive{
       case query: Query => execute(query)
-      case event: Event => dispatch(event)
+      case msg: Message => dispatch(msg)
       case QueryExitSig(query) => finish(query)
     }}
   }
 
-  private def dispatch(event: Event) = {
+  private def dispatch(msg: Message) = {
     sequence += 1
-    queries.foreach(_ ! event)
-    Fyrehose.writer ! event
+    queries.foreach(_ ! msg)
+    Fyrehose.writer ! msg
   }
 
 

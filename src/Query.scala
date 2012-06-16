@@ -17,13 +17,13 @@ trait Query extends Actor{
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)
       case HangupSig => { Fyrehose.log("query finished"); exit() }
-      case event: Event => data(event)
+      case msg: Message => data(msg)
     }}
   }
 
   def execute(endpoint: Actor)
 
-  def data(event: Event)
+  def data(msg: Message)
 
   def eval(part: FQL_TOKEN)
 

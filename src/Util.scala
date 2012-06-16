@@ -1,5 +1,9 @@
 package com.paulasmuth.fyrehose
 
+class ParseException(msg: String) extends Exception{
+  override def toString = msg
+}
+
 object FyrehoseUtil{
 
   def now() : Long =

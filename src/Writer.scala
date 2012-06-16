@@ -8,18 +8,18 @@ class Writer extends Actor {
 
   def act(){ 
     Actor.loop{ react{
-      case event: Event => persist(event)
+      case msg: Message => persist(msg)
     }}
   }
 
-  def persist(event: Event) = {
+  def persist(msg: Message) = {
     val file = 
-      Fyrehose.CONFIG('out_dir) + "/" + ((event.time() / 
+      Fyrehose.CONFIG('out_dir) + "/" + ((msg.time() / 
       Fyrehose.FILE_CHUNK_SIZE) * 
       Fyrehose.FILE_CHUNK_SIZE).toString
 
     using (new FileWriter(file, true)){ 
-      writer => writer.write(new String(event.bytes) + "\n")
+      writer => writer.write(new String(msg.bytes) + "\n")
     }
   }
 

@@ -78,19 +78,19 @@ class QueryParser {
     case o: FQL_OPERATOR_EQUALS => token.right match {
 
       case v: FQL_STRING =>
-        (m: Event) => m.getAsString(key) == v.get
+        (m: Message) => m.getAsString(key) == v.get
 
       case v: FQL_KEY =>
-        (m: Event) => m.getAsString(key) == m.getAsString(v)
+        (m: Message) => m.getAsString(key) == m.getAsString(v)
 
       case v: FQL_INTEGER =>
-        (m: Event) => m.getAsInteger(key) == v.get
+        (m: Message) => m.getAsInteger(key) == v.get
 
       case v: FQL_FLOAT =>
-        (m: Event) => m.getAsDouble(key) == v.get
+        (m: Message) => m.getAsDouble(key) == v.get
 
       case v: FQL_BOOL =>
-        (m: Event) => m.getAsBoolean(key) == v.get
+        (m: Message) => m.getAsBoolean(key) == v.get
 
       case _ =>
         unexpected_token(token.right.asInstanceOf[FQL_TOKEN], "FQL_VAL")

@@ -10,12 +10,12 @@ class StreamQuery() extends Query{
     recv = endpoint
 
 
-  def data(event: Event) =
+  def data(msg: Message) =
     if (recv == null){
-      this ! event
-    } else if(fstack.eval(event)) {
+      this ! msg
+    } else if(fstack.eval(msg)) {
       // FIXPAUL: race condition ahead!
-      recv ! new QueryResponseChunk(event.bytes)
+      recv ! new QueryResponseChunk(msg.bytes)
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 

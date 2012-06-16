@@ -1,8 +1,8 @@
 package com.paulasmuth.fyrehose
 
 trait FilterStack{
-  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit
-  def eval(event: Event) : Boolean
+  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit
+  def eval(event: Message) : Boolean
   def and() : FilterStack
   def or() : FilterStack
 }
@@ -10,7 +10,7 @@ trait FilterStack{
 
 class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends FilterStack{
 
-  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit =
+  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit =
     lst.head.push(key)(lambda)
 
 
@@ -22,7 +22,7 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
     new OrFilterStack(new AndFilterStack() :: lst)
 
 
-  def eval(event: Event) : Boolean =
+  def eval(event: Message) : Boolean =
     lst.find(filter => filter.eval(event)).isEmpty unary_!
 
 }
@@ -31,10 +31,10 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
 class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
   var fkey    : FQL_KEY          = null
-  var flambda : Event => Boolean = null
+  var flambda : Message => Boolean = null
 
 
-  def push(key: FQL_KEY)(lambda: Event => Boolean) : Unit = {
+  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit = {
     if (fkey != null)
       throw new ParseException("invalid filter chain")
 
@@ -57,7 +57,7 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
       new OrFilterStack(List(new AndFilterStack(), this))
 
 
-  def eval(event: Event) : Boolean = try {
+  def eval(event: Message) : Boolean = try {
 
     if ((fkey != null) && (event.exists(fkey) unary_!))
       return false
