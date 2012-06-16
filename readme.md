@@ -7,21 +7,21 @@ messages on the server side and to replay their message history.
 
 **Synopsis / Example:**
 
-_add a few example messages:_
+_publish a few example messages:_
 
     echo '{ "action": "signup", "referrer": "ref1" }' | nc -w0 localhost 2323
     echo '{ "action": "signup", "referrer": "ref2" }' | nc -w0 localhost 2323
     echo '{ "action": "signup", "referrer": "ref3" }' | nc -w0 localhost 2323
 
 
-_get the last 5 minutes of signups:_
-
-    echo "stream where(action = 'signup') since(-5m) until(now)" | nc -w0 localhost 2323
-
-
 _subscribe to all signups where referrer matches /^ref/ from now on:_
 
     echo "stream where(action = 'signup') and where(referrer = /^ref/)" | nc -w0 localhost 2323
+
+
+_get the last 5 minutes of signups:_
+
+    echo "stream where(action = 'signup') since(-5m) until(now)" | nc -w0 localhost 2323
 
 
 
@@ -43,13 +43,6 @@ The order of messages within a response is not guaranteed to be chronological.
 You can run multiple queries at the same time. You can also publish messages while queries are
 running. Unless in keepalive-mode, Fyrehose will close the connection after all queries have
 finished.
-
-### Usage
-
-    usage: fyrehose [options]
-      -l, --listen    <addr>    listen for clients on this tcp address
-      -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
-
 
 ### Fyrehose Query Language
 
@@ -95,6 +88,7 @@ examples:
     stream since(-12h) where(channel = 'dawanda-tap') and where(q_params.page > 150)
 
 
+
 **KEYS**: non-enclosed strings are treated as keys. you can descend into objects using the dot (`.`) operator. (e.g. params.user.first_name). if your keys contain dots, you must escape dots in your keys with a with a leading backslash. keys must not start with a number or dash symbol.
 
 **STRINGS**: strings can be enclosed in single-quotes `'`, double-quotes `"` or backticks `\``.
@@ -106,6 +100,13 @@ examples:
 **BOOLEAN**: the strings `true` or `false` are treated as boolean values. they must not be enclosed in quotes.
 
 **TIME**: time values may be formatted like positive integers, in which case they are treated as timestamps. time values starting with a minus symbol `-` are treated as "seconds since now", if they end with one of `m`, `h`, `s` or `d` they are respectively treated as minutes, hours, seconds or days since now. the string `now` is also a valid time value.
+
+
+### Usage
+
+    usage: fyrehose [options]
+      -l, --listen    <addr>    listen for clients on this tcp address
+      -p, --path      <path>    path to store data (default: /tmp/fyrehose/)
 
 
 Advanced / Hacking
