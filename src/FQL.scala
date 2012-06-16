@@ -22,7 +22,7 @@ trait FQL_META {}
 
 trait FQL_KEYWORD extends FQL_BUFFER {
   def ready : Boolean =
-    (cur == ' ' && ((buf.size == 0) || buf == "()"))
+    ((cur == ' ' && (buf.size == 0)) || buf == "()")
   def next : FQL_TOKEN =
     this.asInstanceOf[FQL_TOKEN]
 }
