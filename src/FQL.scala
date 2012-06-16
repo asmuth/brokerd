@@ -112,8 +112,9 @@ class FQL_KEY extends FQL_TOKEN with FQL_VAL {
 }
 
 class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
-  var key : FQL_VAL  = null
-  var op  : FQL_OP   = null
+  var left  : FQL_VAL  = null
+  var right : FQL_VAL  = null
+  var op    : FQL_OP   = null
 
   override def buffer(_cur: Char, _buf: String) =
     if ((buf == "(") || (buf == ")"))
@@ -122,20 +123,23 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
       (_buf + _cur).trim
 
   def ready =
-    (key != null) && (op != null) && (buf == ")")
+    (left != null) &&
+    (op != null) &&
+    (right != null) &&
+    (buf == ")")
 
   def next =
-    if ((key == null) && (buf == "("))
+    if ((left == null) && (buf == "("))
       new FQL_VALUE
     else
       this
 
   def next(t: FQL_TOKEN) = t match {
-    case k: FQL_VAL =>
-      if (key == null)
-        { key = k; new FQL_OPERATOR }
+    case v: FQL_VAL =>
+      if (left == null)
+        { left = v; new FQL_OPERATOR }
       else
-        { /* is value */ this }
+        { right = v; this }
     case o: FQL_OP =>
       { op = o; this }
   }
