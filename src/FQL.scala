@@ -38,6 +38,7 @@ class FQL_ATOM extends FQL_TOKEN with FQL_META {
       case "exists"    => new FQL_OPERATOR_EXISTS
       case "true"      => new FQL_TRUE
       case "false"     => new FQL_FALSE
+      case ""          => this
       case _           => new FQL_KEY(buf)
     }
 }
