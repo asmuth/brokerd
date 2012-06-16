@@ -7,6 +7,7 @@ class QueryLexer(recv: QueryParser) {
   var buffer : String = ""
   var cursor : Char   = 0
   val stack  = ListBuffer[FQL_TOKEN]()
+  val args   = ListBuffer[FQL_TOKEN]()
 
   new FQL_ATOM +=: stack
 
@@ -23,67 +24,56 @@ class QueryLexer(recv: QueryParser) {
     if (head != stack.head)
       { head +=: stack; next }
 
-    else if (stack.head.ready)
-      ready
+    if ((stack.size < 2) || (stack.head.ready unary_!))
+      return ()
 
+    stack(1) match {
+
+      case a: FQL_ATOM =>
+        recv.emit(stack.remove(0))
+
+      case m: FQL_META =>
+        { println("REPLACE"); stack.remove(1); next }
+
+      case s: FQL_STATEMENT =>
+        (stack.remove(0) :: args.toList).foreach
+          { arg => statement(s, arg); args -= arg }
+
+      case t: FQL_TOKEN =>
+        { println("ARGSTACK"); stack.remove(0) +=: args }
+
+    }
+
+    next
   }
 
   def finish : Unit = {
     next(' '); next(' ')
 
     if (stack.size > 1)
-      error
+      throw new ParseException("invalid query, expected " +
+        stack.head.getClass.getName.replaceFirst(""".*\.""", "") + 
+        " but found: >>" + buffer + "<<")
   }
 
 
-  private def next_ready : Boolean =
-    (stack.size > 1) && (stack.head.ready)
+  private def statement(statement: FQL_STATEMENT, arg: FQL_TOKEN) = {
 
-
-  private def ready() : Unit = {
-    val args  = ListBuffer[FQL_TOKEN]()
-
-    while (next_ready) stack(1) match {
-
-      case a: FQL_ATOM =>
-        recv.emit(stack.remove(0))
-
-      case s: FQL_STATEMENT =>
-        if (args.size == 0)
-          statement(s.next(stack.head))
-        else
-          statement(s.next(args.remove(0)))
-
-      case m: FQL_META =>
-        { println("REPLACE"); stack.remove(1); next }
-
-      case t: FQL_TOKEN =>
-        stack.remove(0) +=: args; next
-
-    }
-  }
-
-  private def statement(head: FQL_TOKEN) = {
-    stack.remove(0)
+    val head = statement.next(arg)
+    println("statement: " + arg.getClass.getName + " => " + head.getClass.getName)
 
     if (head != stack.head)
       head +=: stack
 
-    next
   }
-
-
-  private def error =
-    throw new ParseException("invalid query, expected " +
-      stack.head.getClass.getName.replaceFirst(""".*\.""", "") + 
-      " but found: >>" + buffer + "<<")
 
 
   private def debug =
     println(
       " " + (if (stack.head.ready) "X" else " ") +
-      " | " + cursor + " | " + buffer + 
-      (" " * (15 - buffer.size)) + " | " + 
-      (stack.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) )
+      " | " + cursor + " | " + buffer +
+      (" " * (15 - buffer.size)) + " | " +
+      (stack.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) + " (" +
+      (args.toString.substring(5).replaceAll("""[a-z@\.\(\)0-9]""", "")) + ")")
 }
 

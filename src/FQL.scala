@@ -18,6 +18,8 @@ trait FQL_STATEMENT {
   def next(token: FQL_TOKEN) : FQL_TOKEN
 }
 
+trait FQL_META {}
+
 trait FQL_KEYWORD extends FQL_BUFFER {
   def ready : Boolean =
     (cur == ' ' && ((buf.size == 0) || buf == "()"))
@@ -25,7 +27,6 @@ trait FQL_KEYWORD extends FQL_BUFFER {
     this.asInstanceOf[FQL_TOKEN]
 }
 
-trait FQL_META {}
 
 class FQL_ATOM extends FQL_TOKEN {
   def ready =
@@ -64,30 +65,23 @@ class FQL_OPERATOR extends FQL_TOKEN {
     } else this
 }
 
-class FQL_OP_EQUALS extends FQL_OPERATOR {
-  override def ready = true
-  override def next = new FQL_KEY
+trait FQL_OP_UNARY extends FQL_OPERATOR {
+  override def next = this
 }
 
-class FQL_OP_LESSTHAN extends FQL_OPERATOR {
-  override def next = new FQL_KEY
+trait FQL_OP_VARARG extends FQL_OPERATOR {
+  var args : Int
+  override def ready = args == 0
+  override def next = if (args == 0) this else
+    { args -= 1; new FQL_KEY }
 }
 
-class FQL_OP_GREATERTHAN extends FQL_OPERATOR {
-  override def next = new FQL_KEY
+class FQL_OP_EQUALS extends FQL_OP_VARARG {
+  var args : Int = 1
 }
 
-class FQL_OP_REGEX extends FQL_OPERATOR {
-  override def next = new FQL_KEY
-}
-
-class FQL_OP_INCLUDE extends FQL_OPERATOR {
-  override def next = new FQL_KEY
-}
-
-class FQL_OP_EXISTS extends FQL_OPERATOR {
-  override def next = new FQL_KEY
-}
+class FQL_OP_META extends FQL_OPERATOR with FQL_META {}
+class FQL_OP_EXISTS extends FQL_OP_UNARY { }
 
 class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   var key : FQL_KEY      = null
@@ -99,12 +93,15 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
     (key != null) && (op != null) && (cur == ')')
 
   def next =
-    if ((ready) || (cur == '(')) this else new FQL_KEY
+    if ((key == null) && (cur == '(')) 
+      new FQL_KEY
+    else
+      this
 
   def next(t: FQL_TOKEN) = t match {
     case k: FQL_KEY =>
       if (key == null)
-        { key = k; new FQL_OPERATOR with FQL_META }
+        { key = k; new FQL_OP_META }
       else
         { /* is value */ this }
     case o: FQL_OPERATOR =>
