@@ -1,6 +1,6 @@
 package com.paulasmuth.fyrehose;
 
-// todo: mkeyops, allcaps, since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+// todo: mkeyops, allcaps, since/until/time, less/greater-than, regex, except, only, \. unescape, smart typecasting
 
 trait FQL_VAL {}
 trait FQL_META {}
