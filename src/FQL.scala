@@ -176,7 +176,7 @@ class FQL_KEY(_buf: String = "") extends FQL_TOKEN with FQL_VAL {
   def get = _buf
 }
 
-class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
+class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   var left  : FQL_VAL  = null
   var right : FQL_VAL  = null
   var op    : FQL_OP   = null
@@ -208,6 +208,8 @@ class FQL_WHERE(negated: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
     case o: FQL_OP =>
       { op = o; this }
   }
+
+  def not = _not unary_!
 
 }
 

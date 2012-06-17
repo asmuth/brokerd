@@ -55,7 +55,9 @@ class QueryParser {
     case t: FQL_WHERE => t.left match {
 
       case k: FQL_KEY =>
-        query.fstack.push(k)(eval_where(k, t))
+        query.fstack.push(k)(
+          if (t.not unary_!) eval_where(k, t)
+          else negate(eval_where(k, t)))
 
       case _ =>
         unexpected_token(t.left.asInstanceOf[FQL_TOKEN],
@@ -103,8 +105,13 @@ class QueryParser {
   }
 
 
+  private def negate(lambda: Message => Boolean) =
+    (m: Message) => lambda(m) unary_!
+
+
   private def unexpected_token(found: FQL_TOKEN, expected: String) =
     throw new ParseException("unexpected token: " +  found.getClass.getName
       .replaceAll("[^A-Z_]", "") + ", expected: " + expected)
+
 
 }
