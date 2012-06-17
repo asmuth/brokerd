@@ -1,6 +1,6 @@
 package com.paulasmuth.fyrehose;
 
-// todo: where_not, mkeyops, allcaps, since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
+// todo: mkeyops, allcaps, since(), until(), less/greater-than, regex, include, exists, boolean, time, except, only
 
 trait FQL_VAL {}
 trait FQL_META {}
@@ -169,11 +169,22 @@ class FQL_STRING extends FQL_TOKEN with FQL_VAL {
 
 }
 
-class FQL_KEY(_buf: String = "") extends FQL_TOKEN with FQL_VAL {
+class FQL_KEY(prev: String = "") extends FQL_TOKEN with FQL_VAL {
+  var parts = List[String](prev); var _buf = ""
+
   def ready =
     (cur == ' ') || (cur == ')') || (cur == '=')
-  def next = this
-  def get = _buf
+
+  def next =
+    if ((_buf.size > 1) && (ready || (cur == '.') && (_buf(_buf.size - 1) != '\\')))
+      { parts = parts ++ List(_buf); _buf = cur.toString; this }
+    else
+      { _buf= (_buf + cur).trim; this }
+
+  def get = {
+    println(parts)
+    _buf
+  }
 }
 
 class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
