@@ -1,7 +1,7 @@
 package com.paulasmuth.fyrehose
 
-import com.google.gson._
 import java.io._
+import com.google.gson._
 
 class Message(raw: Array[Byte]){
 
@@ -28,27 +28,39 @@ class Message(raw: Array[Byte]){
     root.get("_time").getAsLong()
 
 
-  def exists(key: FQL_KEY) : Boolean = 
-    root.get(key.get) != null // FIXPAUL: recurse
+  def exists(keys: List[String]) : Boolean = try {
+    getAsGsonPrimitive(keys) != null
+  } catch {
+    case e: ClassCastException => false
+  }
 
 
   def getAsString(key: FQL_KEY) : String =
-    getAsGsonPrimitive(key).getAsString()
+    getAsGsonPrimitive(key.get).getAsString()
 
   def getAsInteger(key: FQL_KEY) : Int =
-    getAsGsonPrimitive(key).getAsInt()
+    getAsGsonPrimitive(key.get).getAsInt()
 
   def getAsDouble(key: FQL_KEY) : Double =
-    getAsGsonPrimitive(key).getAsDouble()
+    getAsGsonPrimitive(key.get).getAsDouble()
 
   def getAsBoolean(key: FQL_KEY) : Boolean =
-    getAsGsonPrimitive(key).getAsBoolean()
+    getAsGsonPrimitive(key.get).getAsBoolean()
 
 
-  private def getAsGsonPrimitive(key: FQL_KEY) =
-    root.get(key.get) // FIXPAUL: recurse
+  private def getAsGsonPrimitive(keys: List[String]) = {
+    var parent = ((root /: keys.init)((t, k) =>
+      if (t == null) null else t.getAsJsonObject(k)))
+
+    if (parent == null)
+      null
+    else
+      parent.get(keys.last)
+  }
+
 
   private def serialize() : Array[Byte] =
     root.toString.getBytes
+
 
 }

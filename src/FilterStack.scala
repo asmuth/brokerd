@@ -30,7 +30,7 @@ class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends Filter
 
 class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
-  var fkey    : FQL_KEY          = null
+  var fkey    : FQL_KEY            = null
   var flambda : Message => Boolean = null
 
 
@@ -59,7 +59,7 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
   def eval(event: Message) : Boolean = try {
 
-    if ((fkey != null) && (event.exists(fkey) unary_!))
+    if ((fkey != null) && (event.exists(fkey.get) unary_!))
       return false
 
     else if ((fkey != null) && (flambda(event) unary_!))

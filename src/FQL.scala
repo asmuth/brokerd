@@ -177,14 +177,11 @@ class FQL_KEY(prev: String = "") extends FQL_TOKEN with FQL_VAL {
 
   def next =
     if ((_buf.size > 1) && (ready || (cur == '.') && (_buf(_buf.size - 1) != '\\')))
-      { parts = parts ++ List(_buf); _buf = cur.toString; this }
+      { parts = parts ++ List(_buf.substring(1)); _buf = cur.toString; this }
     else
       { _buf= (_buf + cur).trim; this }
 
-  def get = {
-    println(parts)
-    _buf
-  }
+  def get = parts
 }
 
 class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
