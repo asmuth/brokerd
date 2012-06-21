@@ -7,10 +7,9 @@ import java.text.DateFormat
 
 // todo:
 //   conn-header: keepalive + safe_mode
-//   filter key recursion via dot
-//   query leading whitespace issue
 //   check if out dir exists on start
 //   listen-udp / upstream
+//   fql: mkeyops, allcaps, since/until/time, less/greater-than, regex, except, only, \. unescape, smart typecasting
 
 object Fyrehose{
 
