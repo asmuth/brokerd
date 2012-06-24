@@ -4,8 +4,6 @@ import scala.actors._
 
 class StreamQuery() extends Query{
 
-  var recv : Actor = null
-
   def execute(endpoint: Actor) =
     recv = endpoint
 

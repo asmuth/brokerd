@@ -12,6 +12,7 @@ case class QueryEOFSig()
 
 trait Query extends Actor{
 
+  var recv : Actor = null
   var sequence : Int = 0
   var fstack : FilterStack = new AndFilterStack
   var since : FQL_TVALUE = new FQL_TNOW
@@ -20,6 +21,7 @@ trait Query extends Actor{
   def act() = { 
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)
+      case QueryEOFSig() => eof()
       case HangupSig => { Fyrehose.log("query finished"); exit() }
       case msg: Message => data(msg)
     }}
@@ -46,6 +48,12 @@ trait Query extends Actor{
 
     }
 
+  }
+
+
+  def eof() = until match {
+    case tuntil: FQL_TSTREAM => ()
+    case _ => recv ! QueryExitSig(this)
   }
 
 

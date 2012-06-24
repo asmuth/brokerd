@@ -4,8 +4,6 @@ import scala.actors._
 
 class InfoQuery() extends Query{
 
-  var recv : Actor = null
-
   def execute(endpoint: Actor) = {
     recv = endpoint
 

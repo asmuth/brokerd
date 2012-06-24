@@ -20,6 +20,7 @@ object Fyrehose{
   var CONN_MAX_QUEUE_SIZE  = 20000
   val BUFFER_SIZE_PARSER   = 8192 * 4
   val BUFFER_SIZE_SOCKET   = 2048
+  val MESSAGE_CACHE_SIZE   = 100000
   val FILE_CHUNK_SIZE      = 3600 * 6
   val DEFAULT_OUT_DIR      = "/tmp/fyrehose"
 

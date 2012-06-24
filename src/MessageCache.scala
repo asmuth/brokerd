@@ -6,7 +6,7 @@ import scala.collection.mutable.ListBuffer
 
 class MessageCache extends Actor {
 
-  var cache_size = 10
+  val cache_size = Fyrehose.MESSAGE_CACHE_SIZE
 
   val messages = ListBuffer[Message]()
   var sequence = 0

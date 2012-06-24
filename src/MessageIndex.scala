@@ -16,7 +16,6 @@ class MessageIndex extends Actor {
 
 
   def next(msg: Message) : Unit = {
-    println(sindex)
     val bucket = bucket_at(msg.time)
 
     if (sindex contains bucket unary_!) {
