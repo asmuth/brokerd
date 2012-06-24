@@ -12,7 +12,8 @@ class MessageCache extends Actor {
   var sequence = 0
 
   def act = loop { react {
-    case m: Message => next(m)
+    case msg: Message => next(msg)
+    case sig: QueryDiscoverSig => retrieve(sig)
   }}
 
 
@@ -37,6 +38,10 @@ class MessageCache extends Actor {
       trim
 
   }
+
+
+  def retrieve(sig: QueryDiscoverSig) =
+    println("memcache request: " + sig.seq_range._1.toString + " - " + sig.seq_range._2.toString)
 
 
 }

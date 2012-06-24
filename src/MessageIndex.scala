@@ -37,4 +37,12 @@ class MessageIndex extends Actor {
     (time / bucket_size) * bucket_size
 
 
+  def seq_range(since: FQL_TUNIX, until: Int) : (Int, Int) =
+    ((seq_range(since, null)._1, until))
+
+
+  def seq_range(since: FQL_TUNIX, until: FQL_TUNIX) : (Int, Int) = ((1,1))
+
+
+
 }

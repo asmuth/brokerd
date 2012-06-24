@@ -7,13 +7,14 @@ case class QueryBody(raw: Array[Byte])
 case class QueryResponseChunk(chunk: Array[Byte])
 case class QueryExecuteSig(endpoint: Actor)
 case class QueryExitSig(query: Query)
+case class QueryDiscoverSig(query: Query, seq_range: (Int, Int))
 
 trait Query extends Actor{
 
   var sequence : Int = 0
   var fstack : FilterStack = new AndFilterStack
-  var since : FQL_TVALUE = null
-  var until : FQL_TVALUE = null
+  var since : FQL_TVALUE = new FQL_TNOW
+  var until : FQL_TVALUE = new FQL_TSTREAM
 
   def act() = { 
     Actor.loop{ react{
@@ -24,18 +25,27 @@ trait Query extends Actor{
   }
 
 
-  def ready() = ()
-    /*if(self.since == "now")
-      // do nothing
+  def ready() = since match {
 
-    else if(self.until == "now")
-      load_messages(sequence_from_index(self.since), sequence)
+    case tsince: FQL_TNOW => ()
 
-    else if(self.until == "stream")
-      load_messages(sequence_from_index(self.since), sequence)
+    case tsince: FQL_TUNIX => until match {
 
-    else
-      load_messages(sequence_from_index(self.since), sequence_from_index(self.until))*/
+      case tuntil: FQL_TNOW =>
+        Fyrehose.message_cache ! QueryDiscoverSig(this,
+          Fyrehose.message_index.seq_range(tsince, sequence))
+
+      case tuntil: FQL_TSTREAM =>
+        Fyrehose.message_cache ! QueryDiscoverSig(this,
+          Fyrehose.message_index.seq_range(tsince, sequence))
+
+      case tuntil: FQL_TUNIX =>
+        Fyrehose.message_cache ! QueryDiscoverSig(this,
+          Fyrehose.message_index.seq_range(tsince, tuntil))
+
+    }
+
+  }
 
 
   def execute(endpoint: Actor)
