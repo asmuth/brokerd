@@ -227,7 +227,10 @@ trait FQL_TVALUE extends FQL_TOKEN {
   def ready = true
 }
 
-class FQL_TUNIX(get: Long) extends FQL_TVALUE {}
+class FQL_TUNIX(ts: Long) extends FQL_TVALUE {
+  def get : Long = ts
+}
+
 class FQL_TNOW extends FQL_TVALUE {}
 class FQL_TSTREAM extends FQL_TVALUE {}
 
