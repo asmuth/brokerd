@@ -52,6 +52,12 @@ class QueryParser {
     case t: FQL_AND =>
       query.fstack = query.fstack.and()
 
+    case t: FQL_SINCE =>
+      query.since = eval_time(t.get)
+
+    case t: FQL_UNTIL =>
+      query.until = eval_time(t.get)
+
     case t: FQL_WHERE => t.left match {
 
       case k: FQL_KEY =>
@@ -102,6 +108,12 @@ class QueryParser {
     case _ =>
       unexpected_token(token.op.asInstanceOf[FQL_TOKEN], "FQL_OPERATOR")
 
+  }
+
+
+  private def eval_time(t: FQL_TOKEN) : FQL_TVALUE = t match {
+    case tv: FQL_TVALUE => tv
+    case _ => throw new ParseException("invalid time: " + t.buf)
   }
 
 

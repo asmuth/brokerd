@@ -33,6 +33,7 @@ class Backbone() extends Actor{
     queries += query
     query.sequence = sequence
     query.start()
+    query.ready()
   }
 
 

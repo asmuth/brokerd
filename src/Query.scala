@@ -12,6 +12,8 @@ trait Query extends Actor{
 
   var sequence : Int = 0
   var fstack : FilterStack = new AndFilterStack
+  var since : FQL_TVALUE = null
+  var until : FQL_TVALUE = null
 
   def act() = { 
     Actor.loop{ react{
@@ -20,6 +22,21 @@ trait Query extends Actor{
       case msg: Message => data(msg)
     }}
   }
+
+
+  def ready() = ()
+    /*if(self.since == "now")
+      // do nothing
+
+    else if(self.until == "now")
+      load_messages(sequence_from_index(self.since), sequence)
+
+    else if(self.until == "stream")
+      load_messages(sequence_from_index(self.since), sequence)
+
+    else
+      load_messages(sequence_from_index(self.since), sequence_from_index(self.until))*/
+
 
   def execute(endpoint: Actor)
 

@@ -28,6 +28,8 @@ class FQL_ATOM extends FQL_TOKEN with FQL_META {
       this
     else buf.trim match {
       case "stream"    => new FQL_STREAM
+      case "since"     => new FQL_SINCE
+      case "until"     => new FQL_UNTIL
       case "and"       => new FQL_AND
       case "or"        => new FQL_OR
       case "where"     => new FQL_WHERE(true)
@@ -220,3 +222,41 @@ class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
 }
 
 
+trait FQL_TVALUE extends FQL_TOKEN {
+  def next = this
+  def ready = true
+}
+
+class FQL_TUNIX(get: Long) extends FQL_TVALUE {}
+class FQL_TNOW extends FQL_TVALUE {}
+class FQL_TSTREAM extends FQL_TVALUE {}
+
+class FQL_TIME extends FQL_TOKEN with FQL_META {
+
+  def ready = cur == ')'
+
+  def next =
+    if (ready) parse(buf.substring(2))
+    else this
+
+  def parse(str: String) : FQL_TOKEN =
+    if (str == "now")
+      new FQL_TNOW
+    else if (str == "stream")
+      new FQL_TSTREAM
+    else if (str.matches("[0-9]+"))
+      new FQL_TUNIX(str.toLong)
+    else
+      this
+}
+
+trait FQL_SCOPE extends FQL_TOKEN with FQL_STATEMENT {
+  var tval : FQL_TOKEN = null
+  def ready = buf == ")"
+  def next = if (tval != null) this else new FQL_TIME
+  def next(token: FQL_TOKEN) = { tval = token; this }
+  def get : FQL_TOKEN = tval
+}
+
+class FQL_SINCE extends FQL_SCOPE {}
+class FQL_UNTIL extends FQL_SCOPE {}
