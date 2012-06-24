@@ -26,6 +26,9 @@ object Fyrehose{
   var backbone : Backbone  = null
   var writer   : Writer    = null
 
+  val message_cache = new MessageCache
+  val message_index = new MessageIndex
+
   def main(args: Array[String]) : Unit = {
     var n = 0
 
@@ -83,6 +86,9 @@ object Fyrehose{
 
     writer = new Writer()
     writer.start()
+
+    message_cache.start()
+    message_index.start()
 
     if (CONFIG contains 'listen_tcp) {
       try{

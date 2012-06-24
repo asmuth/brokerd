@@ -5,6 +5,8 @@ import com.google.gson._
 
 class Message(raw: Array[Byte]){
 
+  var sequence = 0
+
   var touched = false 
   val root = MessageParser.parse(raw)
 
@@ -20,7 +22,7 @@ class Message(raw: Array[Byte]){
   }
 
 
-  def bytes() : Array[Byte] = 
+  def bytes() : Array[Byte] =
     if (touched) serialize() else raw
 
 
