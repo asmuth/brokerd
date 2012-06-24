@@ -39,9 +39,39 @@ class MessageCache extends Actor {
 
   }
 
+  def forward(seq_range: (Int, Int)) =
+    println("foward " + seq_range.toString)
 
-  def retrieve(sig: QueryDiscoverSig) =
+
+  def retrieve(sig: QueryDiscoverSig) : Unit = {
     println("memcache request: " + sig.seq_range._1.toString + " - " + sig.seq_range._2.toString)
 
+    if (sig.seq_range == ((-1, 0)))
+      return sig.query ! QueryEOFSig()
+
+    if (sig.seq_range._2 < messages.first.sequence)
+      return forward(sig.seq_range)
+
+    var ind = messages.size - 1
+
+    while ((messages(ind).sequence >= sig.seq_range._1) && (ind > 0)) {
+      if (messages(ind).sequence <= sig.seq_range._2)
+        sig.query ! messages(ind)
+
+      ind -= 1
+    }
+
+    if (sig.seq_range._1 < messages.first.sequence)
+      forward(((sig.seq_range._1,  messages.first.sequence)))
+
+    else
+      return sig.query ! QueryEOFSig()
+
+  }
+
+
+  override def exceptionHandler = {
+    case e: Exception => Fyrehose.fatal("MessageCache / " + e.toString)
+  }
 
 }

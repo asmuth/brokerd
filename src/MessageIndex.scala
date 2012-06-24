@@ -50,7 +50,23 @@ class MessageIndex extends Actor {
     (((-1,0)) /: buckets_in(since.get, (
       if (until == null) FyrehoseUtil.now else until.get)))(
         (seqr: (Int, Int), buck: Int) => ((
-          (if ((sindex contains buck) && ((seqr._1 == -1) || (sindex(buck)._1 < seqr._1))) sindex(buck)._1 else seqr._1),
-          (if ((sindex contains buck) && (sindex(buck)._2 > seqr._2)) sindex(buck)._2 else seqr._2))))
+          (if (
+           (sindex contains buck) &&
+           ((seqr._1 == -1) ||
+           (sindex(buck)._1 < seqr._1)))
+             sindex(buck)._1 
+          else
+            seqr._1),
+          (if
+            ((sindex contains buck) && 
+            (sindex(buck)._2 > seqr._2))
+              sindex(buck)._2
+          else
+            seqr._2))))
+
+
+  override def exceptionHandler = {
+    case e: Exception => Fyrehose.fatal("MessageIndex / " + e.toString)
+  }
 
 }

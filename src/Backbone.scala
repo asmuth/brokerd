@@ -30,10 +30,18 @@ class Backbone() extends Actor{
 
 
   private def execute(query: Query) = {
-    queries += query
     query.sequence = sequence
     query.start()
     query.ready()
+
+    query.until match {
+
+      case t: FQL_TSTREAM =>
+        queries += query
+
+      case _ => ()
+
+    }
   }
 
 

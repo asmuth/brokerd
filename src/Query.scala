@@ -8,6 +8,7 @@ case class QueryResponseChunk(chunk: Array[Byte])
 case class QueryExecuteSig(endpoint: Actor)
 case class QueryExitSig(query: Query)
 case class QueryDiscoverSig(query: Query, seq_range: (Int, Int))
+case class QueryEOFSig()
 
 trait Query extends Actor{
 
