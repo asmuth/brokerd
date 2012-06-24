@@ -47,25 +47,30 @@ class MessageCache extends Actor {
 
 
   def retrieve(cpy: Array[Message], sig: QueryDiscoverSig) : Unit = {
-    println("memcache request: " + sig.seq_range._1.toString + " - " + sig.seq_range._2.toString)
+    var seq_range : (Int, Int) = sig.seq_range
 
-    if (sig.seq_range == ((-1, 0)))
+    println("memcache request: " + seq_range._1.toString + " - " + seq_range._2.toString)
+
+    if (seq_range == ((-1, 0)))
       return sig.query ! QueryEOFSig()
 
-    if (sig.seq_range._2 < cpy.first.sequence)
-      return forward(sig.seq_range)
+    if (seq_range._1 == -1)
+      seq_range = ((0, seq_range._2))
+
+    if (seq_range._2 < cpy.first.sequence)
+      return forward(seq_range)
 
     var ind = cpy.size - 1
 
-    while ((cpy(ind).sequence >= sig.seq_range._1) && (ind > 0)) {
-      if (cpy(ind).sequence <= sig.seq_range._2)
+    while ((cpy(ind).sequence >= seq_range._1) && (ind > 0)) {
+      if (cpy(ind).sequence <= seq_range._2)
         sig.query ! cpy(ind)
 
       ind -= 1
     }
 
-    if (sig.seq_range._1 < cpy.first.sequence)
-      forward(((sig.seq_range._1,  cpy.first.sequence)))
+    if (seq_range._1 < cpy.first.sequence)
+      forward(((seq_range._1,  cpy.first.sequence)))
 
     else
       return sig.query ! QueryEOFSig()
