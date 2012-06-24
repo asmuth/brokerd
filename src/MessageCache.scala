@@ -13,7 +13,7 @@ class MessageCache extends Actor {
 
   def act = loop { react {
     case msg: Message => next(msg)
-    case sig: QueryDiscoverSig => retrieve(sig)
+    case sig: QueryDiscoverSig => retrieve_async(sig)
   }}
 
 
@@ -32,37 +32,40 @@ class MessageCache extends Actor {
     messages += msg
     sequence += 1
 
-    println("mem cache: " + messages.size + " | " + messages.first.sequence.toString + "-" + messages.last.sequence.toString)
-
     if (messages.size > cache_size)
       trim
 
   }
 
+
   def forward(seq_range: (Int, Int)) =
-    println("foward " + seq_range.toString)
+    println("FIXPAUL foward " + seq_range.toString)
 
 
-  def retrieve(sig: QueryDiscoverSig) : Unit = {
+  def retrieve_async(sig: QueryDiscoverSig) =
+    retrieve(messages.toArray, sig) // FIXPAUL: in threadpool!
+
+
+  def retrieve(cpy: Array[Message], sig: QueryDiscoverSig) : Unit = {
     println("memcache request: " + sig.seq_range._1.toString + " - " + sig.seq_range._2.toString)
 
     if (sig.seq_range == ((-1, 0)))
       return sig.query ! QueryEOFSig()
 
-    if (sig.seq_range._2 < messages.first.sequence)
+    if (sig.seq_range._2 < cpy.first.sequence)
       return forward(sig.seq_range)
 
-    var ind = messages.size - 1
+    var ind = cpy.size - 1
 
-    while ((messages(ind).sequence >= sig.seq_range._1) && (ind > 0)) {
-      if (messages(ind).sequence <= sig.seq_range._2)
-        sig.query ! messages(ind)
+    while ((cpy(ind).sequence >= sig.seq_range._1) && (ind > 0)) {
+      if (cpy(ind).sequence <= sig.seq_range._2)
+        sig.query ! cpy(ind)
 
       ind -= 1
     }
 
-    if (sig.seq_range._1 < messages.first.sequence)
-      forward(((sig.seq_range._1,  messages.first.sequence)))
+    if (sig.seq_range._1 < cpy.first.sequence)
+      forward(((sig.seq_range._1,  cpy.first.sequence)))
 
     else
       return sig.query ! QueryEOFSig()

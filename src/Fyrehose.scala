@@ -10,6 +10,7 @@ import java.text.DateFormat
 //   check if out dir exists on start
 //   listen-udp / upstream
 //   fql: mkeyops, allcaps, since/until/time, less/greater-than, regex, except, only, \. unescape, smart typecasting
+//   queries with since before first before seq=0 will never terminate
 
 object Fyrehose{
 
