@@ -17,6 +17,7 @@ trait Query extends Actor{
   var fstack : FilterStack = new AndFilterStack
   var since : FQL_TVALUE = new FQL_TNOW
   var until : FQL_TVALUE = new FQL_TSTREAM
+  val now = FyrehoseUtil.now
 
   def act() = { 
     Actor.loop{ react{
@@ -54,6 +55,25 @@ trait Query extends Actor{
   def eof() = until match {
     case tuntil: FQL_TSTREAM => ()
     case _ => recv ! QueryExitSig(this)
+  }
+
+
+  def matches(msg: Message) =
+    since_matches(msg) &&
+    until_matches(msg) &&
+    fstack.eval(msg)
+
+
+  def since_matches(msg: Message) = since match {
+    case t: FQL_TNOW   => msg.time >= now
+    case t: FQL_TUNIX => msg.time >= t.get
+  }
+
+
+  def until_matches(msg: Message) = until match {
+    case t: FQL_TNOW   => msg.time <= now
+    case t: FQL_TUNIX => msg.time <= t.get
+    case _ => true
   }
 
 

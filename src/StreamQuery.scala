@@ -9,17 +9,17 @@ class StreamQuery() extends Query{
 
 
   def data(msg: Message) =
-    if (recv == null){
+    if (matches(msg) unary_!) ()
+    else if (recv == null) {
       this ! msg
-    } else if(fstack.eval(msg)) {
-      // FIXPAUL: race condition ahead!
+    } else { // FIXPAUL: race condition ahead!
       recv ! new QueryResponseChunk(msg.bytes)
       recv ! new QueryResponseChunk("\n".getBytes)
     }
 
 
   def eval(token: FQL_TOKEN) =
-     throw new ParseException("expected nothing")
+    throw new ParseException("expected nothing")
 
 
 }

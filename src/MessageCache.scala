@@ -69,7 +69,7 @@ class MessageCache extends Actor {
       ind -= 1
     }
 
-    if (seq_range._1 < cpy.first.sequence)
+    if ((seq_range._1 < cpy.first.sequence) && (seq_range._1 > 0))
       forward(((seq_range._1,  cpy.first.sequence)))
 
     else
