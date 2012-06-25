@@ -8,11 +8,11 @@ class MessageIndex extends Actor {
 
   val base_size = 10 // FIXPAUL
 
-  val index_1n    = new SequenceIndex(base_size * 1)
-  val index_10n   = new SequenceIndex(base_size * 10)
-  val index_100n  = new SequenceIndex(base_size * 100)
-  val index_1000n = new SequenceIndex(base_size * 1000)
-  val index_5000n = new SequenceIndex(base_size * 5000)
+  val index_1n     = new SequenceIndex(base_size * 1)
+  val index_10n    = new SequenceIndex(base_size * 10)
+  val index_100n   = new SequenceIndex(base_size * 100)
+  val index_1000n  = new SequenceIndex(base_size * 1000)
+  val index_5000n  = new SequenceIndex(base_size * 5000)
   val index_20000n = new SequenceIndex(base_size * 20000)
 
   def act = loop { react {

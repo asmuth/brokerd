@@ -32,8 +32,7 @@ class Backbone() extends Actor{
   private def execute(query: Query) = {
     query.sequence = sequence
     query.start()
-    
-    println("QUERY EXECUTE")
+
     query ! QueryReadySig
 
     query.until match {
@@ -53,8 +52,8 @@ class Backbone() extends Actor{
   }
 
 
-  /*override def exceptionHandler = {
+  override def exceptionHandler = {
     case e: Exception => Fyrehose.fatal("backbone / " + e.toString)
-  }*/
+  }
 
 }

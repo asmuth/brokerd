@@ -24,8 +24,8 @@ trait Query extends Actor{
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)
       case QueryEOFSig() => eof()
-      case QueryReadySig => { println("QUERY READY!"); ready() }
-      case HangupSig => { Fyrehose.log("query finished"); exit() }
+      case QueryReadySig => ready()
+      case HangupSig => exit()
       case msg: Message => data(msg)
     }}
   }
