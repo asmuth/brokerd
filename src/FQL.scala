@@ -231,6 +231,10 @@ class FQL_TUNIX(ts: Long) extends FQL_TVALUE {
   def get : Long = ts
 }
 
+class FQL_TSINCE(value: Double, scale: Int) extends FQL_TVALUE {
+  def get : Long = (value * scale).toLong
+}
+
 class FQL_TNOW extends FQL_TVALUE {}
 class FQL_TSTREAM extends FQL_TVALUE {}
 
@@ -249,6 +253,16 @@ class FQL_TIME extends FQL_TOKEN with FQL_META {
       new FQL_TSTREAM
     else if (str.matches("[0-9]+"))
       new FQL_TUNIX(str.toLong)
+    else if (str.matches("-[0-9]+"))
+      new FQL_TSINCE(str.substring(1).toDouble, 1)
+    else if (str.matches("""-[0-9]+(\.[0-9]+)?+s(ec(ond)?(s?))?"""))
+      new FQL_TSINCE(str.replaceAll("""[^0-9\.]""", "").toDouble, 1)
+    else if (str.matches("""-[0-9]+(\.[0-9]+)?+m(in(ute)?(s?))?"""))
+      new FQL_TSINCE(str.replaceAll("""[^0-9\.]""", "").toDouble, 60)
+    else if (str.matches("""-[0-9]+(\.[0-9]+)?+h(our(s?))?"""))
+      new FQL_TSINCE(str.replaceAll("""[^0-9\.]""", "").toDouble, 3600)
+    else if (str.matches("""-[0-9]+(\.[0-9]+)?+d(ay(s?))?"""))
+      new FQL_TSINCE(str.replaceAll("""[^0-9\.]""", "").toDouble, 86400)
     else
       this
 }

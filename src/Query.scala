@@ -67,13 +67,13 @@ trait Query extends Actor{
 
 
   def since_matches(msg: Message) = since match {
-    case t: FQL_TNOW   => msg.time >= now
+    case t: FQL_TNOW  => msg.time >= now
     case t: FQL_TUNIX => msg.time >= t.get
   }
 
 
   def until_matches(msg: Message) = until match {
-    case t: FQL_TNOW   => msg.time <= now
+    case t: FQL_TNOW  => msg.time <= now
     case t: FQL_TUNIX => msg.time <= t.get
     case _ => true
   }
