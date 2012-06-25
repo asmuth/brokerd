@@ -9,6 +9,7 @@ case class QueryExecuteSig(endpoint: Actor)
 case class QueryExitSig(query: Query)
 case class QueryDiscoverSig(query: Query, seq_range: (Int, Int))
 case class QueryEOFSig()
+case class QueryReadySig()
 
 trait Query extends Actor{
 
@@ -23,13 +24,14 @@ trait Query extends Actor{
     Actor.loop{ react{
       case QueryExecuteSig(endpoint) => execute(endpoint)
       case QueryEOFSig() => eof()
+      case QueryReadySig => { println("QUERY READY!"); ready() }
       case HangupSig => { Fyrehose.log("query finished"); exit() }
       case msg: Message => data(msg)
     }}
   }
 
 
-  def ready() = since match {
+  private def ready() = since match {
 
     case tsince: FQL_TNOW => ()
 
@@ -82,5 +84,10 @@ trait Query extends Actor{
   def data(msg: Message)
 
   def eval(part: FQL_TOKEN)
+
+
+  /*override def exceptionHandler = {
+    case e: Exception => Fyrehose.error("query exploded: " + e.toString)
+  }*/
 
 }
