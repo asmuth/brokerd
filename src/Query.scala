@@ -86,8 +86,8 @@ trait Query extends Actor{
   def eval(part: FQL_TOKEN)
 
 
-  /*override def exceptionHandler = {
+  override def exceptionHandler = {
     case e: Exception => Fyrehose.error("query exploded: " + e.toString)
-  }*/
+  }
 
 }
