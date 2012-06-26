@@ -56,7 +56,7 @@ trait Query extends Actor{
 
   def eof() = until match {
     case tuntil: FQL_TSTREAM => ()
-    case _ => recv ! QueryExitSig(this)
+    case _ => finish
   }
 
 
@@ -79,11 +79,16 @@ trait Query extends Actor{
   }
 
 
-  def execute(endpoint: Actor)
-
   def data(msg: Message)
 
   def eval(part: FQL_TOKEN)
+
+
+  def execute(endpoint: Actor) = recv = endpoint
+
+  def assert : Unit = ()
+
+  def finish = recv ! QueryExitSig(this)
 
 
   override def exceptionHandler = {

@@ -19,7 +19,7 @@ class QueryLexer(recv: QueryParser) {
     var head = stack.head.next(cursor, buffer)
     buffer   = stack.head.buffer(cursor, buffer)
 
-    debug
+    // debug
 
     if (head != stack.head)
       { head +=: stack; next }

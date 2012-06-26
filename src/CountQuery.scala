@@ -4,16 +4,24 @@ import scala.actors._
 
 class CountQuery() extends Query{
 
-  def execute(endpoint: Actor) = {
-    recv = endpoint
+  var count : Int = 0
 
-    recv ! QueryResponseChunk("fnord\n".getBytes)
+  def data(msg: Message) =
+    if (matches(msg))
+      count += 1
+
+  def eval(token: FQL_TOKEN) =
+    throw new ParseException("expected nothing")
+
+  override def finish = {
+    recv ! QueryResponseChunk(("{ \"count\": " + count.toString + " }\n").getBytes)
     recv ! QueryExitSig(this)
   }
 
-  def data(msg: Message) = ()
-
-  def eval(token: FQL_TOKEN) =
-    throw new ParseException("invalid query token: " + token.getClass.getName)
+  override def assert = until match {
+    case t: FQL_TSTREAM =>
+      throw new ParseException("can't COUNT over unbound time range (UNTIL STREAM)")
+    case _ => ()
+  }
 
 }

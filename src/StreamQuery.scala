@@ -4,9 +4,6 @@ import scala.actors._
 
 class StreamQuery() extends Query{
 
-  def execute(endpoint: Actor) =
-    recv = endpoint
-
 
   def data(msg: Message) =
     if (matches(msg) unary_!) ()

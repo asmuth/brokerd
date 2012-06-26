@@ -4,7 +4,7 @@ import scala.actors._
 
 class InfoQuery() extends Query{
 
-  def execute(endpoint: Actor) = {
+  override def execute(endpoint: Actor) = {
     recv = endpoint
 
     recv ! QueryResponseChunk("fnord\n".getBytes)
