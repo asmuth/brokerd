@@ -5,6 +5,7 @@ import scala.collection.mutable.HashMap
 
 class GroupQuery() extends Query {
 
+  var limit : FQL_LIMIT = null
   var group_key : FQL_KEY = null
   var groups = HashMap[String, Int]().withDefaultValue(0)
 
@@ -24,15 +25,32 @@ class GroupQuery() extends Query {
     }
 
 
-  def eval(token: FQL_TOKEN) =
-    throw new ParseException("invalid query token: " + token.getClass.getName)
+  def eval(token: FQL_TOKEN) = token match {
+
+    case t: FQL_LIMIT =>
+      limit = t
+
+    case _ =>
+      throw new ParseException("unexpected token: " + token.getClass.getName)
+
+  }
 
 
   override def finish = {
     val json_key = (group_key.get.head /: group_key.get.tail)((m, s) => m + "." + s)
+    var json_dat = groups.toList
 
-    groups.foreach ( t => recv ! QueryResponseChunk((
-      "{ \"" + json_key + "\": " + t._1 + ", \"count\": " + t._2.toString + "}\n"
+    if (limit != null) {
+      json_dat = json_dat.sortBy(_._2)
+      json_dat = limit.mode match {
+        case m: FQL_LIMIT_HEAD => json_dat.takeRight(limit.limit.get)
+        case m: FQL_LIMIT_TAIL => json_dat.take(limit.limit.get)
+      }
+    }
+
+    (json_dat :\ ()) ( (x, t) => recv ! QueryResponseChunk((
+      "{ \"" + json_key + "\": \"" + t._1.replaceAll("\"", "\\\"") +
+      "\", \"count\": " + t._2.toString + " }\n"
     ).getBytes))
 
     recv ! QueryExitSig(this)

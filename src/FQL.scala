@@ -43,6 +43,9 @@ class FQL_ATOM extends FQL_TOKEN with FQL_META {
       case "exists"    => new FQL_OPERATOR_EXISTS
       case "true"      => new FQL_TRUE
       case "false"     => new FQL_FALSE
+      case "limit"     => new FQL_LIMIT
+      case "head"      => new FQL_LIMIT_HEAD
+      case "tail"      => new FQL_LIMIT_TAIL
       case ""          => this
       case _           => new FQL_KEY(buf)
     }
@@ -302,3 +305,33 @@ trait FQL_SCOPE extends FQL_TOKEN with FQL_STATEMENT {
 
 class FQL_SINCE extends FQL_SCOPE {}
 class FQL_UNTIL extends FQL_SCOPE {}
+
+class FQL_LIMIT extends FQL_TOKEN with FQL_STATEMENT {
+  var mode  : FQL_LIMIT_MODE = null
+  var limit : FQL_INTEGER    = null
+
+  override def buffer(_cur: Char, _buf: String) = ""
+
+  def ready = (mode != null) && (limit != null)
+
+  def next =
+    if (mode == null)
+      new FQL_ATOM
+    else if (limit == null)
+      new FQL_VALUE
+    else
+      this
+
+  def next(t: FQL_TOKEN) = t match {
+    case v: FQL_LIMIT_MODE =>
+      { mode = v; this }
+    case v: FQL_INTEGER =>
+      { limit = v; this }
+    case _ => this
+  }
+
+}
+
+trait FQL_LIMIT_MODE {}
+class FQL_LIMIT_HEAD extends FQL_TOKEN with FQL_KEYWORD with FQL_LIMIT_MODE {}
+class FQL_LIMIT_TAIL extends FQL_TOKEN with  FQL_KEYWORD with FQL_LIMIT_MODE {}
