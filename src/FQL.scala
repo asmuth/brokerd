@@ -190,19 +190,15 @@ class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {
   var op    : FQL_OP   = null
 
   override def buffer(_cur: Char, _buf: String) =
-    if ((buf == "(") || (buf == ")"))
-      ""
-    else
-      (_buf + _cur).trim
+    (_buf + _cur).trim
 
   def ready =
     (left != null) &&
     (op != null) &&
-    (right != null) &&
-    (buf == ")")
+    (right != null)
 
   def next =
-    if ((left == null) && (buf == "("))
+    if (left == null)
       new FQL_VALUE
     else
       this
@@ -240,10 +236,11 @@ class FQL_TSTREAM extends FQL_TVALUE {}
 
 class FQL_TIME extends FQL_TOKEN with FQL_META {
 
-  def ready = cur == ')'
+  def ready =
+    (buf.trim.length > 0) && (cur == ' ')
 
   def next =
-    if (ready) parse(buf.substring(2))
+    if (ready) parse(buf.trim)
     else this
 
   def parse(str: String) : FQL_TOKEN =
@@ -269,8 +266,8 @@ class FQL_TIME extends FQL_TOKEN with FQL_META {
 
 trait FQL_SCOPE extends FQL_TOKEN with FQL_STATEMENT {
   var tval : FQL_TOKEN = null
-  def ready = buf == ")"
-  def next = if (tval != null) this else new FQL_TIME
+  def ready = tval != null
+  def next = if (ready) this else new FQL_TIME
   def next(token: FQL_TOKEN) = { tval = token; this }
   def get : FQL_TOKEN = tval
 }

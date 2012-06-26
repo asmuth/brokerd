@@ -114,7 +114,7 @@ class QueryParser {
   private def eval_time(t: FQL_TOKEN) : FQL_TVALUE = t match {
     case tv: FQL_TSINCE => new FQL_TUNIX(FyrehoseUtil.now - tv.get)
     case tv: FQL_TVALUE => tv
-    case _ => throw new ParseException("invalid time: " + t.buf)
+    case _ => throw new ParseException("invalid time: " + t.buf.trim)
   }
 
 

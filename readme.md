@@ -16,12 +16,11 @@ _publish a few example messages:_
 
 _subscribe to all signups where referrer matches /^ref/ from now on:_
 
-    echo "stream where(action = 'signup') and where(referrer = /^ref/)" | nc -w0 localhost 2323
-
+    echo "stream where action = 'signup' and where referrer = /^ref/" | nc -w0 localhost 2323
 
 _get the last 5 minutes of signups:_
 
-    echo "stream where(action = 'signup') since(-5m) until(now)" | nc -w0 localhost 2323
+    echo "stream where action = 'signup' since -5min until now" | nc -w0 localhost 2323
 
 
 
@@ -48,35 +47,37 @@ finished.
 
 keywords / commands:
 
-    stream
-    info
+    STREAM
+    COUNT
+    SUM
+    GROUP
+    INFO
 
 
 specifing the time range
 
-    since(TIMESTAMP)
-    since(-SECONDS)
-    since(now)
+    SINCE [timestamp]
+    SINCE -[seconds]
+    SINCE NOW
 
-    until(TIMESTAMP)
-    until(-SECONDS)
-    until(now)
+    UNTIL [timestamp]
+    UNTIL -[seconds]
+    UNTIL NOW
+    UNTIL STREAM
 
 
 filters for where / where_not
 
-    where(KEY = "VALUE")
-    where(KEY = /REGEX/)
-    where(KEY = OTHER_KEY)
+    WHERE [key] = "[value]"
+    WHERE [key] = /[regex]/
+    WHERE [key]  = [other_key]
 
-    where(KEY < MAX)
-    where(KEY > MIN)
-    where(KEY % MOD)
+    WHERE [key] < [max]
+    WHERE [key] > [min]
+    WHERE [key] % [mod]
 
-    where(KEY exists)
-
-    where(KEY includes "VALUE")
-    where(KEY includes /REGEX/)
+    WHERE [key] EXISTS
+    WHERE [key] INCLUDES "[value]"
 
 
 examples:
