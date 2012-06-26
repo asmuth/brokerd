@@ -1,5 +1,5 @@
 
-GROUP keywords WHERE channel = 'dawanda.search' SPLITCOPY query WITH ' ' TO keywords SORT_BY count DESC LIMIT 6000 SINCE -12h UNTIL now
+GROUP keywords WHERE channel = 'dawanda.search' SPLITCOPY query WITH ' ' TO keywords LIMIT TAIL 6000 SINCE -12h UNTIL now
 
 stream where channel = 'dawanda.search' and num_results = 0 only(query)
 
@@ -34,16 +34,15 @@ stream where channel = 'dawanda.search' and num_results = 0 only(query)
   UNTIL [time]
 
 
-### Pre-Modifiers
+### Modifiers
 
   SPLITCOPY [src_key] WITH [pattern] TO [dst_key]
 
 
-### Post-Modifiers
+### Options for: GROUP
 
-  LIMIT [limit]
+  LIMIT HEAD [limit]
+  LIMIT TAIL [limit]
 
-  SORT_BY [key] DESC/ASC
-  SORT_BY time NEWEST_FIRST/OLDEST_FIRST
 
 

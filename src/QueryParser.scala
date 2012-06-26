@@ -21,15 +21,15 @@ class QueryParser {
 
   def next(token: FQL_TOKEN) : Unit = token match {
 
-    case t: FQL_STREAM  =>
+    case t: FQL_CMD  =>
       if (query == null)
         query = eval_query(t)
       else
-        unexpected_token(t, "query to only contain one of stream, info, etc.")
+        unexpected_token(t, "query to only contain one of stream, count, sum, group, info, etc.")
 
     case t: FQL_TOKEN =>
       if (query == null)
-        unexpected_token(t, "query to start with stream, info, etc.")
+        unexpected_token(t, "query to start with stream, count, sum, group, info, etc.")
       else
         eval_token(t)
 
@@ -40,6 +40,18 @@ class QueryParser {
 
     case t: FQL_STREAM =>
       new StreamQuery()
+
+    case t: FQL_COUNT =>
+      new CountQuery()
+
+    case t: FQL_SUM =>
+      new CountQuery()
+
+    case t: FQL_GROUP =>
+      new CountQuery()
+
+    case t: FQL_INFO =>
+      new InfoQuery()
 
   }
 
