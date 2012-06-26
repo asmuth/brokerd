@@ -26,7 +26,7 @@ class FQL_ATOM extends FQL_TOKEN with FQL_META {
   def next =
     if (ready unary_!)
       this
-    else buf.trim match {
+    else buf.trim.toLowerCase match {
       case "stream"    => new FQL_STREAM
       case "since"     => new FQL_SINCE
       case "until"     => new FQL_UNTIL
