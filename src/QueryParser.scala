@@ -62,8 +62,7 @@ class QueryParser {
 
       case k: FQL_KEY =>
         query.fstack.push(k)(
-          if (t.not unary_!) eval_where(k, t)
-          else negate(eval_where(k, t)))
+          eval_where(k, t), (t.not unary_!))
 
       case _ =>
         unexpected_token(t.left.asInstanceOf[FQL_TOKEN],
@@ -116,10 +115,6 @@ class QueryParser {
     case tv: FQL_TVALUE => tv
     case _ => throw new ParseException("invalid time: " + t.buf.trim)
   }
-
-
-  private def negate(lambda: Message => Boolean) =
-    (m: Message) => lambda(m) unary_!
 
 
   private def unexpected_token(found: FQL_TOKEN, expected: String) =

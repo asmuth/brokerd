@@ -1,7 +1,7 @@
 package com.paulasmuth.fyrehose
 
 trait FilterStack{
-  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit
+  def push(key: FQL_KEY)(lambda: Message => Boolean, expect: Boolean) : Unit
   def eval(event: Message) : Boolean
   def and() : FilterStack
   def or() : FilterStack
@@ -10,8 +10,8 @@ trait FilterStack{
 
 class OrFilterStack(lst: List[FilterStack] = List[FilterStack]()) extends FilterStack{
 
-  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit =
-    lst.head.push(key)(lambda)
+  def push(key: FQL_KEY)(lambda: Message => Boolean, expect: Boolean) : Unit =
+    lst.head.push(key)(lambda, expect)
 
 
   def and() : FilterStack =
@@ -32,14 +32,16 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
 
   var fkey    : FQL_KEY            = null
   var flambda : Message => Boolean = null
+  var fexpect : Boolean            = true
 
 
-  def push(key: FQL_KEY)(lambda: Message => Boolean) : Unit = {
+  def push(key: FQL_KEY)(lambda: Message => Boolean, expect: Boolean) : Unit = {
     if (fkey != null)
       throw new ParseException("invalid filter chain")
 
     fkey    = key
     flambda = lambda
+    fexpect = expect
   }
 
 
@@ -57,7 +59,7 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
       new OrFilterStack(List(new AndFilterStack(), this))
 
 
-  def eval(event: Message) : Boolean = try {
+  def eval_self(event: Message) : Boolean = try {
 
     if ((fkey != null) && (event.exists(fkey.get) unary_!))
       return false
@@ -65,14 +67,26 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
     else if ((fkey != null) && (flambda(event) unary_!))
       return false
 
-    else if (next == null)
-      return true
-
     else
-      return next.eval(event)
+      return true
 
   } catch {
     case e: NumberFormatException => return false
   }
 
+
+  def eval(event: Message) : Boolean = {
+
+    if (eval_self(event) != fexpect)
+      return false
+
+    if (next == null)
+      return true
+
+    else
+      return next.eval(event)
+
+  }
+
 }
+
