@@ -71,7 +71,8 @@ class AndFilterStack(next: FilterStack = null) extends FilterStack{
       return true
 
   } catch {
-    case e: NumberFormatException => return false
+    case e: java.lang.ClassCastException => return false
+    case e: java.lang.IllegalStateException => return false
   }
 
 

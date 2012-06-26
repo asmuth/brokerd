@@ -12,7 +12,8 @@ class SumQuery() extends Query {
     if (matches(msg) && msg.exists(sum_key.get))
       sum += msg.getAsDouble(sum_key)
   } catch {
-    case e: java.lang.NumberFormatException => ()
+    case e: java.lang.ClassCastException => ()
+    case e: java.lang.IllegalStateException => ()
   }
 
 

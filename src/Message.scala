@@ -50,7 +50,7 @@ class Message(raw: Array[Byte]){
     getAsGsonPrimitive(key.get).getAsBoolean()
 
 
-  private def getAsGsonPrimitive(keys: List[String]) = {
+  def getAsGsonPrimitive(keys: List[String]) = {
     var parent = ((root /: keys.init)((t, k) =>
       if (t == null) null else t.getAsJsonObject(k)))
 

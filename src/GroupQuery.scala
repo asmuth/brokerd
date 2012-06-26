@@ -10,8 +10,18 @@ class GroupQuery() extends Query {
 
 
   def data(msg: Message) =
-    if (matches(msg) && msg.exists(group_key.get))
-      groups(msg.getAsString(group_key)) += 1
+    if (matches(msg) && msg.exists(group_key.get)) {
+      val elem = msg.getAsGsonPrimitive(group_key.get)
+
+      if (elem.isJsonPrimitive)
+        groups(msg.getAsString(group_key)) += 1
+
+      else if (msg.getAsGsonPrimitive(group_key.get).isJsonArray) {
+        val iter = msg.getAsGsonPrimitive(group_key.get).getAsJsonArray.iterator
+        while (iter.hasNext)
+          groups(iter.next.getAsString) += 1
+      }
+    }
 
 
   def eval(token: FQL_TOKEN) =
