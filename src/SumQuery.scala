@@ -14,6 +14,7 @@ class SumQuery() extends Query {
   } catch {
     case e: java.lang.ClassCastException => ()
     case e: java.lang.IllegalStateException => ()
+    case e: java.lang.NumberFormatException => ()
   }
 
 

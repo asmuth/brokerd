@@ -9,7 +9,7 @@ import java.text.DateFormat
 //   conn-header: keepalive + safe_mode
 //   check if out dir exists on start
 //   listen-udp / upstream
-//   fql: mkeyops, allcaps, since/until/time, less/greater-than, regex, except, only, \. unescape, smart typecasting
+//   fql: mkeyops, allcaps, less/greater-than, regex, except, only, \. unescape, smart typecasting
 
 object Fyrehose{
 

@@ -48,7 +48,7 @@ class GroupQuery() extends Query {
       }
     }
 
-    (json_dat :\ ()) ( (x, t) => recv ! QueryResponseChunk((
+    (json_dat :\ ()) ((t, x) => recv ! QueryResponseChunk((
       "{ \"" + json_key + "\": \"" + t._1.replaceAll("\"", "\\\"") +
       "\", \"count\": " + t._2.toString + " }\n"
     ).getBytes))
