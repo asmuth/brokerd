@@ -11,13 +11,14 @@ case class QueryDiscoverSig(query: Query, seq_range: (Int, Int))
 case class QueryEOFSig()
 case class QueryReadySig()
 
-trait Query extends Actor{
+trait Query extends Actor {
 
   var recv : Actor = null
   var sequence : Int = 0
   var fstack : FilterStack = new AndFilterStack
   var since : FQL_TVALUE = new FQL_TNOW
   var until : FQL_TVALUE = new FQL_TSTREAM
+  var cmd   : FQL_CMD    = null
   val now = FyrehoseUtil.now
 
   def act() = { 

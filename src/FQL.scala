@@ -82,29 +82,38 @@ trait FQL_STATEMENT {
   def next(token: FQL_TOKEN) : FQL_TOKEN
 }
 
-trait FQL_CMD {}
 
-trait FQL_CMD_NOOP extends FQL_BUFFER with FQL_CMD {
+trait FQL_KEYWORD extends FQL_BUFFER {
   def ready : Boolean =
     ((cur == ' ' && (buf.size == 0)) || buf == "()")
   def next : FQL_TOKEN =
     this.asInstanceOf[FQL_TOKEN]
 }
 
+trait FQL_CMD {
+  def arg1 : FQL_TOKEN = null
+}
+
+trait FQL_CMD_NOOP extends FQL_KEYWORD with FQL_CMD {}
+
 trait FQL_CMD_UNARY extends FQL_TOKEN with FQL_STATEMENT with FQL_CMD {
+  override def buffer(c: Char, b: String) = ""
   var arg : FQL_TOKEN = null
   def ready = arg != null
-  def next = if (ready) this else new FQL_ATOM
-  def next(t: FQL_TOKEN) = { arg = next; this }
+  def next = if (ready || (cur == ' ')) this else new FQL_VALUE
+  def next(t: FQL_TOKEN) = { arg = t; this }
+  override def arg1 = arg
 }
 
 
+class FQL_OR extends FQL_TOKEN with FQL_KEYWORD {}
+class FQL_AND extends FQL_TOKEN with FQL_KEYWORD {}
+
 class FQL_STREAM extends FQL_TOKEN with FQL_CMD_NOOP {}
 class FQL_INFO extends FQL_TOKEN with FQL_CMD_NOOP {}
-class FQL_OR extends FQL_TOKEN with FQL_CMD_NOOP {}
-class FQL_AND extends FQL_TOKEN with FQL_CMD_NOOP {}
+class FQL_COUNT extends FQL_TOKEN with FQL_CMD_NOOP {}
+
 class FQL_SUM extends FQL_CMD_UNARY {}
-class FQL_COUNT extends FQL_CMD_UNARY {}
 class FQL_GROUP extends FQL_CMD_UNARY {}
 class FQL_CONTINUE extends FQL_CMD_UNARY {}
 

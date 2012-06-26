@@ -25,7 +25,7 @@ class QueryParser {
 
     case t: FQL_CMD  =>
       if (query == null)
-        query = eval_query(t)
+        { query = eval_query(t); query.cmd = t }
       else
         unexpected_token(t, "query to only contain one of stream, count, sum, group, info, etc.")
 
@@ -47,10 +47,10 @@ class QueryParser {
       new CountQuery()
 
     case t: FQL_SUM =>
-      new CountQuery()
+      new SumQuery()
 
     case t: FQL_GROUP =>
-      new CountQuery()
+      new GroupQuery()
 
     case t: FQL_INFO =>
       new InfoQuery()

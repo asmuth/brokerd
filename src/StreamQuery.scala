@@ -2,8 +2,7 @@ package com.paulasmuth.fyrehose
 
 import scala.actors._
 
-class StreamQuery() extends Query{
-
+class StreamQuery() extends Query {
 
   def data(msg: Message) =
     if (matches(msg) unary_!) ()
