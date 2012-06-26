@@ -30,7 +30,7 @@ class SumQuery() extends Query {
 
     until match {
       case t: FQL_TSTREAM =>
-        throw new ParseException("can't COUNT over unbound time range (UNTIL STREAM)")
+        throw new ParseException("can't SUM over unbound time range (UNTIL STREAM)")
       case _ => ()
     }
 
