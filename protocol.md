@@ -2,9 +2,8 @@ fyrehose backbone pub/sub protocol
 ==================================
 
 the protocol is designed to be extremly efficent for the central distribution instance
-(since this cannot be scaled horizontally) and therefore moves all error handling to
-inter-client connections. in a tradeoff for maximum throughput up to one second of data
-may be lost in case of a crash/network outage.
+(the "backbone") since this cannot be scaled horizontally. it therefore moves all error
+handling to the client and inter-client "connections".
 
 the basic idea is that every publisher/client must sent all incoming messages to a
 backbone which will assign a continous sequence number. a publisher can only consider
@@ -17,6 +16,8 @@ the continous sequence number)
 if a client detects message loss, it must send a request for the missing message(s)
 to the backbone, which will round-robin forward it to another client that responds
 directly to the requester.
+
+all messages are delivered via UDP and use network byte order / big endian.
 
 
 
@@ -59,6 +60,18 @@ RULES (BACKBONE)
 
   5. PUSH MESSAGE packets must be accepted even from clients that have never sent a
      KEEPALIVE package.
+
+
+
+GOTCHAS
+
+
+  1. in a tradeoff for maximum throughput up to one second of data may be lost in case of a
+     crash/network outage. this can be minimized by using a smaller KEEPALIVE interval.
+
+  2. the maximum message size is 65526 byte
+
+
 
 
 
