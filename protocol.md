@@ -1,26 +1,28 @@
-fyrehose internal binary pub/sub protocol
-=========================================
+fyrehose backbone pub/sub protocol
+==================================
 
-in this context, a "client" is a fyrehose-query or fyrehose-journal instance while a 
-"backbone"is a fyrehose-backbone instance. everything is big endian.
+the protocol is designed to be extremly efficent for the central distribution instance
+(since this cannot be scaled horizontally) and therefore moves all error handling to
+inter-client connections. in a tradeoff for maximum throughput up to one second of data
+may be lost in case of a crash/network outage.
 
-the basic idea is that every publisher/frontend must sent all incoming messages to a
+the basic idea is that every publisher/client must sent all incoming messages to a
 backbone which will assign a continous sequence number. a publisher can only consider
 a message to be "published" after he received it back from the backbone.
 
-the backbone delivers every mesasge to all subscribers but performs no error correction.
+the backbone delivers every message to all subscribers, but performs no error correction.
 a subscriber must therefore check if all preceeding messages have been received (using
-the continous sequence number) 
+the continous sequence number)
 
 if a client detects message loss, it must send a request for the missing message(s)
 to the backbone, which will round-robin forward it to another client that responds
 directly to the requester.
 
 
-RULES:
 
-  1. the client has to send a KEEPALIVE to the backbone at least every one second. the
-     backbone has to respond to every KEEPALIVE with a KEEPALIVE-ACK
+RULES (CLIENT):
+
+  1. the client has to send a KEEPALIVE to the backbone at least every one second.
 
   2. if a client receives a DELIVER MESSAGE it should check if all messages with
      lower sequence numbers have been received. if not, it may re-request the missing
@@ -34,8 +36,29 @@ RULES:
      to be sent FORWARD MESSAGE packets by setting the NOJOURNAL flag
 
   5. the protocol does not guarantee that PUSH MESSAGES are actually received by the
-     backbone unless the CONFIRM flag is set
+     backbone (this has to be handeled on a higher abstraction level)
 
+  6. the protocol does not guarantee that there is always at least one client that
+     stores each message/sequence. A REQUEST MESSAGE may be un-fullfillable if a 
+     message/sequence has been permanently lost.
+
+
+
+RULES (BACKBONE)
+
+  1. the backbone has to respond to every KEEPALIVE with a KEEPALIVE-ACK
+
+  2. every client is considered to be a subscriber for the next 5 seconds after
+     a KEEPALIVE message has been received (and the NOSUBSCRIBE flag is not set)
+
+  3. if the backbone receives a PUSH MESSAGE packet, it must assign a sequence number
+     and send a DELIVER MESSAGE packet to all subscribers
+
+  4. if the backbone receives a REQUEST MESSAGE packet, it must randomly choose one
+     subscriber that does not have the NOJOURNAL flag set and send it a FORWARD MESSAGE
+
+  5. PUSH MESSAGE packets must be accepted even from clients that have never sent a
+     KEEPALIVE package.
 
 
 
