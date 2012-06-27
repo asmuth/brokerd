@@ -17,7 +17,8 @@ if a client detects message loss, it must send a request for the missing message
 to the backbone, which will round-robin forward it to another client that responds
 directly to the requester.
 
-all messages are delivered via UDP and use network byte order / big endian.
+all messages are delivered via UDP and use network byte order / big endian. the first
+byte of each packet contains the packet type.
 
 
 
@@ -75,61 +76,81 @@ GOTCHAS
 
 
 
-# BASE PACKET
+
+### 0x1 - DELIVER MESSAGE
 
     -------------------------------------------------------------------------------------
-    [  TYPE (1 Byte)  |                      DATA (0-65534 Byte)                        ]
+    [  0x1  |  LENGTH (2 Byte)  |  SEQUENCE (6 Byte)  |       DATA (0-65526 Byte)       ]
     -------------------------------------------------------------------------------------
 
-
-
-# 0x1 - DELIVER MESSAGE
-
-    -------------------------------------------------------------------------------------
-    [  0x1  |  LENGTH (2 Byte)  |  SEQUENCE (6 Byte)  |        DATA (0-65526 Byte)      ]
-    -------------------------------------------------------------------------------------
+    sent either from the backbone to the client or from client to another (following a
+    FORWARD MESSAGE packet). when a DELIVER MESSAGE the message (DATA) can be considered
+    published
 
 
 
-# 0x2 - PUSH MESSAGE
+
+### 0x2 - PUSH MESSAGE
 
     -------------------------------------------------------------------------------------
-    [  0x2  |  LENGTH (2 Byte)  |                  DATA (0-65526 Bytes)                 ]
+    [  0x2  |  LENGTH (2 Byte)  |  UNUSED (6 Byte)   |       DATA (0-65526 Byte)       ]
     -------------------------------------------------------------------------------------
 
+    sent from a client to the backbone to publish a new message. the message (DATA) must
+    not be considered published until the corresponding DELIVER MESSAGE was received.
 
 
-# 0x4 - REQUEST MESSAGE
+
+
+### 0x4 - REQUEST MESSAGE
 
     -------------------------------------------------------------------------------------
     [  0x4  |  ADDR (4 Byte)  |  PORT (2 Byte) |  FROM_SEQ (6 Byte) |  TO_SEQ (6 Byte)  ]
     -------------------------------------------------------------------------------------
 
+   sent from a client to the backbone after missing messages have been detected. addr and
+   port should be the requesters listening udp address and port.
 
 
-# 0x8 - FORWARD MESSAGE
+
+
+### 0x8 - FORWARD MESSAGE
 
     -------------------------------------------------------------------------------------
     [  0x8  |  ADDR (4 Byte)  |  PORT (2 Byte) |  FROM_SEQ (6 Byte) |  TO_SEQ (6 Byte)  ]
     -------------------------------------------------------------------------------------
 
-
-
-
-# 0x10 KEEPALIVE
-
-    ---------------------------------------------------------------------------------
-    [  TYPE (1 Byte)  |                ADDR (4 Byte)          |    PORT (2 Byte)    ]
-    ---------------------------------------------------------------------------------
-
-    example for 127.0.0.1:2323:
-
-    ---------------------------------------------------------------------------------
-    [    00000010     |  01111111 00000000 00000000 00000001  |  00001001 00010011  ]
-    ---------------------------------------------------------------------------------
+    sent from the backbone to one client after a REQUEST MESSAGE was received. contains
+    the requesters udp listening address and ports. if the client can fulfill the request
+    it should send the response as DELIVER MESSAGE packets directly to the requester.
 
 
 
 
+### 0x10 KEEPALIVE
+
+    -------------------------------------------------------------------------------------
+    [  0x10 |  ADDR (4 Byte)  |  PORT (2 Byte) |  FLAGS (6 Byte)  |   TOKEN (16 Byte)   ]
+    -------------------------------------------------------------------------------------
+
+    sent from a client to the backbone to sign-on or keepalive the connection. a client
+    will be considered a subscriber by the backbone for the next 5 seconds after a the
+    KEEPALIVE packet unless the NOSUBSCRIBE flag is set. the backbone will also forward
+    REQUEST MESSAGE packets as FORWARD MESSAGE packets for 5 seconds after the KEEPALIVE
+    unless the NOJOURNAL flag was set.
+
+    FLAGS: 0x1 -> NOSUBSCRIBE, 0x2 -> NOJOURNAL
+
+
+
+
+### 0x20 KEEPALIVE-ACK
+
+    -------------------------------------------------------------------------------------
+    [  0x20 |                           TOKEN (16 Byte)                                 ]
+    -------------------------------------------------------------------------------------
+
+    sent from the backbone to a client after a KEEPALIVE has been received. TOKEN is the
+    same as in the original KEEPALIVE packet.
 
 
