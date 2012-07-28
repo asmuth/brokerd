@@ -8,7 +8,7 @@ import java.net._
 object HangupSig{}
 object TimeoutSig{}
 
-class Endpoint(socket: Socket) extends Runnable{
+class Endpoint(socket: Socket) extends Runnable with Receivable {
 
   var safe_mode = true  // FIXPAUL: this should be disable-able for performance
   var keepalive = false // FIXPAUL: this should be disable-able for performance
@@ -21,7 +21,7 @@ class Endpoint(socket: Socket) extends Runnable{
   val in_stream  = socket.getInputStream()
   val out_stream = socket.getOutputStream()
 
-  val stream = new InboundStream(this)
+  val stream = new InboundStream(this, Fyrehose.BUFFER_SIZE_PARSER)
   stream.set_safe_mode(safe_mode)
 
   Fyrehose.log("connection opened")
@@ -40,7 +40,7 @@ class Endpoint(socket: Socket) extends Runnable{
   reactor.start()
 
   def run = {
-    var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_SOCKET)
+    var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_TCP)
     var next   = 0
 
     try{
@@ -77,7 +77,7 @@ class Endpoint(socket: Socket) extends Runnable{
     }
 
 
-  def event(ev_body: MessageBody) = try{
+  def message(ev_body: MessageBody) = try{
     Fyrehose.backbone ! new Message(ev_body.raw)
   } catch {
     case e: ParseException => error(e.toString, true)

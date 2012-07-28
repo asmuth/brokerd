@@ -3,7 +3,7 @@ package com.paulasmuth.fyrehose
 import scala.actors.Actor
 import scala.actors.Actor._
 
-class InboundStream(recv: Endpoint){
+class InboundStream(recv: Receivable, buffer_size: Int){
 
   // if safe_mode is disabled, non-json input is silently
   // ignored. safe_mode=false requires strict_mode=true
@@ -13,7 +13,7 @@ class InboundStream(recv: Endpoint){
   // an ASCII bang character ('!')
   var strict_mode = false
 
-  var buffer = new Array[Byte](Fyrehose.BUFFER_SIZE_PARSER)
+  var buffer = new Array[Byte](buffer_size)
   var buffer_pos = 0
 
 
@@ -55,7 +55,7 @@ class InboundStream(recv: Endpoint){
     else if (buffer(0) != '{')
       trim_pos = 1
 
-    for(pos <- 1 to buffer_pos){
+    for(pos <- 1 to Math.min(buffer_size - 1, buffer_pos)){
 
       if ((trim_pos > 0) && ((buffer(pos) == '{') || (buffer(pos) == '!')))
         return trim_buffer(pos, trim_check)
@@ -115,7 +115,7 @@ class InboundStream(recv: Endpoint){
 
 
   private def emit_event(buf: Array[Byte]) =
-    recv.event(new MessageBody(buf))
+    recv.message(new MessageBody(buf))
 
 
   private def emit_query(buf: Array[Byte]) =

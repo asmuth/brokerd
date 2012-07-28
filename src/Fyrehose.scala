@@ -19,7 +19,8 @@ object Fyrehose{
   var CONN_IDLE_TIMEOUT    = 5000
   var CONN_MAX_QUEUE_SIZE  = 20000
   val BUFFER_SIZE_PARSER   = 8192 * 4
-  val BUFFER_SIZE_SOCKET   = 2048
+  val BUFFER_SIZE_TCP      = 2048
+  val BUFFER_SIZE_UDP      = 65535
   val MESSAGE_CACHE_SIZE   = 100000
   val FILE_CHUNK_SIZE      = 3600 * 6
   val DEFAULT_OUT_DIR      = "/tmp/fyrehose"
@@ -68,9 +69,6 @@ object Fyrehose{
     if (CONFIG contains 'upstream)
       return println("not yet implemented: -x / --upstream")
 
-    if (CONFIG contains 'listen_udp)
-      return println("not yet implemented: -u / --listen-udp")
-
     if (CONFIG contains 'timeout)
       CONN_IDLE_TIMEOUT = CONFIG('timeout).toInt
 
@@ -95,11 +93,22 @@ object Fyrehose{
       try{
         CONFIG('listen_tcp).toInt
       } catch { case e: NumberFormatException =>
-        return println("error: invalid port: " + CONFIG('listen_tcp))
+        return println("error: invalid port: tcp/" + CONFIG('listen_tcp))
       }
 
-      val tcp_listener = new Listener(CONFIG('listen_tcp).toInt)
+      val tcp_listener = new TCPListener(CONFIG('listen_tcp).toInt)
       tcp_listener.listen
+    }
+
+    if (CONFIG contains 'listen_udp) {
+      try{
+        CONFIG('listen_udp).toInt
+      } catch { case e: NumberFormatException =>
+        return println("error: invalid port: udp/" + CONFIG('listen_udp))
+      }
+
+      val udp_listener = new UDPListener(CONFIG('listen_udp).toInt)
+      udp_listener.listen
     }
 
   }
@@ -114,7 +123,7 @@ object Fyrehose{
     println("  -u, --listen-udp  <port>    listen for clients on this udp port          ")
     println("  -p, --path        <path>    path to store data (default: /tmp/fyrehose/) ")
     println("  -t, --timeout     <msecs>   connection idle timeout (default: 5000ms)    ")
-    println("  -x, --upstream    <addr>    pull events from this fyrehosed            \n")
+    // println("  -x, --upstream    <addr>    pull events from this fyrehosed            \n")
   }
 
 
