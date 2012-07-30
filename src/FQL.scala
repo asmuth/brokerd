@@ -11,6 +11,7 @@ trait FQL_BUFFER {
 }
 
 trait FQL_TOKEN extends FQL_BUFFER {
+  def inspect = if (buf == null) "?" else buf
   def ready : Boolean
   def next : FQL_TOKEN
   def buffer(_cur: Char, _buf: String) : String =
@@ -213,6 +214,7 @@ class FQL_KEY(prev: String = "") extends FQL_TOKEN with FQL_VAL {
       { _buf= (_buf + cur).trim; this }
 
   def get = parts
+  override def inspect = ("" /: parts)(_ + _)
 }
 
 class FQL_WHERE(_not: Boolean) extends FQL_TOKEN with FQL_STATEMENT {

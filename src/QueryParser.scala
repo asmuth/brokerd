@@ -13,7 +13,7 @@ class QueryParser {
     lexer.finish
 
     if (query == null)
-      throw new ParseException("query must contain one of stream, info, etc.")
+      throw new ParseException("query must start with one of stream, count, etc.")
 
     query.assert
 
@@ -31,7 +31,7 @@ class QueryParser {
 
     case t: FQL_TOKEN =>
       if (query == null)
-        unexpected_token(t, "query to start with stream, count, sum, group, info, etc.")
+        unexpected_token(t, "query to start with one of stream, count, etc. got: " + t.inspect)
       else
         eval_token(t)
 
