@@ -13,7 +13,7 @@ import java.text.DateFormat
 
 object Fyrehose{
 
-  val VERSION = "v0.0.5-dev"
+  val VERSION = "v0.0.6"
   val CONFIG  = HashMap[Symbol,String]()
 
   var CONN_IDLE_TIMEOUT    = 5000
