@@ -23,7 +23,6 @@ object Fyrehose{
   val BUFFER_SIZE_UDP      = 65535
   val MESSAGE_CACHE_SIZE   = 100000
   val FILE_CHUNK_SIZE      = 3600 * 6
-  val DEFAULT_OUT_DIR      = "/tmp/fyrehose"
 
   var backbone : Backbone  = null
   var writer   : Writer    = null
@@ -63,9 +62,6 @@ object Fyrehose{
       (CONFIG contains 'listen_udp unary_!)
     ) return usage()
 
-    if (CONFIG contains 'out_dir unary_!)
-      CONFIG += (('out_dir, DEFAULT_OUT_DIR))
-
     if (CONFIG contains 'upstream)
       return println("not yet implemented: -x / --upstream")
 
@@ -83,8 +79,10 @@ object Fyrehose{
     backbone = new Backbone()
     backbone.start()
 
-    writer = new Writer()
-    writer.start()
+    if (CONFIG contains 'out_dir) {
+      writer = new Writer()
+      writer.start()
+    }
 
     message_cache.start()
     message_index.start()
@@ -127,7 +125,7 @@ object Fyrehose{
     println("usage: fyrehose [options]                                                  ")
     println("  -l, --listen-tcp  <port>    listen for clients on this tcp port          ")
     println("  -u, --listen-udp  <port>    listen for clients on this udp port          ")
-    println("  -p, --path        <path>    path to store data (default: /tmp/fyrehose/) ")
+    println("  -p, --path        <path>    write event journal (default: no journal)    ")
     println("  -t, --timeout     <msecs>   connection idle timeout (default: 5000ms)    ")
     // println("  -x, --upstream    <addr>    pull events from this fyrehosed            \n")
   }

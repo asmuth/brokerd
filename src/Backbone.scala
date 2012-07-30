@@ -23,12 +23,16 @@ class Backbone() extends Actor{
     if (msg.exists(List("_volatile")) unary_!) {
       sequence += 1
       msg.sequence = sequence
+
       Fyrehose.message_index ! msg
       Fyrehose.message_cache ! msg
-      Fyrehose.writer ! msg
     }
 
     msg.sequence = sequence
+
+    if (Fyrehose.writer != null)
+      Fyrehose.writer ! msg
+
     queries.foreach(_ ! msg)
   }
 
