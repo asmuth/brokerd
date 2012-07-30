@@ -16,7 +16,7 @@ object Fyrehose{
   val BUFFER_SIZE_PARSER   = 8192 * 4
   val BUFFER_SIZE_TCP      = 2048
   val BUFFER_SIZE_UDP      = 65535
-  val MESSAGE_CACHE_SIZE   = 100000
+  val MESSAGE_CACHE_SIZE   = 23500
   val FILE_CHUNK_SIZE      = 3600 * 6
 
   var backbone : Backbone  = null
