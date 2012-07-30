@@ -38,8 +38,8 @@ class MessageCache extends Actor {
   }
 
 
-  def forward(seq_range: (Int, Int)) =
-    println("FIXPAUL foward " + seq_range.toString)
+  def forward(seq_range: (Int, Int)) = ()
+    //println("FIXPAUL foward " + seq_range.toString)
 
 
   def size =
@@ -52,8 +52,6 @@ class MessageCache extends Actor {
 
   def retrieve(cpy: Array[Message], sig: QueryDiscoverSig) : Unit = {
     var seq_range : (Int, Int) = sig.seq_range
-
-    println("memcache request: " + seq_range._1.toString + " - " + seq_range._2.toString)
 
     if (seq_range == ((-1, 0)))
       return sig.query ! QueryEOFSig()

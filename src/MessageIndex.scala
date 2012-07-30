@@ -39,8 +39,6 @@ class MessageIndex extends Actor {
     else
       until.get - since.get
 
-    println("range: " + range.toString)
-
     if (range < (10 * base_size * 2))
       index_1n.seq_range(since, until)
 
