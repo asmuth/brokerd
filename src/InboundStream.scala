@@ -77,6 +77,8 @@ class InboundStream(recv: Receivable, buffer_size: Int){
 
         if (buffer(offset) == 123)
           emit_event(java.util.Arrays.copyOfRange(buffer, offset, pos))
+        else if (buffer(offset) == 33)
+          emit_query(java.util.Arrays.copyOfRange(buffer, offset + 1, pos))
         else
           emit_query(java.util.Arrays.copyOfRange(buffer, offset, pos))
 
