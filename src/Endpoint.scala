@@ -25,6 +25,7 @@ class Endpoint(socket: Socket) extends Runnable with Receivable {
   stream.set_safe_mode(safe_mode)
 
   Fyrehose.log("connection opened")
+  Fyrehose.tcp_listener.num_connections.incrementAndGet
 
   val reactor = new Actor {
     def qsize = mailboxSize
@@ -128,6 +129,7 @@ class Endpoint(socket: Socket) extends Runnable with Receivable {
 
   private def hangup() : Unit = {
     Fyrehose.log("connection closed")
+    Fyrehose.tcp_listener.num_connections.decrementAndGet
     socket.close()
   }
 

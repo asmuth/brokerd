@@ -1,6 +1,7 @@
 package com.paulasmuth.fyrehose
 
 import java.util.concurrent._
+import java.util.concurrent.atomic._
 import scala.actors.Actor
 import scala.actors.Actor._
 
@@ -11,6 +12,8 @@ class Backbone() extends Actor{
   val queries = scala.collection.mutable.Set[Query]()
   var sequence = 0
 
+  var msg_total = new AtomicInteger
+
   def act() = {
     Actor.loop{ receive{
       case query: Query => execute(query)
@@ -20,6 +23,8 @@ class Backbone() extends Actor{
   }
 
   private def dispatch(msg: Message) = {
+    msg_total.incrementAndGet
+
     if (msg.exists(List("_volatile")) unary_!) {
       sequence += 1
       msg.sequence = sequence

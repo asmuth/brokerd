@@ -1,15 +1,10 @@
 package com.paulasmuth.fyrehose
 
-import scala.collection.mutable.HashMap;
 import java.util.Locale
 import java.util.Date
 import java.text.DateFormat
+import scala.collection.mutable.HashMap;
 
-// todo:
-//   conn-header: keepalive + safe_mode
-//   check if out dir exists on start
-//   listen-udp / upstream
-//   fql: mkeyops, allcaps, less/greater-than, regex, except, only, \. unescape, smart typecasting
 
 object Fyrehose{
 
@@ -26,6 +21,9 @@ object Fyrehose{
 
   var backbone : Backbone  = null
   var writer   : Writer    = null
+
+  var tcp_listener : TCPListener = null
+  var udp_listener : UDPListener = null
 
   val message_cache = new MessageCache
   val message_index = new MessageIndex
@@ -79,6 +77,8 @@ object Fyrehose{
     backbone = new Backbone()
     backbone.start()
 
+    val status_timer  = new StatusTimer
+
     if (CONFIG contains 'out_dir) {
       writer = new Writer()
       writer.start()
@@ -94,7 +94,7 @@ object Fyrehose{
         return println("error: invalid port: tcp/" + CONFIG('listen_tcp))
       }
 
-      val tcp_listener = new TCPListener(CONFIG('listen_tcp).toInt)
+      tcp_listener = new TCPListener(CONFIG('listen_tcp).toInt)
       tcp_listener.listen
     }
 
@@ -105,10 +105,9 @@ object Fyrehose{
         return println("error: invalid port: udp/" + CONFIG('listen_udp))
       }
 
-      val udp_listener = new UDPListener(CONFIG('listen_udp).toInt)
+      udp_listener = new UDPListener(CONFIG('listen_udp).toInt)
       udp_listener.listen
     }
-
   }
 
   def safe_boot() = try{
@@ -144,5 +143,6 @@ object Fyrehose{
   def fatal(msg: String) = {
     error(msg); System.exit(1)
   }
+
 
 }

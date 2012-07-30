@@ -1,5 +1,7 @@
 package com.paulasmuth.fyrehose;
 
+// todo: mkeyops, allcaps, less/greater-than, regex, except, only, \. unescape, smart typecasting
+
 trait FQL_VAL {}
 trait FQL_META {}
 trait FQL_OP {}

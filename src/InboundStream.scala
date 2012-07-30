@@ -32,7 +32,7 @@ class InboundStream(recv: Receivable, buffer_size: Int){
 
 
   def read(buf: Array[Byte], buf_len: Int) : Unit = {
-    if ((buf_len + buffer_pos) > buffer.length){
+    if ((buf_len + buffer_pos) >= buffer.length) {
       throw new ParseException(
         "endoint parser buffer overflow: " +
         new String(java.util.Arrays.copyOfRange(buf, 0, buf_len))

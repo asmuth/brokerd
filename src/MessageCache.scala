@@ -42,6 +42,10 @@ class MessageCache extends Actor {
     println("FIXPAUL foward " + seq_range.toString)
 
 
+  def size =
+    messages.size
+
+
   def retrieve_async(sig: QueryDiscoverSig) =
     retrieve(messages.toArray, sig) // FIXPAUL: in threadpool!
 
