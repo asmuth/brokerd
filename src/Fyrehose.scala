@@ -16,7 +16,7 @@ object Fyrehose{
   val BUFFER_SIZE_PARSER   = 8192 * 4
   val BUFFER_SIZE_TCP      = 2048
   val BUFFER_SIZE_UDP      = 65535
-  val MESSAGE_CACHE_SIZE   = 23500
+  var MESSAGE_CACHE_SIZE   = 23500
   val FILE_CHUNK_SIZE      = 3600 * 6
 
   var backbone : Backbone  = null
@@ -45,6 +45,9 @@ object Fyrehose{
       else if((args(n) == "-t") || (args(n) == "--timeout"))
         { CONFIG += (('timeout, args(n+1))); n += 2 }
 
+      else if((args(n) == "-c") || (args(n) == "--cache-size"))
+        { CONFIG += (('cache_size, args(n+1))); n += 2 }
+
       else if((args(n) == "-x") || (args(n) == "--upstream"))
         { CONFIG += (('upstream, args(n+1))); n += 2 }
 
@@ -65,6 +68,9 @@ object Fyrehose{
 
     if (CONFIG contains 'timeout)
       CONN_IDLE_TIMEOUT = CONFIG('timeout).toInt
+
+    if (CONFIG contains 'cache_size)
+      MESSAGE_CACHE_SIZE = CONFIG('cache_size).toInt
 
     safe_boot()
   }
@@ -125,6 +131,7 @@ object Fyrehose{
     println("  -l, --listen-tcp  <port>    listen for clients on this tcp port          ")
     println("  -u, --listen-udp  <port>    listen for clients on this udp port          ")
     println("  -p, --path        <path>    write event journal (default: no journal)    ")
+    println("  -c, --cache-size  <nmsg>    number of messages to cache (default: 23.5k) ")
     println("  -t, --timeout     <msecs>   connection idle timeout (default: 5000ms)    ")
     // println("  -x, --upstream    <addr>    pull events from this fyrehosed            \n")
   }
