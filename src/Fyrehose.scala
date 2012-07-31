@@ -8,7 +8,7 @@ import scala.collection.mutable.HashMap;
 
 object Fyrehose{
 
-  val VERSION = "v0.0.6"
+  val VERSION = "v0.0.7"
   val CONFIG  = HashMap[Symbol,String]()
 
   var CONN_IDLE_TIMEOUT    = 5000
