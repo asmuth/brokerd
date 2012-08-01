@@ -19,7 +19,8 @@ class QueryLexer(recv: QueryParser) {
     var head = stack.head.next(cursor, buffer)
     buffer   = stack.head.buffer(cursor, buffer)
 
-    // debug
+    if (Fyrehose.verbose)
+      debug
 
     if (head != stack.head)
       { head +=: stack; next }

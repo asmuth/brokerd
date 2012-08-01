@@ -19,14 +19,17 @@ object Fyrehose{
   var MESSAGE_CACHE_SIZE   = 23500
   val FILE_CHUNK_SIZE      = 3600 * 6
 
+  var debug   = false
+  var verbose = false
+
   var backbone : Backbone  = null
   var writer   : Writer    = null
 
   var tcp_listener : TCPListener = null
   var udp_listener : UDPListener = null
 
-  val message_cache = new MessageCache
-  val message_index = new MessageIndex
+  var message_cache : MessageCache = null
+  var message_index : MessageIndex = null
 
   def main(args: Array[String]) : Unit = {
     var n = 0
@@ -50,6 +53,12 @@ object Fyrehose{
 
       else if((args(n) == "-x") || (args(n) == "--upstream"))
         { CONFIG += (('upstream, args(n+1))); n += 2 }
+
+      else if((args(n) == "-d") || (args(n) == "--debug"))
+        { debug = true; n += 1 }
+
+      else if((args(n) == "-v") || (args(n) == "--verbose"))
+        { verbose = true; n += 1 }
 
       else {
         println("error: invalid option: " + args(n) + "\n")
@@ -79,6 +88,9 @@ object Fyrehose{
   def boot() : Unit = {
     log("fyerhosed " + VERSION + " booting...")
     System.setProperty("actors.enableForkJoin", "false")
+
+    message_cache = new MessageCache
+    message_index = new MessageIndex
 
     backbone = new Backbone()
     backbone.start()
@@ -119,7 +131,7 @@ object Fyrehose{
   def safe_boot() = try{
     boot
   } catch {
-    case e: Exception => Fyrehose.fatal(e.toString)
+    case e: Exception => Fyrehose.exception(e, true)
   }
 
 
@@ -133,6 +145,8 @@ object Fyrehose{
     println("  -p, --path        <path>    write event journal (default: no journal)    ")
     println("  -c, --cache-size  <nmsg>    number of messages to cache (default: 23.5k) ")
     println("  -t, --timeout     <msecs>   connection idle timeout (default: 5000ms)    ")
+    println("  -d, --debug                 debug mode                                   ")
+    println("  -v, --verbose               verbose mode                                 ")
     // println("  -x, --upstream    <addr>    pull events from this fyrehosed            \n")
   }
 
@@ -147,8 +161,19 @@ object Fyrehose{
     log("[ERROR] " + msg)
 
 
-  def fatal(msg: String) = {
-    error(msg); System.exit(1)
+  def debug(msg: String) =
+    log("[DEBUG] " + msg)
+
+
+  def exception(ex: Exception, fatal: Boolean) = {
+    error(ex.toString)
+
+    if (debug)
+      for (line <- ex.getStackTrace)
+        debug(line.toString)
+
+    if (fatal)
+      System.exit(1)
   }
 
 

@@ -21,7 +21,7 @@ class TCPListener(port: Int) {
           val conn = new Endpoint(sock.accept())
           clients.execute(conn)
         } catch {
-          case e: Exception => Fyrehose.fatal(e.toString)
+          case e: Exception => Fyrehose.exception(e, true)
         }
       }
     }})

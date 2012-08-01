@@ -69,7 +69,7 @@ class Backbone() extends Actor{
 
 
   override def exceptionHandler = {
-    case e: Exception => Fyrehose.fatal("backbone / " + e.toString)
+    case e: Exception => Fyrehose.exception(e, true)
   }
 
 }

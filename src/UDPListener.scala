@@ -26,7 +26,7 @@ class UDPListener(port: Int) extends Receivable {
   def message(ev_body: MessageBody) = try{
     Fyrehose.backbone ! new Message(ev_body.raw)
   } catch {
-    case e: ParseException => 
+    case e: ParseException =>
       Fyrehose.error("via UDP: " + e.toString)
   }
 

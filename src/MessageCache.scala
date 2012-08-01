@@ -81,7 +81,7 @@ class MessageCache extends Actor {
 
 
   override def exceptionHandler = {
-    case e: Exception => Fyrehose.fatal("MessageCache / " + e.toString)
+    case e: Exception => Fyrehose.exception(e, true)
   }
 
 }

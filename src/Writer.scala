@@ -27,7 +27,7 @@ class Writer extends Actor {
     try { f(param) } finally { param.close() }
 
   override def exceptionHandler = {
-    case e: Exception => Fyrehose.fatal(e.toString)
+    case e: Exception => Fyrehose.exception(e, true)
   }
 
 }
