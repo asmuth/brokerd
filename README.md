@@ -50,5 +50,5 @@ format:
 
     !command\r\n
 
-commands are user defined and are noops in the reference implementations
+commands are user defined and do not have to be implemented at all
 
