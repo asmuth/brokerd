@@ -1,7 +1,7 @@
 fyrehose
 ========
 
-fyrehose is a ascii based pub sub protocol, it's simple to understand and can be
+fyrehose is an ascii based pub sub protocol, it's simple to understand and can be
 parsed efficiently. a lot of the ideas were borrowed from redis protocol.
 
 
