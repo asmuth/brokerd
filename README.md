@@ -8,6 +8,19 @@ parsed efficiently. a lot of the ideas were borrowed from redis protocol.
 Protocol
 -------
 
+### Request / Response
+
+transaction-id is chosen by client.
+
+request format:
+
+    #transaction-id @channel (...)\n
+
+response format (retcode 0 means success):
+
+    #transaction-id $retcode\n
+
+
 ### Data Message
 
 format:
@@ -16,7 +29,8 @@ format:
 
 example: send 'hello world' to channel 'fnord'
 
-    #12345 @fnord *11 hello world\n
+    > #12345 @fnord *11 hello world\n
+    < #12345 $0
 
 
 ### Control Message
@@ -27,22 +41,13 @@ format:
 
 example: subscribe to channel 'fnord':
 
-    #12345 @fnord +1\n
+    > #12345 @fnord +1\n
+    < #12345 $0
 
 example: unsubscribe from channel 'fnord':
 
-    #12345 @fnord +0\n
-
-
-### Status Response
-
-format:
-
-    #transaction-id $retcode\n
-
-example: transaction 12345 finished with return code 0 (success):
-
-    #transaction-id $0\n
+    > #12345 @fnord +0\n
+    < #12345 $0
 
 
 
