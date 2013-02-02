@@ -68,7 +68,7 @@ module Fyrehose
             if buf[pos] == " " || buf[pos] == "\n"
               len_or_flags = len_or_flags.to_i
               if type == :data
-
+                self.state = len_or_flags
               else
                 self.state += 1
                 next
@@ -84,6 +84,10 @@ module Fyrehose
             yield(data)
             trim = pos + 1
             self.state = -7
+
+          else
+            self.state -= 1
+            body << buf[pos]
 
         end
 
