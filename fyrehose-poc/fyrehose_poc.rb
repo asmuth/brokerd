@@ -3,6 +3,24 @@ require "eventmachine"
 
 module Fyrehose
 
+  class ProtocolError < StandardError
+
+    INFO_SIZE = 30
+
+    def initialize(buf=nil, pos=nil)
+      return unless buf
+      offset = [0, pos - (INFO_SIZE / 2)].max
+      @info = "\n    => "
+      @info << buf[offset..offset + INFO_SIZE].gsub("\n", " ")
+      @info << "\n#{" " * (pos - offset + 7)}^\n"
+    end
+
+    def to_s
+      "invalid token#{@info}"
+    end
+
+  end
+
   class InputStream
 
     attr_accessor :state, :buf, :pos
@@ -33,7 +51,7 @@ module Fyrehose
             next
 
           when -6
-            raise "protocol error" if buf[pos] != "#"
+            raise ProtocolError if buf[pos] != "#"
             self.state += 1
 
           when -5
@@ -50,7 +68,7 @@ module Fyrehose
             elsif buf[pos] == "@"
               self.state += 1
             else
-              raise "protocol error"
+              raise ProtocolError
             end
 
           when -3
@@ -67,7 +85,7 @@ module Fyrehose
             elsif buf[pos] == "+"
               type = :flags
             else
-              raise "protocol error #{buf[pos]}"
+              raise ProtocolError
             end
 
           when -1
@@ -107,6 +125,9 @@ module Fyrehose
         self.pos -= trim
         self.buf = self.buf[trim..-1]
       end
+
+    rescue Fyrehose::ProtocolError => e
+      raise Fyrehose::ProtocolError.new(self.buf, self.pos)
     end
 
   end
