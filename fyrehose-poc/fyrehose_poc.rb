@@ -54,7 +54,7 @@ module Fyrehose
             raise ProtocolError if buf[pos] != "#"
             self.state += 1
 
-          when -5
+          when -3, -5
             if buf[pos] == " "
               self.state += 1
             else
@@ -69,13 +69,6 @@ module Fyrehose
               self.state += 1
             else
               raise ProtocolError
-            end
-
-          when -3
-            if buf[pos] == " "
-              self.state += 1
-            else
-              channel << buf[pos]
             end
 
           when -2
