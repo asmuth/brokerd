@@ -44,8 +44,14 @@ module Fyrehose
             end
 
           when -4
-            raise "protocol error" if buf[pos] != "@"
-            self.state += 1
+            if buf[pos] == "$"
+              type = :ack
+              self.state = -1
+            elsif buf[pos] == "@"
+              self.state += 1
+            else
+              raise "protocol error"
+            end
 
           when -3
             if buf[pos] == " "
@@ -78,10 +84,13 @@ module Fyrehose
             end
 
           when 0
-            data = { :txid => txid, :channel => channel }
-            data[:body] = body if type == :data
-            data[:flags] = len_or_flags if type == :flags
-            yield(data)
+            yield({
+              :type => type,
+              :txid => txid,
+              :channel => channel,
+              :flags => len_or_flags,
+              :body => body
+            })
             trim = pos + 1
             self.state = -7
 
@@ -91,7 +100,6 @@ module Fyrehose
 
         end
 
-        puts "#{state} @ #{pos} (#{txid} -> #{channel} -> #{len_or_flags}) [#{buf.size}]"
         self.pos += 1
       end
 
@@ -114,8 +122,9 @@ class FyrehosePOC < EventMachine::Connection
 
   def receive_data(chunk)
     @input_stream << chunk
-    @input_stream.each do |*args|
-      puts args.inspect
+
+    @input_stream.each do |msg|
+      puts msg.inspect
     end
   end
 
