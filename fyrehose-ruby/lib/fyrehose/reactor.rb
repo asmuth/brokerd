@@ -4,7 +4,7 @@ class Fyrehose::Reactor < EventMachine::Connection
 
   def self.run(host, port, opts = {}, &block)
     unless block
-      raise "missing proc{ |channel,data| } for #run"
+      raise Fyrehose::Error.new("missing proc{ |channel,data| } for #run")
     end
 
     EventMachine.run do
@@ -19,11 +19,13 @@ class Fyrehose::Reactor < EventMachine::Connection
   end
 
   def deliver(channel, data)
-    send_data("##{next_txid} @#{channel} *#{data.size} #{data}\n")
+    txid = Fyrehose.next_txid
+    send_data("##{txid} @#{channel} *#{data.size} #{data}\n")
   end
 
   def set_flags(channel, flags)
-    send_data("##{next_txid} @#{channel} +#{flags}\n")
+    txid = Fyrehose.next_txid
+    send_data("##{txid} @#{channel} +#{flags}\n")
   end
 
   def subscribe(channel)
@@ -48,12 +50,6 @@ class Fyrehose::Reactor < EventMachine::Connection
         block.call(msg[:channel], msg[:body])
       end
     end
-  end
-
-private
-
-  def next_txid
-    rand(8**32).to_s(36)
   end
 
 end

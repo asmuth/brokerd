@@ -1,5 +1,8 @@
 module Fyrehose
-  class ProtocolError < StandardError
+  class Error < StandardError; end
+  class ConnectionError < Fyrehose::Error; end
+
+  class ProtocolError < Fyrehose::Error
 
     INFO_SIZE = 30
 
@@ -16,4 +19,5 @@ module Fyrehose
     end
 
   end
+
 end
