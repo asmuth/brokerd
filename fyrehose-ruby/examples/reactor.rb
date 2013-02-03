@@ -1,6 +1,6 @@
-require "rubygems"
+$: << ::File.expand_path("../../lib", __FILE__)
 
-$: << ::File.expand_path("../../fyrehose-ruby/lib", __FILE__)
+require "rubygems"
 require "fyrehose"
 require "fyrehose/reactor"
 

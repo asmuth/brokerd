@@ -1,29 +1,25 @@
+$: << ::File.expand_path("../../lib", __FILE__)
+
 require "rubygems"
 require "eventmachine"
-
-$: << ::File.expand_path("../../fyrehose-ruby/lib", __FILE__)
 require "fyrehose"
 
-module FyrehosePOC
+module POCServer
 
   def self.channels
     @@channels ||= Hash.new{ |h,k| h[k] = [] }
   end
 
-  def self.generate_txid
-    rand(8**32).to_s(36)
-  end
-
 end
 
-class FyrehosePOC::Connection < EventMachine::Connection
+class POCServer::Connection < EventMachine::Connection
 
   def post_init
     @input_stream = Fyrehose::InputStream.new
   end
 
   def deliver(msg)
-    txid = FyrehosePOC.generate_txid
+    txid = Fyrehose.next_txid
     data = msg[:body]
     channel = msg[:channel]
 
@@ -38,13 +34,13 @@ class FyrehosePOC::Connection < EventMachine::Connection
 
         when :flags
           if msg[:flags] & 1 == 1
-            FyrehosePOC.channels[msg[:channel]] << self
+            POCServer.channels[msg[:channel]] << self
           else
-            FyrehosePOC.channels[msg[:channel]].delete(self)
+            POCServer.channels[msg[:channel]].delete(self)
           end
 
         when :data
-          FyrehosePOC.channels[msg[:channel]].each do |recv|
+          POCServer.channels[msg[:channel]].each do |recv|
             recv.deliver(msg)
           end
           send_data("##{msg[:txid]} $0\n")
@@ -54,7 +50,7 @@ class FyrehosePOC::Connection < EventMachine::Connection
   end
 
   def unbind
-    FyrehosePOC.channels.each do |key, channel|
+    POCServer.channels.each do |key, channel|
       channel.delete(self)
     end
   end
@@ -62,6 +58,6 @@ class FyrehosePOC::Connection < EventMachine::Connection
 end
 
 EventMachine.run do
-  EventMachine.open_datagram_socket("0.0.0.0", 2323, FyrehosePOC::Connection)
-  EventMachine.start_server("0.0.0.0", 2323, FyrehosePOC::Connection)
+  EventMachine.open_datagram_socket("0.0.0.0", 2323, POCServer::Connection)
+  EventMachine.start_server("0.0.0.0", 2323, POCServer::Connection)
 end
