@@ -41,6 +41,7 @@ format:
 example: transaction 'hello world' on channel 'fnord'
 
     > #12345 @fnord *11 hello world\n
+    < #12345 @fnord *11 hello paul!\n
     < #12345 $0
 
 
