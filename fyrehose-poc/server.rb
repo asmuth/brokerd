@@ -62,5 +62,6 @@ class FyrehosePOC::Connection < EventMachine::Connection
 end
 
 EventMachine.run do
+  EventMachine.open_datagram_socket("0.0.0.0", 2323, FyrehosePOC::Connection)
   EventMachine.start_server("0.0.0.0", 2323, FyrehosePOC::Connection)
 end
