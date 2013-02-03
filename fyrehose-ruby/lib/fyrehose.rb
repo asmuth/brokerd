@@ -3,7 +3,9 @@ require "timeout"
 
 require "fyrehose/errors"
 require "fyrehose/input_stream"
+require "fyrehose/abstract_client"
 require "fyrehose/tcp_client"
+require "fyrehose/udp_client"
 
 module Fyrehose
 
