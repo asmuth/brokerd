@@ -1,8 +1,7 @@
 fyrehose
 ========
 
-fyrehose is an ascii based pub sub protocol, it's simple to understand and can be
-parsed efficiently. a lot of the ideas were borrowed from redis protocol.
+fyrehose is transactional pub/sub protocol, it's ascii based, simple to understand and can be parsed efficiently. a lot of the ideas were borrowed from redis protocol.
 
 
 Protocol
@@ -28,6 +27,18 @@ format:
     #transaction-id @channel *len message\n
 
 example: send 'hello world' to channel 'fnord'
+
+    > #12345 @fnord *11 hello world\n
+    < #12345 $0
+
+
+### Transaction Message
+
+format:
+
+    #transaction-id ~channel *len message\n
+
+example: transaction 'hello world' on channel 'fnord'
 
     > #12345 @fnord *11 hello world\n
     < #12345 $0
