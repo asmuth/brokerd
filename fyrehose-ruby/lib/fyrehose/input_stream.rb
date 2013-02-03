@@ -36,7 +36,8 @@ module Fyrehose
             if buf[pos] == " "
               self.state += 1
             else
-              txid << buf[pos]
+              txid    << buf[pos] if state == -5
+              channel << buf[pos] if state == -3
             end
 
           when -4

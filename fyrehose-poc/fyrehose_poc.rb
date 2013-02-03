@@ -10,25 +10,30 @@ module FyrehosePOC
     @@channels ||= Hash.new{ |h,k| h[k] = [] }
   end
 
+  def self.generate_txid
+    rand(8**32).to_s(36)
+  end
+
 end
 
 class FyrehosePOC::Connection < EventMachine::Connection
 
   def post_init
     @input_stream = Fyrehose::InputStream.new
-    puts "connect"
   end
 
   def deliver(msg)
-    send_data "fnord"
+    txid = FyrehosePOC.generate_txid
+    data = msg[:body]
+    channel = msg[:channel]
+
+    send_data("##{txid} @#{channel} *#{data.size} #{data}\n")
   end
 
   def receive_data(chunk)
     @input_stream << chunk
 
     @input_stream.each do |msg|
-      puts msg.inspect
-
       case msg[:type]
 
         when :flags
@@ -42,6 +47,7 @@ class FyrehosePOC::Connection < EventMachine::Connection
           FyrehosePOC.channels[msg[:channel]].each do |recv|
             recv.deliver(msg)
           end
+          send_data("##{msg[:txid]} $0\n")
 
       end
     end
