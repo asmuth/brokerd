@@ -4,7 +4,7 @@ class Fyrehose::Reactor < EventMachine::Connection
 
   def self.run(host, port, opts = {}, &block)
     unless block
-      raise Fyrehose::Error.new("missing proc{ |channel,data| } for #run")
+      raise Fyrehose::Error.new("missing proc for #run")
     end
 
     EventMachine.run do

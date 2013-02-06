@@ -15,6 +15,11 @@ module Fyrehose
 
     def each
       trim = 0
+      type = nil
+      txid = ""
+      channel = ""
+      len_or_flags = ""
+      body = ""
 
       while pos < buf.size do
         case state
