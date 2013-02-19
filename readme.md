@@ -1,24 +1,25 @@
 Fyrehose
 ========
 
-Fyrehose is a scala-based pub/sub daemon for JSON messages. It allows subscribers to filter
-messages on the server side and to replay their message history.
+Fyrehose is a message broker for JSON data streams. It offers a sql-like query frontend that allows you to perform
+time-range queries (“give me all conversion events where user_lang = fr_FR from five minutes ago until
+now”) and features unbound/streaming queries (“stream all incoming conversion events where user_lang = en_US”).
 
 
 **Synopsis / Example:**
 
-_publish a few example messages:_
+_Publish a few example messages:_
 
     echo '{ "action": "signup", "referrer": "ref1" }' | nc -w0 localhost 2323
     echo '{ "action": "signup", "referrer": "ref2" }' | nc -w0 localhost 2323
     echo '{ "action": "signup", "referrer": "ref3" }' | nc -w0 localhost 2323
 
 
-_subscribe to all signups where referrer matches /^ref/ from now on:_
+_Subscribe to all signups where referrer matches /^ref/ from now on:_
 
     echo "stream where action = 'signup' and where referrer = /^ref/" | nc -w0 localhost 2323
 
-_get the last 5 minutes of signups:_
+_Get the last 5 minutes of signups:_
 
     echo "stream where action = 'signup' since -5min until now" | nc -w0 localhost 2323
 
