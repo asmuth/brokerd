@@ -1,66 +1,41 @@
 fyrehose
 ========
 
-fyrehose is transactional pub/sub protocol, it's ascii based, simple to understand and can be parsed efficiently. a lot of the ideas were borrowed from redis protocol.
+fyrehose is a http based pub/sub daemon. it is quite similar to apache's kafka.
 
 
-Protocol
--------
+### Curl Example:
 
-### Request / Response
+in one shell, type this:
 
-transaction-id is chosen by client.
+    curl localhost:4242/mychannel/stream
 
-request format:
+in another shell run this:
 
-    #transaction-id @channel (...)\n
-
-response format (retcode 0 means success):
-
-    #transaction-id $retcode\n
+    curl -X POST -d "test" localhost:4242/mychannel
 
 
-### Data Message
+### HTTP API
 
-format:
+publish to a channel:
 
-    #transaction-id @channel *len message\n
+    POST /:channel
 
-example: send 'hello world' to channel 'fnord'
+subscribe to a channel (responds with http multipart, keep connection open... not supported by all http clients=
 
-    > #12345 @fnord *11 hello world\n
-    < #12345 $0
+    GET /:channel/stream
 
+retrieve a message at a specific offset (regular http response)
 
-### Transaction Message
+    GET /:channel/:offset
 
-format:
+retrieve the next message after a specific offset (regular http response)
 
-    #transaction-id ~channel *len message\n
+    GET /:channel/:offset/next
 
-example: transaction 'hello world' on channel 'fnord'
+retrieve the next :n messages after a specific offset (http multipart response):
 
-    > #12345 @fnord *11 hello world\n
-    < #12345 @fnord *11 hello paul!\n
-    < #12345 $0
-
-
-### Control Message
-
-format:
-
-    #transaction-id @channel +flags\n
-
-example: subscribe to channel 'fnord':
-
-    > #12345 @fnord +1\n
-    < #12345 $0
-
-example: unsubscribe from channel 'fnord':
-
-    > #12345 @fnord +0\n
-    < #12345 $0
-
+    GET /:channel/:offset/next/:n
 
 
 License
