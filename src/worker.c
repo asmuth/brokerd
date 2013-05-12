@@ -71,14 +71,14 @@ void proc_conn(conn_t* conn) {
       break;
   }
 
-  printf("http: %i %s\n", conn->http_req->method, conn->http_req->uri);
+  //printf("http: %i %s\n", conn->http_req->method, conn->http_req->uri);
 
-  printf("write...\n");
+  //printf("write...\n");
 
   char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
   write(conn->sock, resp, strlen(resp));
 
-  printf("close...\n");
+  //printf("close...\n");
   conn_close(conn);
 }
 
@@ -87,14 +87,14 @@ void *worker_run(void* userdata) {
   conn_t* conn;
 
   while (1) {
-    printf("worker waiting...\n");
+    //printf("worker waiting...\n");
 
     if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
       printf("error reading from conn_queue\n");
       continue;
     }
 
-    printf("read next connection...\n");
+    //printf("read next connection...\n");
     proc_conn(conn);
   }
 
