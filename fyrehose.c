@@ -13,11 +13,12 @@
 #include <netinet/in.h>
 
 #include "conn.h"
-#include "server.h"
 #include "worker.h"
 #include <signal.h>
 
 worker_t*  worker;
+
+int ssock;
 int running = 1;
 
 void quit(int fnord) {
@@ -25,22 +26,43 @@ void quit(int fnord) {
   printf("shutdown...\n");
 
   worker_stop(worker);
-  server_stop();
+
+  close(ssock);
 }
 
 int main(int argc, char** argv) {
-  int server;
-  conn_t*    conn;
+  conn_t*            conn;
+  struct sockaddr_in server_addr;
+  int                server;
+  int                port = 2323;
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
 
   worker = worker_init();
 
-  if (worker == NULL)
-    return 1;
+  server_addr.sin_family = AF_INET;
+  server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  server_addr.sin_port = htons(port);
 
-  if (server_start(2324) == -1)
+  ssock = socket(AF_INET, SOCK_STREAM, 0);
+
+  if (ssock == -1) {
+    printf("create socket failed!\n");
+    return 1;
+  }
+
+  if (bind(ssock, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
+    printf("bind failed!\n");
+    return 1;
+  }
+
+  if (listen(ssock, 1024) == -1) {
+    printf("bind failed!\n");
+    return 1;
+  }
+
+  if (worker == NULL)
     return 1;
 
   while (running) {
@@ -62,4 +84,3 @@ int main(int argc, char** argv) {
   printf("yeah\n");
   return 0;
 }
-

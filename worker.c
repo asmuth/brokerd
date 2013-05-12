@@ -7,11 +7,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <pthread.h>
 
-#include "server.h"
 #include "worker.h"
 #include "conn.h"
 
