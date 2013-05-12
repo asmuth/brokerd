@@ -18,10 +18,13 @@
 
 int main(int argc, char** argv) {
   int server;
-  conn_t*    conn;
-  pthread_t  worker;
 
-  if (worker_init(&worker) == -1)
+  conn_t*    conn;
+  worker_t*  worker;
+
+  worker = worker_init();
+
+  if (worker == NULL)
     return 1;
 
   if (server_start(2324) == -1)
@@ -39,10 +42,12 @@ int main(int argc, char** argv) {
     }
 
     printf("accepted, putting into connection queue!\n");
-    write(conn_queue[1], (char *) &conn, sizeof(conn_t *));
+    write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
   }
 
   printf("yeah\n");
+
+  worker_stop(worker);
   server_stop();
 
   return 0;

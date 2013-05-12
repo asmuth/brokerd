@@ -9,7 +9,6 @@
 #define SERVER_H
 
 int ssock;
-int conn_queue[2];
 
 int server_start(int port);
 void server_stop();

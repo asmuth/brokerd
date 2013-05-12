@@ -22,11 +22,6 @@ int server_start(int port) {
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
   addr.sin_port = htons(port);
 
-  if (pipe(conn_queue) == -1) {
-    printf("create pipe failed!\n");
-    return -1;
-  }
-
   ssock = socket(AF_INET, SOCK_STREAM, 0);
 
   if (ssock == -1) {

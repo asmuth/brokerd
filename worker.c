@@ -15,13 +15,39 @@
 #include "worker.h"
 #include "conn.h"
 
-void *work(void* fnord) {
+worker_t* worker_init() {
+  int err;
+
+  worker_t* worker = calloc(1, sizeof(worker));
+
+  if (pipe(worker->queue) == -1) {
+    printf("create pipe failed!\n");
+    return NULL;
+  }
+
+  err = pthread_create(&worker->thread, NULL, worker_run, worker);
+
+  if (err) {
+    printf("error starting worker: %i\n", err);
+    return NULL;
+  }
+
+  return worker;
+}
+
+void worker_stop(worker_t* worker) {
+  //pthread_join(worker->thread);
+  free(worker);
+}
+
+void *worker_run(void* userdata) {
+  worker_t* self = userdata;
   conn_t* conn;
 
   while (1) {
     printf("worker waiting...\n");
 
-    if (read(conn_queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
+    if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
       printf("error reading from conn_queue\n");
       continue;
     }
@@ -35,18 +61,5 @@ void *work(void* fnord) {
     conn_close(conn);
   }
 
-  return fnord;
-}
-
-int worker_init(pthread_t* thread) {
-  int err;
-
-  err = pthread_create(thread, NULL, work, NULL);
-
-  if (err) {
-    printf("error starting worker: %i\n", err);
-    return -1;
-  }
-
-  return 0;
+  return self;
 }

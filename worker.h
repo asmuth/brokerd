@@ -10,7 +10,13 @@
 
 #include <pthread.h>
 
-int worker_init(pthread_t* thread);
-void* work(void* fnord);
+typedef struct {
+  pthread_t thread;
+  int queue[2];
+} worker_t;
+
+worker_t* worker_init();
+void* worker_run(void* self);
+void worker_stop(worker_t* worker);
 
 #endif
