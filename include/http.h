@@ -14,7 +14,13 @@
 #define HTTP_STATE_HKEY 3
 #define HTTP_STATE_HVAL 4
 
+#define HTTP_METHOD_HEAD 0
+#define HTTP_METHOD_GET 1
+#define HTTP_METHOD_POST 2
+
 typedef struct {
+  int   method;
+  char  uri[4096];
   int   state;
   int   last_pos;
   char* cur_token;

@@ -68,14 +68,12 @@ int http_read(http_req_t* req, char* buf, size_t len) {
             return -1;
 
           case HTTP_STATE_VERSION:
-            *pos = 0; printf("  >> http:   %s\n", req->cur_token);
-
+            // *pos = 0; printf("  >> http:   %s\n", req->cur_token);
             req->cur_token = pos + 1;
             req->state = HTTP_STATE_HKEY;
 
           case HTTP_STATE_HVAL:
-            *pos = 0; printf("  >> hval:   %s\n", req->cur_token);
-
+            // *pos = 0; printf("  >> hval:   %s\n", req->cur_token);
             req->cur_token = pos + 1;
             req->state = HTTP_STATE_HKEY;
             break;
@@ -90,8 +88,7 @@ int http_read(http_req_t* req, char* buf, size_t len) {
         switch (req->state) {
 
           case HTTP_STATE_HKEY:
-            *pos = 0; printf("  >> hkey:   %s\n", req->cur_token);
-
+            // *pos = 0; printf("  >> hkey:   %s\n", req->cur_token);
             req->cur_token = pos + 1;
             req->state = HTTP_STATE_HVAL;
             break;
@@ -109,35 +106,33 @@ int http_read(http_req_t* req, char* buf, size_t len) {
 }
 
 int http_read_method(http_req_t* req, char* start, char* end) {
-  char buf[64];
-  int  len = end - start + 1;
+  int len = end - start + 1;
 
-  if (len >= 64)
+  if (strncmp(start, "HEAD", len) == 0)
+    req->method = HTTP_METHOD_HEAD;
+
+  else if (strncmp(start, "GET", len) == 0)
+    req->method = HTTP_METHOD_GET;
+
+  else if (strncmp(start, "POST", len) == 0)
+    req->method = HTTP_METHOD_POST;
+
+  else
     return -1;
 
-  strncpy(buf, start, len);
-  buf[len] = 0;
-
-  printf("  >> method: %s\n", buf);
-
   req->state = HTTP_STATE_URI;
-
   return 0;
 }
 
 int http_read_uri(http_req_t* req, char* start, char* end) {
-  char buf[64];
   int  len = end - start + 1;
 
-  if (len >= 64)
+  if (len >= sizeof(req->uri))
     return -1;
 
-  strncpy(buf, start, len);
-  buf[len] = 0;
-
-  printf("  >> uri:    %s\n", buf);
+  strncpy(req->uri, start, len);
+  req->uri[len] = 0;
 
   req->state = HTTP_STATE_VERSION;
-
   return 0;
 }

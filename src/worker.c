@@ -71,6 +71,8 @@ void proc_conn(conn_t* conn) {
       break;
   }
 
+  printf("http: %i %s\n", conn->http_req->method, conn->http_req->uri);
+
   printf("write...\n");
 
   char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
