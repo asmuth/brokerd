@@ -40,6 +40,8 @@ void worker_stop(worker_t* worker) {
 }
 
 void *worker_run(void* userdata) {
+  int chunk;
+
   worker_t* self = userdata;
   conn_t* conn;
 
@@ -52,6 +54,9 @@ void *worker_run(void* userdata) {
     }
 
     printf("read next connection...\n");
+
+    chunk = read(conn->sock, conn->buf, conn->buf_len);
+    printf("read %i bytes\n", chunk);
 
     printf("write...\n");
     write(conn->sock, "fnord\n", 6);

@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
   while (running) {
     printf("waiting...\n");
-    conn = conn_init();
+    conn = conn_init(4096);
 
     conn->sock = accept(ssock, conn->addr, &conn->addr_len);
 
@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
     }
 
     printf("accepted, putting into connection queue!\n");
+    //conn_set_nonblock(conn);
     write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
   }
 

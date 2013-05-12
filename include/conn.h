@@ -14,6 +14,8 @@ typedef struct {
   int              sock;
   struct sockaddr* addr;
   socklen_t        addr_len;
+  char*            buf;
+  int              buf_len;
 } conn_t;
 
 conn_t* conn_init();
