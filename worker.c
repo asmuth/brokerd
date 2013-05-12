@@ -15,12 +15,6 @@
 #include "worker.h"
 #include "conn.h"
 
-void conn_close(conn_t* conn) {
-  close(conn->sock);
-  free(conn);
-}
-
-
 void *work(void* fnord) {
   conn_t* conn;
 

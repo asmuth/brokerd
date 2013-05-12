@@ -29,9 +29,7 @@ int main(int argc, char** argv) {
 
   while (1) {
     printf("waiting...\n");
-
-    conn = (conn_t *) calloc(1, sizeof(conn_t));
-    conn->addr_len = sizeof(conn->addr);
+    conn = conn_init();
 
     conn->sock = accept(ssock, conn->addr, &conn->addr_len);
 

@@ -5,18 +5,17 @@
 // file except in compliance with the License. You may obtain a copy of
 // the License at: http://opensource.org/licenses/MIT
 
-#ifndef CONN_H
-#define CONN_H
+#include <stdlib.h>
 
-#include <sys/socket.h>
+#include "conn.h"
 
-typedef struct {
-  int              sock;
-  struct sockaddr* addr;
-  socklen_t        addr_len;
-} conn_t;
+conn_t* conn_init() {
+  conn_t* conn = (conn_t *) calloc(1, sizeof(conn_t));
+  conn->addr_len = sizeof(conn->addr);
+  return conn;
+}
 
-conn_t* conn_init();
-void conn_close();
-
-#endif
+void conn_close(conn_t* conn) {
+  close(conn->sock);
+  free(conn);
+}
