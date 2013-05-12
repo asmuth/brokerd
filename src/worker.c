@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "worker.h"
 #include "conn.h"
@@ -40,9 +41,9 @@ void worker_stop(worker_t* worker) {
 }
 
 void proc_conn(conn_t* conn) {
-  int chunk;
+  int chunk, body_pos;
 
-  while (conn->buf_pos < 200) {
+  while (conn->buf_pos < conn->buf_len) {
     chunk = read(conn->sock, conn->buf + conn->buf_pos, 10);
 
     if (chunk == 0) {
@@ -57,14 +58,23 @@ void proc_conn(conn_t* conn) {
       return;
     }
 
-    printf("read %i bytes\n", chunk);
     conn->buf_pos += chunk;
 
-    http_read(conn->http_req, conn->buf, conn->buf_pos);
+    body_pos = http_read(conn->http_req, conn->buf, conn->buf_pos);
+
+    if (body_pos == -1) {
+      printf("http_read() returned error\n");
+      conn_close(conn);
+    }
+
+    if (body_pos > 0)
+      break;
   }
 
   printf("write...\n");
-  write(conn->sock, "fnord\n", 6);
+
+  char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
+  write(conn->sock, resp, strlen(resp));
 
   printf("close...\n");
   conn_close(conn);

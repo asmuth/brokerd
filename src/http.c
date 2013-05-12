@@ -81,7 +81,6 @@ int http_read(http_req_t* req, char* buf, size_t len) {
             break;
 
           case HTTP_STATE_HKEY:
-            printf("YEAH!\n");
             return pos - buf;
             break;
 
