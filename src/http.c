@@ -24,16 +24,15 @@ http_req_t* http_req_init() {
 // can be called multiple times on the same buffer (with increasing lenghth)
 // for incremental parsing... (it remembers the last_pos in req->last_pos)
 //
-// returns 1 if the request was successfully and completely parsed, returns
-// 0 if the request was parsed without errors so far, but is not yet finished
-// and returns -1 if an error occured
+// returns 0 if the request was parsed without errors so far, but is not yet
+// finished and returns -1 if an error occured. if the request was successfully
+// and completely parsed it will return the (positive non-zero) position of the
+// first byte of the http request body
 int http_read(http_req_t* req, char* buf, size_t len) {
   int n, nxt = len - req->last_pos - 1;
   char* pos  = buf + req->last_pos;
 
   for (n = 0; n <= nxt; n++) {
-    //printf("%i: %c\n", n, *pos);
-
     switch (*pos) {
 
       case '\r':
@@ -70,7 +69,33 @@ int http_read(http_req_t* req, char* buf, size_t len) {
 
           case HTTP_STATE_VERSION:
             *pos = 0; printf("  >> http:   %s\n", req->cur_token);
-            return 0;
+
+            req->cur_token = pos + 1;
+            req->state = HTTP_STATE_HKEY;
+
+          case HTTP_STATE_HVAL:
+            *pos = 0; printf("  >> hval:   %s\n", req->cur_token);
+
+            req->cur_token = pos + 1;
+            req->state = HTTP_STATE_HKEY;
+            break;
+
+          case HTTP_STATE_HKEY:
+            printf("YEAH!\n");
+            return pos - buf;
+            break;
+
+      }; break;
+
+      case ':':
+        switch (req->state) {
+
+          case HTTP_STATE_HKEY:
+            *pos = 0; printf("  >> hkey:   %s\n", req->cur_token);
+
+            req->cur_token = pos + 1;
+            req->state = HTTP_STATE_HVAL;
+            break;
 
       }; break;
 

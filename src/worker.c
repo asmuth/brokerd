@@ -42,7 +42,7 @@ void worker_stop(worker_t* worker) {
 void proc_conn(conn_t* conn) {
   int chunk;
 
-  while (conn->buf_pos < 20) {
+  while (conn->buf_pos < 200) {
     chunk = read(conn->sock, conn->buf + conn->buf_pos, 10);
 
     if (chunk == 0) {
