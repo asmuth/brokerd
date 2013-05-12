@@ -15,12 +15,25 @@
 #include "conn.h"
 #include "server.h"
 #include "worker.h"
+#include <signal.h>
+
+worker_t*  worker;
+int running = 1;
+
+void quit(int fnord) {
+  running = 0;
+  printf("shutdown...\n");
+
+  worker_stop(worker);
+  server_stop();
+}
 
 int main(int argc, char** argv) {
   int server;
-
   conn_t*    conn;
-  worker_t*  worker;
+
+  signal(SIGQUIT, quit);
+  signal(SIGINT, quit);
 
   worker = worker_init();
 
@@ -30,7 +43,7 @@ int main(int argc, char** argv) {
   if (server_start(2324) == -1)
     return 1;
 
-  while (1) {
+  while (running) {
     printf("waiting...\n");
     conn = conn_init();
 
@@ -38,6 +51,7 @@ int main(int argc, char** argv) {
 
     if (conn->sock == -1) {
       printf("accept failed!\n");
+      free(conn);
       continue;
     }
 
@@ -46,9 +60,6 @@ int main(int argc, char** argv) {
   }
 
   printf("yeah\n");
-
-  worker_stop(worker);
-  server_stop();
-
   return 0;
 }
+

@@ -36,6 +36,7 @@ worker_t* worker_init() {
 }
 
 void worker_stop(worker_t* worker) {
+  printf("worker_stop\n");
   //pthread_join(worker->thread);
   free(worker);
 }
