@@ -12,18 +12,21 @@
 #include <fcntl.h>
 
 #include "conn.h"
+#include "http.h"
 
 conn_t* conn_init(int buf_len) {
   conn_t* conn = (conn_t *) calloc(1, sizeof(conn_t));
+  conn->addr_len = sizeof(conn->addr);
   conn->buf      = calloc(1, buf_len);
   conn->buf_len  = buf_len;
-  conn->addr_len = sizeof(conn->addr);
+  conn->http_req = http_req_init();
   return conn;
 }
 
 void conn_close(conn_t* conn) {
   close(conn->sock);
   free(conn->buf);
+  free(conn->http_req);
   free(conn);
 }
 

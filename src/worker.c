@@ -42,8 +42,8 @@ void worker_stop(worker_t* worker) {
 void proc_conn(conn_t* conn) {
   int chunk;
 
-  while (conn->buf_pos < 30) {
-    chunk = read(conn->sock, conn->buf, conn->buf_len);
+  while (conn->buf_pos < 20) {
+    chunk = read(conn->sock, conn->buf + conn->buf_pos, 10);
 
     if (chunk == 0) {
       printf("read EOF\n");
@@ -59,6 +59,8 @@ void proc_conn(conn_t* conn) {
 
     printf("read %i bytes\n", chunk);
     conn->buf_pos += chunk;
+
+    http_read(conn->http_req, conn->buf, conn->buf_pos);
   }
 
   printf("write...\n");

@@ -9,6 +9,7 @@
 #define CONN_H
 
 #include <sys/socket.h>
+#include "http.h"
 
 typedef struct {
   int              sock;
@@ -17,6 +18,7 @@ typedef struct {
   char*            buf;
   int              buf_len;
   int              buf_pos;
+  http_req_t*      http_req;
 } conn_t;
 
 conn_t* conn_init();
