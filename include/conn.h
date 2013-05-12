@@ -16,6 +16,7 @@ typedef struct {
   socklen_t        addr_len;
   char*            buf;
   int              buf_len;
+  int              buf_pos;
 } conn_t;
 
 conn_t* conn_init();

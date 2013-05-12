@@ -39,9 +39,36 @@ void worker_stop(worker_t* worker) {
   free(worker);
 }
 
-void *worker_run(void* userdata) {
+void proc_conn(conn_t* conn) {
   int chunk;
 
+  while (conn->buf_pos < 30) {
+    chunk = read(conn->sock, conn->buf, conn->buf_len);
+
+    if (chunk == 0) {
+      printf("read EOF\n");
+      conn_close(conn);
+      return;
+    }
+
+    if (chunk < 0) {
+      printf("error while reading...\n");
+      conn_close(conn);
+      return;
+    }
+
+    printf("read %i bytes\n", chunk);
+    conn->buf_pos += chunk;
+  }
+
+  printf("write...\n");
+  write(conn->sock, "fnord\n", 6);
+
+  printf("close...\n");
+  conn_close(conn);
+}
+
+void *worker_run(void* userdata) {
   worker_t* self = userdata;
   conn_t* conn;
 
@@ -54,15 +81,7 @@ void *worker_run(void* userdata) {
     }
 
     printf("read next connection...\n");
-
-    chunk = read(conn->sock, conn->buf, conn->buf_len);
-    printf("read %i bytes\n", chunk);
-
-    printf("write...\n");
-    write(conn->sock, "fnord\n", 6);
-
-    printf("close...\n");
-    conn_close(conn);
+    proc_conn(conn);
   }
 
   return self;
