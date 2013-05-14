@@ -26,8 +26,8 @@ conn_t* conn_init(int buf_len) {
 
 void conn_close(conn_t* conn) {
   close(conn->sock);
+  http_req_free(conn->http_req);
   free(conn->buf);
-  free(conn->http_req);
   free(conn);
 }
 

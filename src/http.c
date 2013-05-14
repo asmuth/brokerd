@@ -19,6 +19,10 @@ http_req_t* http_req_init() {
   return req;
 }
 
+void http_req_free(http_req_t* self) {
+  free(self);
+}
+
 // parses a http request
 //
 // can be called multiple times on the same buffer (with increasing lenghth)

@@ -31,5 +31,6 @@ int http_read_method(http_req_t* req, char* start, char* end);
 int http_read_uri(http_req_t* req, char* start, char* end);
 
 http_req_t* http_req_init();
+void http_req_free(http_req_t* self);
 
 #endif
