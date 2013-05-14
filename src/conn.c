@@ -25,6 +25,8 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* conn) {
+  return; // FIXPAUL: needs to be removed from the worker conn list aswell!
+
   close(conn->sock);
   http_req_free(conn->http_req);
   free(conn->buf);
@@ -46,36 +48,34 @@ void conn_read(conn_t* self) {
 
   if (chunk == 0) {
     printf("read EOF\n");
-    //conn_close(conn);
+    conn_close(self);
     return;
   }
 
   if (chunk < 0) {
     printf("error while reading...\n");
-    //conn_close(conn);
+    conn_close(self);
     return;
   }
 
   self->buf_pos += chunk;
-
   body_pos = http_read(self->http_req, self->buf, self->buf_pos);
 
   if (body_pos == -1) {
     printf("http_read() returned error\n");
-    //conn_close(conn);
+    conn_close(self);
   }
 
   if (body_pos > 0) {
     printf("http request complete!!!!!!!!!!!!!!!!!!!!\n");
+
+    printf("http: %i %s\n", self->http_req->method, self->http_req->uri);
+
+    printf("write...\n");
+    char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
+    write(self->sock, resp, strlen(resp)); // this will break as we are nonblocking, but let's try it anyway ;)
+
+    printf("close...\n");
+    conn_close(self);
   }
-
-  //printf("http: %i %s\n", conn->http_req->method, conn->http_req->uri);
-
-  //printf("write...\n");
-
-  //char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
-  //write(conn->sock, resp, strlen(resp));
-
-  //printf("close...\n");
-  //conn_close(conn);
 }
