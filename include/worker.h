@@ -12,7 +12,8 @@
 
 typedef struct {
   pthread_t thread;
-  int queue[2];
+  int       queue[2];
+  void*     connections;
 } worker_t;
 
 worker_t* worker_init();

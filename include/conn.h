@@ -19,9 +19,11 @@ typedef struct {
   int              buf_len;
   int              buf_pos;
   http_req_t*      http_req;
+  void*            next;
 } conn_t;
 
 conn_t* conn_init();
 void conn_close();
+void conn_read(conn_t* self);
 
 #endif

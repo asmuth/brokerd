@@ -77,8 +77,8 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    //printf("accepted, putting into connection queue!\n");
-    //conn_set_nonblock(conn);
+    printf("accepted, putting into connection queue!\n");
+    conn_set_nonblock(conn);
     write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
   }
 
