@@ -33,7 +33,6 @@ void quit(int fnord) {
 int main(int argc, char** argv) {
   conn_t*            conn;
   struct sockaddr_in server_addr;
-  int                server;
   int                port = 2323;
 
   signal(SIGQUIT, quit);
@@ -77,7 +76,7 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    printf("accepted, putting into connection queue!\n");
+    //printf("accepted, putting into connection queue!\n");
     conn_set_nonblock(conn);
     write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
   }

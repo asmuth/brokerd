@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 
 #include "conn.h"
 #include "http.h"
@@ -25,7 +26,7 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* conn) {
-  conn_t** cur = &conn->worker->connections;
+  conn_t** cur = (conn_t **) &conn->worker->connections;
 
   for (; (*cur)->sock != conn->sock; cur = &(*cur)->next)
     if (!*cur) goto free;
@@ -72,16 +73,17 @@ void conn_read(conn_t* self) {
     conn_close(self);
   }
 
+  // this is just a stub...
   if (body_pos > 0) {
-    printf("http request complete!!!!!!!!!!!!!!!!!!!!\n");
+    //printf("http request complete!!!!!!!!!!!!!!!!!!!!\n");
 
-    printf("http: %i %s\n", self->http_req->method, self->http_req->uri);
+    //printf("http: %i %s\n", self->http_req->method, self->http_req->uri);
 
-    printf("write...\n");
+    //printf("write...\n");
     char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
     write(self->sock, resp, strlen(resp)); // this will break as we are nonblocking, but let's try it anyway ;)
 
-    printf("close...\n");
+    //printf("close...\n");
     conn_close(self);
   }
 }

@@ -37,7 +37,7 @@ worker_t* worker_init() {
 }
 
 void worker_stop(worker_t* worker) {
-  printf("worker_stop\n");
+  //printf("worker_stop\n");
   //pthread_join(worker->thread);
   free(worker);
 }
@@ -50,11 +50,11 @@ void *worker_run(void* userdata) {
   conn_t* conn;
 
   while (1) {
-    printf("worker selecting...\n");
+    //printf("worker selecting...\n");
     FD_ZERO(&op_read);
 
     for (conn = self->connections; conn != NULL; ) {
-      printf("connection!!!!\n");
+      //printf("connection!!!!\n");
 
       // conn interest claim
       FD_SET(conn->sock, &op_read);
@@ -77,11 +77,11 @@ void *worker_run(void* userdata) {
       continue;
     }
 
-    printf("select(): %i\n", res);
+    //printf("select(): %i\n", res);
 
     // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
-      printf("new connection!\n");
+      //printf("new connection!\n");
 
       if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
         printf("error reading from conn_queue\n");
