@@ -10,8 +10,9 @@
 
 #include <sys/socket.h>
 #include "http.h"
+#include "worker.h"
 
-typedef struct {
+typedef struct conn_s {
   int              sock;
   struct sockaddr* addr;
   socklen_t        addr_len;
@@ -19,7 +20,8 @@ typedef struct {
   int              buf_len;
   int              buf_pos;
   http_req_t*      http_req;
-  void*            next;
+  struct conn_s*   next;
+  worker_t*        worker;
 } conn_t;
 
 conn_t* conn_init();

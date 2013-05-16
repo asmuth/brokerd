@@ -25,8 +25,14 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* conn) {
-  return; // FIXPAUL: needs to be removed from the worker conn list aswell!
+  conn_t** cur = &conn->worker->connections;
 
+  for (; (*cur)->sock != conn->sock; cur = &(*cur)->next)
+    if (!*cur) goto free;
+
+  *cur = (*cur)->next;
+
+  free:
   close(conn->sock);
   http_req_free(conn->http_req);
   free(conn->buf);

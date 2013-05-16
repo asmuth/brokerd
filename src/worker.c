@@ -79,6 +79,7 @@ void *worker_run(void* userdata) {
 
     printf("select(): %i\n", res);
 
+    // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
       printf("new connection!\n");
 
@@ -86,6 +87,8 @@ void *worker_run(void* userdata) {
         printf("error reading from conn_queue\n");
         continue;
       }
+
+      conn->worker = self;
 
       if (self->connections == NULL) {
         self->connections = conn;
