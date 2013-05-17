@@ -50,22 +50,27 @@ void *worker_run(void* userdata) {
   conn_t* conn;
 
   while (1) {
-    //printf("worker selecting...\n");
     FD_ZERO(&op_read);
+    FD_ZERO(&op_write);
+    FD_SET(self->queue[0], &op_read);
 
     for (conn = self->connections; conn != NULL; ) {
-      //printf("connection!!!!\n");
+      switch (conn->state) {
 
-      // conn interest claim
-      FD_SET(conn->sock, &op_read);
-      // EOF conn interest claim
+        case CONN_STATE_HEAD:
+          FD_SET(conn->sock, &op_read);
+          break;
+
+        case CONN_STATE_STREAM:
+          FD_SET(conn->sock, &op_write);
+          break;
+
+      }
 
       conn = conn->next;
     }
 
-    FD_SET(self->queue[0], &op_read);
-
-    res = select(FD_SETSIZE, &op_read, NULL, NULL, NULL);
+    res = select(FD_SETSIZE, &op_read, &op_write, NULL, NULL);
 
     if (res == 0) {
       printf("timeout while selecting\n");
@@ -73,16 +78,12 @@ void *worker_run(void* userdata) {
     }
 
     if (res == -1) {
-      printf("error while selecting\n");
+      perror("error while selecting");
       continue;
     }
 
-    //printf("select(): %i\n", res);
-
     // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
-      //printf("new connection!\n");
-
       if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
         printf("error reading from conn_queue\n");
         continue;
@@ -98,21 +99,15 @@ void *worker_run(void* userdata) {
       }
     }
 
-
     for (conn = self->connections; conn != NULL; ) {
-      // conn callback exec
-
       if (FD_ISSET(conn->sock, &op_read))
         conn_read(conn);
 
-      // EOF conn callback exec
+      if (FD_ISSET(conn->sock, &op_write))
+        conn_write(conn);
 
       conn = conn->next;
     }
-
-
-    //printf("read next connection...\n");
-    //proc_conn(conn);
   }
 
   return self;

@@ -22,11 +22,13 @@ conn_t* conn_init(int buf_len) {
   conn->buf_len  = buf_len;
   conn->http_req = http_req_init();
   conn->next     = NULL;
+  conn->state    = CONN_STATE_HEAD;
   return conn;
 }
 
 void conn_close(conn_t* conn) {
   conn_t** cur = (conn_t **) &conn->worker->connections;
+  conn->state = CONN_STATE_CLOSED;
 
   for (; (*cur)->sock != conn->sock; cur = &(*cur)->next)
     if (!*cur) goto free;
@@ -51,7 +53,14 @@ void conn_set_nonblock(conn_t* conn) {
 void conn_read(conn_t* self) {
   int chunk, body_pos;
 
-  chunk = read(self->sock, self->buf + self->buf_pos, 10);
+  if (self->buf_len - self->buf_pos <= 0) {
+    printf("error: http request buffer exhausted\n");
+    conn_close(self);
+    return;
+  }
+
+  chunk = read(self->sock, self->buf + self->buf_pos,
+    self->buf_len - self->buf_pos);
 
   if (chunk == 0) {
     printf("read EOF\n");
@@ -60,7 +69,7 @@ void conn_read(conn_t* self) {
   }
 
   if (chunk < 0) {
-    printf("error while reading...\n");
+    perror("error while reading...");
     conn_close(self);
     return;
   }
@@ -73,17 +82,37 @@ void conn_read(conn_t* self) {
     conn_close(self);
   }
 
-  // this is just a stub...
   if (body_pos > 0) {
-    //printf("http request complete!!!!!!!!!!!!!!!!!!!!\n");
+    // FIXPAUL handle request here !
+    self->state = CONN_STATE_STREAM;
 
-    //printf("http: %i %s\n", self->http_req->method, self->http_req->uri);
-
-    //printf("write...\n");
+    // STUB!!!
     char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
-    write(self->sock, resp, strlen(resp)); // this will break as we are nonblocking, but let's try it anyway ;)
+    self->buf_limit = strlen(resp);
+    self->buf_pos = 0;
+    strcpy(self->buf, resp);
+    // EOF STUB
+  }
+}
 
-    //printf("close...\n");
+void conn_write(conn_t* self) {
+  int chunk;
+
+  chunk = write(self->sock, self->buf + self->buf_pos,
+    self->buf_limit - self->buf_pos);
+
+  if (chunk == -1) {
+    perror("write returned an error");
+    conn_close(self);
+    return;
+  }
+
+  if (chunk > 0)
+    self->buf_pos += chunk;
+
+  if (self->buf_pos + 1 >= self->buf_limit) {
+    //self->state = CONN_STATE_WAIT;
     conn_close(self);
   }
+
 }
