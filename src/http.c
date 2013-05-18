@@ -72,14 +72,19 @@ int http_read(http_req_t* req, char* buf, size_t len) {
             return -1;
 
           case HTTP_STATE_VERSION:
-            // *pos = 0; printf("  >> http:   %s\n", req->cur_token);
+            if (http_read_version(req, req->cur_token, pos - 1) == -1)
+              return -1;
+
             req->cur_token = pos + 1;
-            req->state = HTTP_STATE_HKEY;
+            break;
 
           case HTTP_STATE_HVAL:
-            // *pos = 0; printf("  >> hval:   %s\n", req->cur_token);
-            req->cur_token = pos + 1;
+            http_read_header(req,
+              req->cur_hkey, req->cur_hkey_len,
+              req->cur_token, pos - req->cur_token);
+
             req->state = HTTP_STATE_HKEY;
+            req->cur_token = pos + 1;
             break;
 
           case HTTP_STATE_HKEY:
@@ -93,6 +98,8 @@ int http_read(http_req_t* req, char* buf, size_t len) {
 
           case HTTP_STATE_HKEY:
             // *pos = 0; printf("  >> hkey:   %s\n", req->cur_token);
+            req->cur_hkey_len = pos - req->cur_token;
+            req->cur_hkey = req->cur_token;
             req->cur_token = pos + 1;
             req->state = HTTP_STATE_HVAL;
             break;
@@ -129,7 +136,7 @@ int http_read_method(http_req_t* req, char* start, char* end) {
 }
 
 int http_read_uri(http_req_t* req, char* start, char* end) {
-  int  len = end - start + 1;
+  int len = end - start + 1;
 
   if (len >= sizeof(req->uri))
     return -1;
@@ -140,3 +147,25 @@ int http_read_uri(http_req_t* req, char* start, char* end) {
   req->state = HTTP_STATE_VERSION;
   return 0;
 }
+
+
+int http_read_version(http_req_t* req, char* start, char* end) {
+  int len = end - start - 4 ;
+
+  if (len < 3)
+    return -1;
+
+  if (strncmp(start + 5, "1.1", len) == 0)
+    req->keepalive = 1;
+
+  else
+    req->keepalive = 0;
+
+  req->state = HTTP_STATE_HKEY;
+  return 0;
+}
+
+void http_read_header(http_req_t* req, char* hkey, int hkey_len, char* hval, int hval_len) {
+  printf("header: %i, %i: \n", hkey_len, hval_len);
+}
+

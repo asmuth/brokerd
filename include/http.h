@@ -20,17 +20,21 @@
 
 typedef struct {
   int   method;
+  int   keepalive;
   char  uri[4096];
   int   state;
   int   last_pos;
   char* cur_token;
+  char* cur_hkey;
+  int   cur_hkey_len;
 } http_req_t;
 
+http_req_t* http_req_init();
 int http_read(http_req_t* req, char* buf, size_t len);
 int http_read_method(http_req_t* req, char* start, char* end);
 int http_read_uri(http_req_t* req, char* start, char* end);
-
-http_req_t* http_req_init();
+int http_read_version(http_req_t* req, char* start, char* end);
+void http_read_header(http_req_t* req, char* hkey, int hkey_len, char* hval, int hval_len);
 void http_req_free(http_req_t* self);
 
 #endif
