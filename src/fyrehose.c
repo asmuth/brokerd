@@ -113,17 +113,14 @@ int main(int argc, char** argv) {
   }
 
   for (n = 0; running == 1; n++) {
-    conn = conn_init(4096);
-    conn->sock = accept(ssock, conn->addr, &conn->addr_len);
+    int fd = accept(ssock, NULL, NULL);
 
-    if (conn->sock == -1) {
-      printf("accept failed!\n");
-      free(conn);
+    if (fd == -1) {
+      perror("accept failed");
       continue;
     }
 
-    conn_set_nonblock(conn);
-    write(worker[n % num_workers]->queue[1], (char *) &conn, sizeof(conn_t *));
+    write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd));
   }
 
   return 0;
