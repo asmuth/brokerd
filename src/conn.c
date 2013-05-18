@@ -87,7 +87,7 @@ void conn_read(conn_t* self) {
     self->state = CONN_STATE_STREAM;
 
     // STUB!!!
-    char* resp = "HTTP/1.0 200 OK\r\nServer: fyrehose-v0.0.1\r\n\r\nfnord :)\r\n";
+    char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\n\r\nfnord :)\r\n";
     self->buf_limit = strlen(resp);
     self->buf_pos = 0;
     strcpy(self->buf, resp);
@@ -111,8 +111,9 @@ void conn_write(conn_t* self) {
     self->buf_pos += chunk;
 
   if (self->buf_pos + 1 >= self->buf_limit) {
-    //self->state = CONN_STATE_WAIT;
-    conn_close(self);
+    self->buf_pos = 0;
+    self->state = CONN_STATE_HEAD;
+    //conn_close(self);
   }
 
 }
