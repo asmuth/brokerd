@@ -22,7 +22,7 @@
 int ssock;
 int running = 1;
 worker_t** worker;
-int num_workers;
+int num_workers = 1;
 
 void quit(int fnord) {
   int n;
