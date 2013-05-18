@@ -72,6 +72,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
+#ifdef SOL_TCP
   if (setsockopt(ssock, SOL_TCP, TCP_QUICKACK, &opt, sizeof(opt)) < 0) {
     perror("setsockopt(TCP_QUICKACK)");
     return 1;
@@ -81,6 +82,7 @@ int main(int argc, char** argv) {
     perror("setsockopt(TCP_QUICKACK)");
     return 1;
   }
+#endif
 
   if (bind(ssock, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
     perror("bind failed");
