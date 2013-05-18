@@ -33,13 +33,12 @@ void quit(int fnord) {
 int main(int argc, char** argv) {
   conn_t*            conn;
   struct sockaddr_in server_addr;
-  int                port = 2323;
+  int                port = 2324;
   int                rc;
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
 
-  worker = worker_init();
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -67,25 +66,30 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (worker == NULL)
-    return 1;
+  //if (worker == NULL)
+  //  return 1;
 
-  while (running) {
+  printf("go!\n");
+  worker = worker_init();
+
+  //while (running) {
     //printf("waiting...\n");
-    conn = conn_init(4096);
+    //conn = conn_init(4096);
 
-    conn->sock = accept(ssock, conn->addr, &conn->addr_len);
+    //conn->sock = accept(ssock, conn->addr, &conn->addr_len);
 
-    if (conn->sock == -1) {
-      printf("accept failed!\n");
-      free(conn);
-      continue;
-    }
+    //if (conn->sock == -1) {
+    //  printf("accept failed!\n");
+    //  free(conn);
+    //  continue;
+    //}
 
     //printf("accepted, putting into connection queue!\n");
-    conn_set_nonblock(conn);
-    write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
-  }
+    //conn_set_nonblock(conn);
+    //write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
+  //}
+
+  pthread_join(worker->thread, NULL);
 
   printf("yeah\n");
   return 0;
