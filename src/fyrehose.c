@@ -34,6 +34,7 @@ int main(int argc, char** argv) {
   conn_t*            conn;
   struct sockaddr_in server_addr;
   int                port = 2323;
+  int                rc;
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
@@ -48,6 +49,11 @@ int main(int argc, char** argv) {
 
   if (ssock == -1) {
     printf("create socket failed!\n");
+    return 1;
+  }
+
+  if (setsockopt(ssock, SOL_SOCKET, SO_REUSEADDR, &rc, sizeof(rc)) < 0) {
+    perror("setsockopt(SO_REUSEADDR)");
     return 1;
   }
 
