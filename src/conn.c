@@ -63,7 +63,7 @@ void conn_read(conn_t* self) {
     self->buf_len - self->buf_pos);
 
   if (chunk == 0) {
-    printf("read EOF\n");
+    //printf("read EOF\n");
     conn_close(self);
     return;
   }

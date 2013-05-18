@@ -163,7 +163,12 @@ int http_read_version(http_req_t* req, char* version, int len) {
 }
 
 void http_read_header(http_req_t* req, char* hkey, int hkey_len, char* hval, int hval_len) {
-  hkey[hkey_len] = 0; hval[hval_len] = 0;
-  printf("header: (%i) '%s' => (%i) '%s'\n", hkey_len, hkey, hval_len, hval);
+  //hkey[hkey_len] = 0; hval[hval_len] = 0;
+  //printf("header: (%i) '%s' => (%i) '%s'\n", hkey_len, hkey, hval_len, hval);
+
+  if (strncmp(hkey, "Connection", hkey_len) == 0)
+    if (strncmp(hval, "Keep-Alive", hval_len) == 0)
+      req->keepalive = 1;
+
 }
 
