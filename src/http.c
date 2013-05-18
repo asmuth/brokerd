@@ -81,6 +81,9 @@ int http_read(http_req_t* req, char* buf, size_t len) {
             break;
 
           case HTTP_STATE_HVAL:
+            while (*(req->cur_token) == ' ' && req->cur_token < pos)
+              req->cur_token++;
+
             http_read_header(req,
               req->cur_hkey, req->cur_hkey_len,
               req->cur_token, pos - req->cur_token);
@@ -99,7 +102,6 @@ int http_read(http_req_t* req, char* buf, size_t len) {
         switch (req->state) {
 
           case HTTP_STATE_HKEY:
-            // *pos = 0; printf("  >> hkey:   %s\n", req->cur_token);
             req->cur_hkey_len = pos - req->cur_token;
             req->cur_hkey = req->cur_token;
             req->cur_token = pos + 1;
@@ -114,7 +116,6 @@ int http_read(http_req_t* req, char* buf, size_t len) {
   }
 
   req->last_pos += nxt;
-
   return 0;
 }
 
@@ -162,6 +163,7 @@ int http_read_version(http_req_t* req, char* version, int len) {
 }
 
 void http_read_header(http_req_t* req, char* hkey, int hkey_len, char* hval, int hval_len) {
-  printf("header: %i, %i: \n", hkey_len, hval_len);
+  hkey[hkey_len] = 0; hval[hval_len] = 0;
+  printf("header: (%i) '%s' => (%i) '%s'\n", hkey_len, hkey, hval_len, hval);
 }
 
