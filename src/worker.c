@@ -50,25 +50,26 @@ void worker_stop(worker_t* worker) {
 
 void *worker_run(void* userdata) {
   int res;
-  fd_set op_read, op_write;
 
   worker_t* self = userdata;
   conn_t *conn, *next;
 
+  self->ev_state = ev_init();
+
   while (1) {
-    FD_ZERO(&op_read);
-    FD_ZERO(&op_write);
-    FD_SET(self->queue[0], &op_read);
+    ev_watch_fd(self->ev_state, self->queue[0], EV_WATCH_READ);
 
     for (conn = self->connections; conn != NULL; ) {
       switch (conn->state) {
 
         case CONN_STATE_HEAD:
-          FD_SET(conn->sock, &op_read);
+          //FD_SET(conn->sock, &op_read);
+          ev_watch(self->ev_state, conn, EV_WATCH_READ);
           break;
 
         case CONN_STATE_STREAM:
-          FD_SET(conn->sock, &op_write);
+          //FD_SET(conn->sock, &op_write);
+          ev_watch(self->ev_state, conn, EV_WATCH_WRITE);
           break;
 
       }
@@ -76,7 +77,8 @@ void *worker_run(void* userdata) {
       conn = conn->next;
     }
 
-    res = select(FD_SETSIZE, &op_read, &op_write, NULL, NULL);
+    printf("select...\n");
+    res = select(FD_SETSIZE, &self->ev_state->op_read, &self->ev_state->op_write, NULL, NULL); // FIXSELECT
 
     if (res == 0) {
       printf("timeout while selecting\n");
@@ -89,7 +91,9 @@ void *worker_run(void* userdata) {
     }
 
     // pops the next connection from the queue
-    if (FD_ISSET(self->queue[0], &op_read)) {
+    if (FD_ISSET(self->queue[0], &self->ev_state->op_read)) { // FIXSELECT
+      printf("new connection!\n");
+
       int fd;
       if (read(self->queue[0], &fd, sizeof(fd)) != sizeof(fd)) {
         if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
@@ -115,17 +119,21 @@ void *worker_run(void* userdata) {
       conn = next;
       next = conn->next;
 
-      if (FD_ISSET(conn->sock, &op_read))
+      printf("callback!\n");
+
+      if (FD_ISSET(conn->sock, &self->ev_state->op_read)) // FIXSELECT
         if (conn_read(conn) == -1) {
           conn_close(conn);
           continue;
         }
 
-      if (FD_ISSET(conn->sock, &op_write))
+      if (FD_ISSET(conn->sock, &self->ev_state->op_write)) // FIXSELECT
         if (conn_write(conn) == -1) {
           conn_close(conn);
           continue;
         }
+
+      ev_unwatch(self->ev_state, conn, EV_WATCH_READ | EV_WATCH_WRITE);
     }
   }
 

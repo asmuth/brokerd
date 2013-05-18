@@ -14,6 +14,7 @@
 
 #include "conn.h"
 #include "http.h"
+#include "worker.h"
 
 conn_t* conn_init(int buf_len) {
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
@@ -28,20 +29,22 @@ conn_t* conn_init(int buf_len) {
   return conn;
 }
 
-void conn_close(conn_t* conn) {
-  conn_t** cur = (conn_t **) &conn->worker->connections;
-  conn->state = CONN_STATE_CLOSED;
+void conn_close(conn_t* self) {
+  conn_t** cur = (conn_t **) &((worker_t *) self->worker)->connections;
 
-  for (; (*cur)->sock != conn->sock; cur = &(*cur)->next)
+  ev_unwatch(((worker_t *) self->worker)->ev_state, self, EV_WATCH_READ | EV_WATCH_WRITE);
+  self->state = CONN_STATE_CLOSED;
+
+  for (; (*cur)->sock != self->sock; cur = &(*cur)->next)
     if (!*cur) goto free;
 
   *cur = (*cur)->next;
 
   free:
-  close(conn->sock);
-  http_req_free(conn->http_req);
-  free(conn->buf);
-  free(conn);
+  close(self->sock);
+  http_req_free(self->http_req);
+  free(self->buf);
+  free(self);
 }
 
 void conn_set_nonblock(conn_t* conn) {

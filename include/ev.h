@@ -1,0 +1,28 @@
+// This file is part of the "fyrehose" project
+//   (c) 2011-2013 Paul Asmuth <paul@paulasmuth.com>
+//
+// Licensed under the MIT License (the "License"); you may not use this
+// file except in compliance with the License. You may obtain a copy of
+// the License at: http://opensource.org/licenses/MIT
+
+#ifndef EV_H
+#define EV_H
+
+#define EV_WATCH_READ 1
+#define EV_WATCH_WRITE 2
+
+#include "conn.h"
+
+typedef struct {
+  int fnord;
+  fd_set op_read;
+  fd_set op_write;
+} ev_state_t;
+
+ev_state_t* ev_init();
+void ev_watch(ev_state_t* state, conn_t* conn, int flags);
+void ev_unwatch(ev_state_t* state, conn_t* conn, int flags);
+void ev_watch_fd(ev_state_t* state, int fd, int flags);
+void ev_unwatch_fd(ev_state_t* state, int fd, int flags);
+
+#endif
