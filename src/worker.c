@@ -28,6 +28,10 @@ worker_t* worker_init() {
     return NULL;
   }
 
+  if (fcntl(worker->queue[0], F_SETFL, O_NONBLOCK) == -1) {
+    perror("fcntl(pipe, O_NONBLOCK)");
+  }
+
   err = pthread_create(&worker->thread, NULL, worker_run, worker);
 
   if (err) {
@@ -86,14 +90,18 @@ void *worker_run(void* userdata) {
 
     // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
-      if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
+      int fd;
+      if (read(self->queue[0], &fd, sizeof(fd)) != sizeof(fd)) {
         if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
           printf("error reading from conn_queue\n");
 
         continue;
       }
 
+      conn = conn_init(4096);
+      conn->sock = fd;
       conn->worker = self;
+      conn_set_nonblock(conn);
 
       if (self->connections == NULL) {
         self->connections = conn;

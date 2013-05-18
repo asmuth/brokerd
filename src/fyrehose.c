@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
+#include <getopt.h>
 
 #include "conn.h"
 #include "worker.h"
@@ -40,6 +41,25 @@ int main(int argc, char** argv) {
   struct    sockaddr_in server_addr;
   int       n, opt, port = 2323;
   conn_t*   conn;
+
+  while ((opt = getopt(argc, argv, "t:p:vh?")) != -1) {
+    switch (opt) {
+      case 't':
+        num_workers = atoi(optarg);
+        break;
+      case 'p':
+        port = atoi(optarg);
+        break;
+      case 'v':
+        printf("fyrehose, version 0.0.1\n");
+        return 0;
+      case '?':
+      case 'h':
+      default:
+        printf("fyrehose [-p PORT] [-t THREADS]\n");
+        return 0;
+    }
+  }
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
@@ -93,17 +113,14 @@ int main(int argc, char** argv) {
   }
 
   for (n = 0; running == 1; n++) {
-    conn = conn_init(4096);
-    conn->sock = accept(ssock, conn->addr, &conn->addr_len);
+    int fd = accept(ssock, NULL, NULL);
 
-    if (conn->sock == -1) {
-      printf("accept failed!\n");
-      free(conn);
+    if (fd == -1) {
+      perror("accept failed");
       continue;
     }
 
-    conn_set_nonblock(conn);
-    write(worker[n % num_workers]->queue[1], (char *) &conn, sizeof(conn_t *));
+    write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd));
   }
 
   return 0;
