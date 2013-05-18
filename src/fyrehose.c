@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
 
-  num_workers = 24;
+  num_workers = 4;
   worker = malloc(sizeof(worker_t *) * num_workers);
 
   for (n = 0; n < num_workers; n++) {
