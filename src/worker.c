@@ -15,8 +15,6 @@
 #include "worker.h"
 #include "conn.h"
 
-extern int ssock;
-
 worker_t* worker_init() {
   int err;
 
@@ -55,7 +53,6 @@ void *worker_run(void* userdata) {
     FD_ZERO(&op_read);
     FD_ZERO(&op_write);
     FD_SET(self->queue[0], &op_read);
-    FD_SET(ssock, &op_read);
 
     for (conn = self->connections; conn != NULL; ) {
       switch (conn->state) {
@@ -83,28 +80,6 @@ void *worker_run(void* userdata) {
     if (res == -1) {
       perror("error while selecting");
       continue;
-    }
-
-    if (FD_ISSET(ssock, &op_read)) {
-      conn = conn_init(4096);
-      conn->sock = accept(ssock, conn->addr, &conn->addr_len);
-
-      if (conn->sock == -1) {
-        printf("accept failed!\n");
-        free(conn);
-        continue;
-      }
-
-      conn_set_nonblock(conn);
-
-      conn->worker = self;
-
-      if (self->connections == NULL) {
-        self->connections = conn;
-      } else {
-        conn->next = self->connections;
-        self->connections = conn;
-      }
     }
 
     // pops the next connection from the queue
