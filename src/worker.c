@@ -18,8 +18,8 @@
 worker_t* worker_init() {
   int err;
 
-  worker_t* worker = calloc(1, sizeof(worker));
-  worker->connections = NULL;
+  worker_t* worker = malloc(sizeof(worker_t));
+  bzero(worker, sizeof(worker_t));
 
   if (pipe(worker->queue) == -1) {
     printf("create pipe failed!\n");
@@ -47,7 +47,7 @@ void *worker_run(void* userdata) {
   fd_set op_read, op_write;
 
   worker_t* self = userdata;
-  conn_t* conn;
+  conn_t *conn, *next;
 
   while (1) {
     FD_ZERO(&op_read);
@@ -99,14 +99,21 @@ void *worker_run(void* userdata) {
       }
     }
 
-    for (conn = self->connections; conn != NULL; ) {
+    for (next = self->connections; next != NULL; ) {
+      conn = next;
+      next = conn->next;
+
       if (FD_ISSET(conn->sock, &op_read))
-        conn_read(conn);
+        if (conn_read(conn) == -1) {
+          conn_close(conn);
+          continue;
+        }
 
       if (FD_ISSET(conn->sock, &op_write))
-        conn_write(conn);
-
-      conn = conn->next;
+        if (conn_write(conn) == -1) {
+          conn_close(conn);
+          continue;
+        }
     }
   }
 

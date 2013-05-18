@@ -16,9 +16,11 @@
 #include "http.h"
 
 conn_t* conn_init(int buf_len) {
-  conn_t* conn = (conn_t *) calloc(1, sizeof(conn_t));
+  conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
+  bzero(conn, sizeof(conn_t));
+
   conn->addr_len = sizeof(conn->addr);
-  conn->buf      = calloc(1, buf_len);
+  conn->buf      = malloc(buf_len);
   conn->buf_len  = buf_len;
   conn->http_req = http_req_init();
   conn->next     = NULL;
@@ -50,13 +52,12 @@ void conn_set_nonblock(conn_t* conn) {
     printf("fnctl failed!\n");
 }
 
-void conn_read(conn_t* self) {
+int conn_read(conn_t* self) {
   int chunk, body_pos;
 
   if (self->buf_len - self->buf_pos <= 0) {
     printf("error: http request buffer exhausted\n");
-    conn_close(self);
-    return;
+    return -1;
   }
 
   chunk = read(self->sock, self->buf + self->buf_pos,
@@ -64,14 +65,12 @@ void conn_read(conn_t* self) {
 
   if (chunk == 0) {
     //printf("read EOF\n");
-    conn_close(self);
-    return;
+    return -1;
   }
 
   if (chunk < 0) {
     perror("error while reading...");
-    conn_close(self);
-    return;
+    return -1;
   }
 
   self->buf_pos += chunk;
@@ -79,7 +78,7 @@ void conn_read(conn_t* self) {
 
   if (body_pos == -1) {
     printf("http_read() returned error\n");
-    conn_close(self);
+    return -1;
   }
 
   if (body_pos > 0) {
@@ -93,9 +92,11 @@ void conn_read(conn_t* self) {
     strcpy(self->buf, resp);
     // EOF STUB
   }
+
+  return 0;
 }
 
-void conn_write(conn_t* self) {
+int conn_write(conn_t* self) {
   int chunk;
 
   chunk = write(self->sock, self->buf + self->buf_pos,
@@ -103,8 +104,7 @@ void conn_write(conn_t* self) {
 
   if (chunk == -1) {
     perror("write returned an error");
-    conn_close(self);
-    return;
+    return -1;
   }
 
   if (chunk > 0)
@@ -115,8 +115,9 @@ void conn_write(conn_t* self) {
       self->buf_pos = 0;
       self->state = CONN_STATE_HEAD;
     } else {
-      conn_close(self);
+      return -1;
     }
   }
 
+  return 0;
 }

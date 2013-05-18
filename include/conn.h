@@ -34,8 +34,8 @@ typedef struct conn_s {
 
 conn_t* conn_init();
 void conn_close();
-void conn_read(conn_t* self);
-void conn_write(conn_t* self);
+int conn_read(conn_t* self);
+int conn_write(conn_t* self);
 void conn_set_nonblock(conn_t* conn);
 
 #endif

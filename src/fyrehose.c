@@ -16,30 +16,42 @@
 #include "worker.h"
 #include <signal.h>
 
-worker_t*  worker;
 
 int ssock;
 int running = 1;
+worker_t** worker;
+int num_workers;
 
 void quit(int fnord) {
-  running = 0;
+  int n;
+
   printf("shutdown...\n");
 
-  worker_stop(worker);
-
+  running = 0;
   close(ssock);
+
+  for (n = 0; n < num_workers; n++)
+    worker_stop(worker[n]);
+
 }
 
 int main(int argc, char** argv) {
-  conn_t*            conn;
-  struct sockaddr_in server_addr;
-  int                port = 2323;
-  int                rc;
+  struct    sockaddr_in server_addr;
+  int       n, opt, port = 2323;
+  conn_t*   conn;
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
 
-  worker = worker_init();
+  num_workers = 24;
+  worker = malloc(sizeof(worker_t *) * num_workers);
+
+  for (n = 0; n < num_workers; n++) {
+    worker[n] = worker_init(n);
+
+    if (worker[n] == NULL)
+      return 1;
+  }
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -52,7 +64,9 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (setsockopt(ssock, SOL_SOCKET, SO_REUSEADDR, &rc, sizeof(rc)) < 0) {
+  opt = 0;
+
+  if (setsockopt(ssock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
     perror("setsockopt(SO_REUSEADDR)");
     return 1;
   }
@@ -67,13 +81,8 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (worker == NULL)
-    return 1;
-
-  while (running) {
-    //printf("waiting...\n");
+  for (n = 0; running == 1; n++) {
     conn = conn_init(4096);
-
     conn->sock = accept(ssock, conn->addr, &conn->addr_len);
 
     if (conn->sock == -1) {
@@ -82,11 +91,9 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    //printf("accepted, putting into connection queue!\n");
     conn_set_nonblock(conn);
-    write(worker->queue[1], (char *) &conn, sizeof(conn_t *));
+    write(worker[n % num_workers]->queue[1], (char *) &conn, sizeof(conn_t *));
   }
 
-  printf("yeah\n");
   return 0;
 }

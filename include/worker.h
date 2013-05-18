@@ -11,9 +11,9 @@
 #include <pthread.h>
 
 typedef struct {
-  pthread_t thread;
-  int       queue[2];
-  void*     connections;
+  pthread_t       thread;
+  int             queue[2];
+  struct conn_s*  connections;
 } worker_t;
 
 worker_t* worker_init();
