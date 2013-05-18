@@ -84,6 +84,7 @@ void *worker_run(void* userdata) {
 
     // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
+      printf("new conn\n");
       if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
         printf("error reading from conn_queue\n");
         continue;
