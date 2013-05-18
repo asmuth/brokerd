@@ -11,6 +11,8 @@
 
 #include "http.h"
 
+#define HTTP_CUR_TOKEN req->cur_token, pos - req->cur_token
+
 http_req_t* http_req_init() {
   http_req_t* req = calloc(1, sizeof(http_req_t));
   req->last_pos = 0;
@@ -47,14 +49,14 @@ int http_read(http_req_t* req, char* buf, size_t len) {
         switch (req->state) {
 
           case HTTP_STATE_METHOD:
-            if (http_read_method(req, buf, pos - 1) == -1)
+            if (http_read_method(req, buf, pos - buf) == -1)
               return -1;
 
             req->cur_token = pos + 1;
             break;
 
           case HTTP_STATE_URI:
-            if (http_read_uri(req, req->cur_token, pos - 1) == -1)
+            if (http_read_uri(req, HTTP_CUR_TOKEN) == -1)
               return -1;
 
             req->cur_token = pos + 1;
@@ -72,7 +74,7 @@ int http_read(http_req_t* req, char* buf, size_t len) {
             return -1;
 
           case HTTP_STATE_VERSION:
-            if (http_read_version(req, req->cur_token, pos - 1) == -1)
+            if (http_read_version(req, HTTP_CUR_TOKEN) == -1)
               return -1;
 
             req->cur_token = pos + 1;
@@ -116,16 +118,14 @@ int http_read(http_req_t* req, char* buf, size_t len) {
   return 0;
 }
 
-int http_read_method(http_req_t* req, char* start, char* end) {
-  int len = end - start + 1;
-
-  if (strncmp(start, "HEAD", len) == 0)
+int http_read_method(http_req_t* req, char* method, int len) {
+  if (strncmp(method, "HEAD", len) == 0)
     req->method = HTTP_METHOD_HEAD;
 
-  else if (strncmp(start, "GET", len) == 0)
+  else if (strncmp(method, "GET", len) == 0)
     req->method = HTTP_METHOD_GET;
 
-  else if (strncmp(start, "POST", len) == 0)
+  else if (strncmp(method, "POST", len) == 0)
     req->method = HTTP_METHOD_POST;
 
   else
@@ -135,13 +135,11 @@ int http_read_method(http_req_t* req, char* start, char* end) {
   return 0;
 }
 
-int http_read_uri(http_req_t* req, char* start, char* end) {
-  int len = end - start + 1;
-
+int http_read_uri(http_req_t* req, char* uri, int len) {
   if (len >= sizeof(req->uri))
     return -1;
 
-  strncpy(req->uri, start, len);
+  strncpy(req->uri, uri, len);
   req->uri[len] = 0;
 
   req->state = HTTP_STATE_VERSION;
@@ -149,13 +147,11 @@ int http_read_uri(http_req_t* req, char* start, char* end) {
 }
 
 
-int http_read_version(http_req_t* req, char* start, char* end) {
-  int len = end - start - 4 ;
-
-  if (len < 3)
+int http_read_version(http_req_t* req, char* version, int len) {
+  if (len < 8)
     return -1;
 
-  if (strncmp(start + 5, "1.1", len) == 0)
+  if (strncmp(version + 5, "1.1", len - 5) == 0)
     req->keepalive = 1;
 
   else
