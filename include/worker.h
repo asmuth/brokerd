@@ -5,6 +5,10 @@
 // file except in compliance with the License. You may obtain a copy of
 // the License at: http://opensource.org/licenses/MIT
 
+#ifndef EWOULDBLOCK
+#define EWOULDBLOCK EAGAIN
+#endif
+
 #ifndef WORKER_H
 #define WORKER_H
 
