@@ -83,12 +83,12 @@ int main(int argc, char** argv) {
   }
 
   if (bind(ssock, (struct sockaddr *) &server_addr, sizeof(server_addr)) == -1) {
-    printf("bind failed!\n");
+    perror("bind failed");
     return 1;
   }
 
   if (listen(ssock, 1024) == -1) {
-    printf("bind failed!\n");
+    perror("listen failed");
     return 1;
   }
 
