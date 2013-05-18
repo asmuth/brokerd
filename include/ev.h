@@ -14,15 +14,21 @@
 #include "conn.h"
 
 typedef struct {
-  int fnord;
-  fd_set op_read;
-  fd_set op_write;
+  int   fired;
+  void* userdata;
+} ev_event_t;
+
+typedef struct {
+  fd_set      op_read;
+  fd_set      op_write;
+  ev_event_t* events;
+  int         max_fd;
+  int         setsize;
 } ev_state_t;
 
 ev_state_t* ev_init();
-void ev_watch(ev_state_t* state, conn_t* conn, int flags);
-void ev_unwatch(ev_state_t* state, conn_t* conn, int flags);
-void ev_watch_fd(ev_state_t* state, int fd, int flags);
-void ev_unwatch_fd(ev_state_t* state, int fd, int flags);
+void ev_watch(ev_state_t* state, int fd, int flags, void* userdata);
+void ev_unwatch(ev_state_t* state, int fd);
+int  ev_poll(ev_state_t* state);
 
 #endif

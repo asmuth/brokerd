@@ -32,7 +32,7 @@ conn_t* conn_init(int buf_len) {
 void conn_close(conn_t* self) {
   conn_t** cur = (conn_t **) &((worker_t *) self->worker)->connections;
 
-  ev_unwatch(((worker_t *) self->worker)->ev_state, self, EV_WATCH_READ | EV_WATCH_WRITE);
+  ev_unwatch(((worker_t *) self->worker)->ev_state, self->sock);
   self->state = CONN_STATE_CLOSED;
 
   for (; (*cur)->sock != self->sock; cur = &(*cur)->next)

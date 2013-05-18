@@ -49,27 +49,27 @@ void worker_stop(worker_t* worker) {
 }
 
 void *worker_run(void* userdata) {
-  int res;
-
+  int fd, sock;
   worker_t* self = userdata;
-  conn_t *conn, *next;
+  conn_t *conn;
+  ev_event_t event;
 
   self->ev_state = ev_init();
 
   while (1) {
-    ev_watch_fd(self->ev_state, self->queue[0], EV_WATCH_READ);
+    ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
 
     for (conn = self->connections; conn != NULL; ) {
       switch (conn->state) {
 
         case CONN_STATE_HEAD:
           //FD_SET(conn->sock, &op_read);
-          ev_watch(self->ev_state, conn, EV_WATCH_READ);
+          ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
           break;
 
         case CONN_STATE_STREAM:
           //FD_SET(conn->sock, &op_write);
-          ev_watch(self->ev_state, conn, EV_WATCH_WRITE);
+          ev_watch(self->ev_state, conn->sock, EV_WATCH_WRITE, conn);
           break;
 
       }
@@ -77,65 +77,58 @@ void *worker_run(void* userdata) {
       conn = conn->next;
     }
 
-    printf("select...\n");
-    res = select(FD_SETSIZE, &self->ev_state->op_read, &self->ev_state->op_write, NULL, NULL); // FIXSELECT
-
-    if (res == 0) {
-      printf("timeout while selecting\n");
+    if (ev_poll(self->ev_state) == -1)
       continue;
-    }
 
-    if (res == -1) {
-      perror("error while selecting");
-      continue;
-    }
+    for (fd = 0; fd <= self->ev_state->max_fd; fd++) {
+      event = self->ev_state->events[fd];
 
-    // pops the next connection from the queue
-    if (FD_ISSET(self->queue[0], &self->ev_state->op_read)) { // FIXSELECT
-      printf("new connection!\n");
-
-      int fd;
-      if (read(self->queue[0], &fd, sizeof(fd)) != sizeof(fd)) {
-        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
-          printf("error reading from conn_queue\n");
-
+      if (!event.fired)
         continue;
-      }
 
-      conn = conn_init(4096);
-      conn->sock = fd;
-      conn->worker = self;
-      conn_set_nonblock(conn);
+      // pops the next connection from the queue
+      //if (FD_ISSET(self->queue[0], &self->ev_state->op_read)) { // FIXSELECT
+      if (fd == self->queue[0]) {
+        printf("new connection!\n");
 
-      if (self->connections == NULL) {
-        self->connections = conn;
-      } else {
-        conn->next = self->connections;
-        self->connections = conn;
-      }
-    }
+        if (read(fd, &sock, sizeof(sock)) != sizeof(sock)) {
+          if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+            printf("error reading from conn_queue\n");
 
-    for (next = self->connections; next != NULL; ) {
-      conn = next;
-      next = conn->next;
-
-      printf("callback!\n");
-
-      if (FD_ISSET(conn->sock, &self->ev_state->op_read)) // FIXSELECT
-        if (conn_read(conn) == -1) {
-          conn_close(conn);
           continue;
         }
 
-      if (FD_ISSET(conn->sock, &self->ev_state->op_write)) // FIXSELECT
-        if (conn_write(conn) == -1) {
-          conn_close(conn);
-          continue;
-        }
+        conn = conn_init(4096);
+        conn->sock = sock;
+        conn->worker = self;
+        conn_set_nonblock(conn);
 
-      ev_unwatch(self->ev_state, conn, EV_WATCH_READ | EV_WATCH_WRITE);
+        if (self->connections == NULL) {
+          self->connections = conn;
+        } else {
+          conn->next = self->connections;
+          self->connections = conn;
+        }
+      }
+
+      else if (event.userdata) {
+        conn = event.userdata;
+
+        //if (FD_ISSET(conn->sock, &self->ev_state->op_read)) // FIXSELECT
+        if (event.fired & EV_WATCH_READ)
+          if (conn_read(conn) == -1) {
+            conn_close(conn);
+            continue;
+          }
+
+        if (event.fired & EV_WATCH_WRITE)
+          if (conn_write(conn) == -1) {
+            conn_close(conn);
+            continue;
+          }
+
+        ev_unwatch(self->ev_state, conn->sock);
+      }
     }
   }
-
-  return self;
 }
