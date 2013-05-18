@@ -5,12 +5,16 @@
 // file except in compliance with the License. You may obtain a copy of
 // the License at: http://opensource.org/licenses/MIT
 
+// we extend the libc API to also support pipe2() and other friends
+#define _GNU_SOURCE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "worker.h"
 #include "conn.h"
@@ -21,7 +25,7 @@ worker_t* worker_init() {
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
 
-  if (pipe(worker->queue) == -1) {
+  if (pipe2(worker->queue, O_NONBLOCK) == -1) {
     printf("create pipe failed!\n");
     return NULL;
   }
@@ -85,7 +89,17 @@ void *worker_run(void* userdata) {
     // pops the next connection from the queue
     if (FD_ISSET(self->queue[0], &op_read)) {
       if (read(self->queue[0], &conn, sizeof(conn_t *)) != sizeof(conn_t *)) {
-        printf("error reading from conn_queue\n");
+        switch (errno) {
+        case EINTR:
+        case EAGAIN:
+#if (defined(EWOULDBLOCK) && EWOULDBLOCK != EAGAIN)
+        case EWOULDBLOCK:
+#endif
+          /* ignore them. */
+          break;
+        default:
+          printf("error reading from conn_queue\n");
+        }
         continue;
       }
 
