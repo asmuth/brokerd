@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
 #include <netinet/in.h>
 
 #include "conn.h"
@@ -64,10 +65,20 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  opt = 0;
+  opt = 1; /* enable the following socket options */
 
   if (setsockopt(ssock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
     perror("setsockopt(SO_REUSEADDR)");
+    return 1;
+  }
+
+  if (setsockopt(ssock, SOL_TCP, TCP_QUICKACK, &opt, sizeof(opt)) < 0) {
+    perror("setsockopt(TCP_QUICKACK)");
+    return 1;
+  }
+
+  if (setsockopt(ssock, SOL_TCP, TCP_DEFER_ACCEPT, &opt, sizeof(opt)) < 0) {
+    perror("setsockopt(TCP_QUICKACK)");
     return 1;
   }
 
