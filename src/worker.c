@@ -92,16 +92,13 @@ void *worker_run(void* userdata) {
         conn = event->userdata;
 
         if (event->fired & EV_READABLE)
-          if (conn_read(conn) == -1) {
-            conn_close(conn);
+          if (conn_read(conn) == -1)
             continue;
-          }
 
         if (event->fired & EV_WRITEABLE)
-          if (conn_write(conn) == -1) {
-            conn_close(conn);
+          if (conn_write(conn) == -1)
             continue;
-          }
+
       } else {
         worker_accept(self);
       }

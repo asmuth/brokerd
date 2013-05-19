@@ -20,6 +20,7 @@
 #include "worker.h"
 
 conn_t* conn_init(int buf_len) {
+  printf("conn_init!\n");
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
   bzero(conn, sizeof(conn_t));
 
@@ -33,6 +34,7 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* self) {
+  printf("conn_close!\n");
   ev_unwatch(&self->worker->loop, self->sock);
   self->state = CONN_STATE_CLOSED;
 
@@ -71,6 +73,7 @@ int conn_read(conn_t* self) {
 
   }
 
+  conn_close(self);
   return -1;
 }
 
@@ -79,18 +82,22 @@ inline int conn_read_head(conn_t* self) {
 
   if (self->buf_len - self->buf_pos <= 0) {
     printf("error: http request buffer exhausted\n");
+    conn_close(self);
     return -1;
   }
 
   chunk = read(self->sock, self->buf + self->buf_pos,
     self->buf_len - self->buf_pos);
 
-  if (chunk == 0)
+  if (chunk == 0) {
+    conn_close(self);
     return -1;
+  }
 
   if (chunk < 0) {
     if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
       perror("error while reading...");
+      conn_close(self);
       return -1;
     }
 
@@ -103,6 +110,7 @@ inline int conn_read_head(conn_t* self) {
 
   if (body_pos == -1) {
     printf("http_read() returned error\n");
+    conn_close(self);
     return -1;
   }
 
@@ -125,6 +133,7 @@ int conn_write(conn_t* self) {
 
   }
 
+  conn_close(self);
   return -1;
 }
 
@@ -137,6 +146,7 @@ inline int conn_write_flush(conn_t* self) {
   if (chunk == -1) {
     if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
       perror("error while writing...");
+      conn_close(self);
       return -1;
     }
 
@@ -153,6 +163,7 @@ inline int conn_write_flush(conn_t* self) {
       conn_read(self);
       return 0;
     } else {
+      conn_close(self);
       return -1;
     }
   }
