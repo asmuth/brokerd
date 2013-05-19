@@ -8,8 +8,8 @@
 #ifndef EV_H
 #define EV_H
 
-#define EV_WATCH_READ 1
-#define EV_WATCH_WRITE 2
+#define EV_READABLE 1
+#define EV_WRITEABLE 2
 
 typedef struct {
   int   watch;

@@ -39,8 +39,8 @@ void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata) {
 
   loop->events[fd].userdata = userdata;
 
-  if (flags & EV_WATCH_READ) FD_SET(fd, &loop->op_read);
-  if (flags & EV_WATCH_WRITE) FD_SET(fd, &loop->op_write);
+  if (flags & EV_READABLE) FD_SET(fd, &loop->op_read);
+  if (flags & EV_WRITEABLE) FD_SET(fd, &loop->op_write);
 }
 
 void ev_unwatch(ev_loop_t* loop, int fd) {
@@ -72,12 +72,12 @@ int ev_poll(ev_loop_t* loop) {
     loop->events[fd].fired = 0;
 
     if (FD_ISSET(fd, &op_read)) {
-      loop->events[fd].fired |= EV_WATCH_READ;
+      loop->events[fd].fired |= EV_READABLE;
       FD_CLR(fd, &loop->op_read);
     }
 
     if (FD_ISSET(fd, &op_write)) {
-      loop->events[fd].fired |= EV_WATCH_WRITE;
+      loop->events[fd].fired |= EV_WRITEABLE;
       FD_CLR(fd, &loop->op_write);
     }
 

@@ -55,7 +55,7 @@ void *worker_run(void* userdata) {
   ev_event_t *event;
 
   ev_init(&self->loop);
-  ev_watch(&self->loop, self->queue[0], EV_WATCH_READ, NULL);
+  ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
 
   while (1) {
    num_events = ev_poll(&self->loop);
@@ -72,13 +72,13 @@ void *worker_run(void* userdata) {
       if (event->userdata != NULL) {
         conn = event->userdata;
 
-        if (event->fired & EV_WATCH_READ)
+        if (event->fired & EV_READABLE)
           if (conn_read(conn) == -1) {
             conn_close(conn);
             continue;
           }
 
-        if (event->fired & EV_WATCH_WRITE)
+        if (event->fired & EV_WRITEABLE)
           if (conn_write(conn) == -1) {
             conn_close(conn);
             continue;
@@ -87,7 +87,7 @@ void *worker_run(void* userdata) {
 
       // pops the next connection from the queue
       else {
-        ev_watch(&self->loop, self->queue[0], EV_WATCH_READ, NULL);
+        ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
 
         if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
           if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
@@ -100,7 +100,7 @@ void *worker_run(void* userdata) {
         conn->sock = sock;
         conn->worker = self;
         conn_set_nonblock(conn);
-        ev_watch(&self->loop, conn->sock, EV_WATCH_READ, conn);
+        ev_watch(&self->loop, conn->sock, EV_READABLE, conn);
       }
     }
   }
