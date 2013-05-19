@@ -108,10 +108,11 @@ void *worker_run(void* userdata) {
     }
   }
 
+  worker_cleanup(self);
   return NULL;
 }
 
-void worker_accept(worker_t* self) {
+inline void worker_accept(worker_t* self) {
   conn_t *conn;
   int sock;
 
@@ -126,7 +127,6 @@ void worker_accept(worker_t* self) {
 
   if (sock == -1) {
     self->running = 0;
-    worker_cleanup(self);
     return;
   }
 
