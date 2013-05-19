@@ -43,9 +43,21 @@ worker_t* worker_init() {
 }
 
 void worker_stop(worker_t* worker) {
-  //printf("worker_stop\n");
-  //pthread_join(worker->thread);
+  int cancel = -1;
+  void* ret;
+
+  for (;;)
+    if (write(worker->queue[1], (char *) &cancel, sizeof(cancel)) == sizeof(cancel))
+      break;
+
+  pthread_join(worker->thread, &ret);
+
+  ev_free(&worker->loop);
   free(worker);
+}
+
+void worker_cleanup(worker_t* worker) {
+  printf("TODO: cleanup all connections\n");
 }
 
 void *worker_run(void* userdata) {
@@ -57,10 +69,10 @@ void *worker_run(void* userdata) {
   ev_init(&self->loop);
   ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
 
-  while (1) {
-   num_events = ev_poll(&self->loop);
+  for(;;) {
+    num_events = ev_poll(&self->loop);
 
-   if (num_events == -1)
+    if (num_events == -1)
       continue;
 
     while (--num_events >= 0) {
@@ -94,6 +106,11 @@ void *worker_run(void* userdata) {
             printf("error reading from conn_queue\n");
 
           continue;
+        }
+
+        if (sock == -1) {
+          worker_cleanup(self);
+          return NULL;
         }
 
         conn = conn_init(4096);

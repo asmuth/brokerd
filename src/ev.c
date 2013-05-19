@@ -13,9 +13,6 @@
 #include "ev.h"
 
 ev_loop_t* ev_init(ev_loop_t* loop) {
-  if (loop == NULL)
-    loop = malloc(sizeof(ev_loop_t));
-
   loop->setsize = FD_SETSIZE;
   loop->max_fd  = 1;
 
@@ -30,9 +27,16 @@ ev_loop_t* ev_init(ev_loop_t* loop) {
   return loop;
 }
 
+void ev_free(ev_loop_t* loop) {
+  if (loop->events) free(loop->events);
+  if (loop->fired) free(loop->fired);
+}
+
 void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata) {
-  if (fd >= loop->setsize)
+  if (fd >= loop->setsize) {
+    printf("fd is too big: %i, max is %i\n", fd, loop->setsize - 1);
     return;
+  }
 
   if (fd > loop->max_fd)
     loop->max_fd = fd;

@@ -25,5 +25,6 @@ typedef struct {
 worker_t* worker_init();
 void* worker_run(void* self);
 void worker_stop(worker_t* worker);
+void worker_cleanup(worker_t* worker);
 
 #endif

@@ -82,7 +82,7 @@ int conn_read(conn_t* self) {
     ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
 
     // STUB!!!
-    char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
+    char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 15\r\n\r\nfnord :)\r\n";
     self->buf_limit = strlen(resp);
     self->buf_pos = 0;
     strcpy(self->buf, resp);

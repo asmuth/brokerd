@@ -25,6 +25,9 @@ worker_t** worker;
 int num_workers;
 
 void quit(int n) {
+  if (!running)
+    return;
+
   printf("shutdown...\n");
 
   running = 0;
@@ -33,6 +36,8 @@ void quit(int n) {
   for (n = 0; n < num_workers; n++)
     worker_stop(worker[n]);
 
+  printf("goodbye...\n");
+  //exit(0);
 }
 
 int main(int argc, char** argv) {
@@ -112,6 +117,9 @@ int main(int argc, char** argv) {
 
   for (n = 0; running == 1; n++) {
     int fd = accept(ssock, NULL, NULL);
+
+    if (!running)
+      break;
 
     if (fd == -1) {
       perror("accept failed");

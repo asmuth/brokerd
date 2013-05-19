@@ -30,5 +30,6 @@ ev_loop_t* ev_init(ev_loop_t* loop);
 void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata);
 void ev_unwatch(ev_loop_t* loop, int fd);
 int  ev_poll(ev_loop_t* loop);
+void ev_free(ev_loop_t* loop);
 
 #endif
