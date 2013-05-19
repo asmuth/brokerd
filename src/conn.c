@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 
 #include "conn.h"
 #include "http.h"
@@ -79,8 +80,13 @@ int conn_read(conn_t* self) {
       }
 
       if (chunk < 0) {
-        perror("error while reading...");
-        return -1;
+        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
+          perror("error while reading...");
+          return -1;
+        }
+
+        ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+        return 0;
       }
 
       self->buf_pos += chunk;
@@ -119,8 +125,13 @@ int conn_write(conn_t* self) {
         self->buf_limit - self->buf_pos);
 
       if (chunk == -1) {
-        perror("write returned an error");
-        return -1;
+        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
+          perror("error while writing...");
+          return -1;
+        }
+
+        ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+        return 0;
       }
 
       if (chunk > 0)
