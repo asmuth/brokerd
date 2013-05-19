@@ -56,46 +56,52 @@ void conn_set_nonblock(conn_t* conn) {
 int conn_read(conn_t* self) {
   int chunk, body_pos;
 
-  if (self->buf_len - self->buf_pos <= 0) {
-    printf("error: http request buffer exhausted\n");
-    return -1;
-  }
+  switch (self->state) {
 
-  chunk = read(self->sock, self->buf + self->buf_pos,
-    self->buf_len - self->buf_pos);
+    case CONN_STATE_HEAD:
+      if (self->buf_len - self->buf_pos <= 0) {
+        printf("error: http request buffer exhausted\n");
+        return -1;
+      }
 
-  if (chunk == 0) {
-    //printf("read EOF\n");
-    return -1;
-  }
+      chunk = read(self->sock, self->buf + self->buf_pos,
+        self->buf_len - self->buf_pos);
 
-  if (chunk < 0) {
-    perror("error while reading...");
-    return -1;
-  }
+      if (chunk == 0) {
+        //printf("read EOF\n");
+        return -1;
+      }
 
-  self->buf_pos += chunk;
-  body_pos = http_read(self->http_req, self->buf, self->buf_pos);
+      if (chunk < 0) {
+        perror("error while reading...");
+        return -1;
+      }
 
-  if (body_pos == -1) {
-    printf("http_read() returned error\n");
-    return -1;
-  }
+      self->buf_pos += chunk;
+      body_pos = http_read(self->http_req, self->buf, self->buf_pos);
 
-  if (body_pos > 0) {
-    // FIXPAUL handle request here !
-    self->state = CONN_STATE_STREAM;
+      if (body_pos == -1) {
+        printf("http_read() returned error\n");
+        return -1;
+      }
 
-    // STUB!!!
-    char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
-    self->buf_limit = strlen(resp);
-    self->buf_pos = 0;
-    strcpy(self->buf, resp);
-    conn_write(self); // <--- opportunistic write :)
-    //ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
-    // EOF STUB
-  } else {
-    ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+      if (body_pos > 0) {
+        // FIXPAUL handle request here !
+        self->state = CONN_STATE_FLUSH;
+
+        // STUB!!!
+        char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
+        self->buf_limit = strlen(resp);
+        self->buf_pos = 0;
+        strcpy(self->buf, resp);
+        conn_write(self); // <--- opportunistic write :)
+        //ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+        // EOF STUB
+      } else {
+        ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+      }
+      break;
+
   }
 
   return 0;
@@ -104,28 +110,35 @@ int conn_read(conn_t* self) {
 int conn_write(conn_t* self) {
   int chunk;
 
-  chunk = write(self->sock, self->buf + self->buf_pos,
-    self->buf_limit - self->buf_pos);
+  switch (self->state) {
 
-  if (chunk == -1) {
-    perror("write returned an error");
-    return -1;
+    case CONN_STATE_FLUSH:
+      chunk = write(self->sock, self->buf + self->buf_pos,
+        self->buf_limit - self->buf_pos);
+
+      if (chunk == -1) {
+        perror("write returned an error");
+        return -1;
+      }
+
+      if (chunk > 0)
+        self->buf_pos += chunk;
+
+      if (self->buf_pos + 1 >= self->buf_limit) {
+        if (self->http_req->keepalive) {
+          self->buf_pos = 0;
+          self->state = CONN_STATE_HEAD;
+          ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+          return 0;
+        } else {
+          return -1;
+        }
+      }
+
+      ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+      break;
+
   }
 
-  if (chunk > 0)
-    self->buf_pos += chunk;
-
-  if (self->buf_pos + 1 >= self->buf_limit) {
-    if (self->http_req->keepalive) {
-      self->buf_pos = 0;
-      self->state = CONN_STATE_HEAD;
-      ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-
-  ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
   return 0;
 }

@@ -16,7 +16,8 @@
 #define CONN_STATE_BODY 2
 #define CONN_STATE_STREAM 3
 #define CONN_STATE_WAIT 4
-#define CONN_STATE_CLOSED 5
+#define CONN_STATE_FLUSH 5
+#define CONN_STATE_CLOSED 6
 
 typedef struct conn_s {
   int              state;
