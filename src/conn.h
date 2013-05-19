@@ -36,7 +36,9 @@ typedef struct conn_s {
 conn_t* conn_init();
 void conn_close();
 int conn_read(conn_t* self);
+int conn_read_head(conn_t* self);
 int conn_write(conn_t* self);
+int conn_write_flush(conn_t* self);
 void conn_set_nonblock(conn_t* conn);
 void conn_reset(conn_t* self);
 void conn_handle(conn_t* self);

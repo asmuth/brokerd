@@ -61,100 +61,108 @@ void conn_set_nonblock(conn_t* conn) {
 }
 
 int conn_read(conn_t* self) {
-  int chunk, body_pos;
-
   switch (self->state) {
 
     case CONN_STATE_HEAD:
-      if (self->buf_len - self->buf_pos <= 0) {
-        printf("error: http request buffer exhausted\n");
-        return -1;
-      }
+      return conn_read_head(self);
 
-      chunk = read(self->sock, self->buf + self->buf_pos,
-        self->buf_len - self->buf_pos);
+  }
 
-      if (chunk == 0) {
-        //printf("read EOF\n");
-        return -1;
-      }
+  return -1;
+}
 
-      if (chunk < 0) {
-        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-          perror("error while reading...");
-          return -1;
-        }
+int conn_read_head(conn_t* self) {
+  int chunk, body_pos;
 
-        ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
-        return 0;
-      }
+  if (self->buf_len - self->buf_pos <= 0) {
+    printf("error: http request buffer exhausted\n");
+    return -1;
+  }
 
-      self->buf_pos += chunk;
-      body_pos = http_read(self->http_req, self->buf, self->buf_pos);
+  chunk = read(self->sock, self->buf + self->buf_pos,
+    self->buf_len - self->buf_pos);
 
-      if (body_pos == -1) {
-        printf("http_read() returned error\n");
-        return -1;
-      }
+  if (chunk == 0) {
+    //printf("read EOF\n");
+    return -1;
+  }
 
-      if (body_pos > 0) {
-        // if (post_body_pending) {
-        //   self->state = CONN_STATE_BODY;
-        //   conn_read(self); // opportunistic read
-        //   return 0;
-        // else
+  if (chunk < 0) {
+    if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
+      perror("error while reading...");
+      return -1;
+    }
 
-        conn_handle(self);
-      } else {
-        ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
-      }
-      break;
+    ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+    return 0;
+  }
 
+  self->buf_pos += chunk;
+  body_pos = http_read(self->http_req, self->buf, self->buf_pos);
+
+  if (body_pos == -1) {
+    printf("http_read() returned error\n");
+    return -1;
+  }
+
+  if (body_pos > 0) {
+    // if (post_body_pending) {
+    //   self->state = CONN_STATE_BODY;
+    //   conn_read(self); // opportunistic read
+    //   return 0;
+    // else
+
+    conn_handle(self);
+  } else {
+    ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
   }
 
   return 0;
 }
 
 int conn_write(conn_t* self) {
-  int chunk;
-
   switch (self->state) {
 
     case CONN_STATE_FLUSH:
-      chunk = write(self->sock, self->buf + self->buf_pos,
-        self->buf_limit - self->buf_pos);
-
-      if (chunk == -1) {
-        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-          perror("error while writing...");
-          return -1;
-        }
-
-        ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
-        return 0;
-      }
-
-      if (chunk > 0)
-        self->buf_pos += chunk;
-
-      if (self->buf_pos + 1 >= self->buf_limit) {
-        if (self->http_req->keepalive) {
-          conn_reset(self);
-          conn_read(self);
-          return 0;
-        } else {
-          return -1;
-        }
-      }
-
-      ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
-      break;
+      return conn_write_flush(self);
 
   }
 
-  return 0;
+  return -1;
 }
 
+int conn_write_flush(conn_t* self) {
+  int chunk;
+
+  chunk = write(self->sock, self->buf + self->buf_pos,
+    self->buf_limit - self->buf_pos);
+
+  if (chunk == -1) {
+    if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
+      perror("error while writing...");
+      return -1;
+    }
+
+    ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+    return 0;
+  }
+
+  if (chunk > 0)
+    self->buf_pos += chunk;
+
+  if (self->buf_pos + 1 >= self->buf_limit) {
+    if (self->http_req->keepalive) {
+      conn_reset(self);
+      conn_read(self);
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+
+  ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+  return 0;
+}
 
 void conn_handle(conn_t* self) {
   char*  url = self->http_req->uri;
