@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
@@ -40,8 +42,12 @@ void conn_close(conn_t* self) {
 }
 
 void conn_set_nonblock(conn_t* conn) {
+  int opt = 1;
   int flags = fcntl(conn->sock, F_GETFL, 0);
   flags = flags | O_NONBLOCK;
+
+  if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0)
+    perror("setsockopt(TCP_NODELAY)");
 
   if (fcntl(conn->sock, F_SETFL, flags) != 0)
     printf("fnctl failed!\n");
