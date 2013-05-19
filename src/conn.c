@@ -66,6 +66,9 @@ int conn_read(conn_t* self) {
     case CONN_STATE_HEAD:
       return conn_read_head(self);
 
+    default:
+      printf("error: invalid conn-state (read): %i\n", self->state);
+
   }
 
   return -1;
@@ -116,6 +119,9 @@ int conn_write(conn_t* self) {
 
     case CONN_STATE_FLUSH:
       return conn_write_flush(self);
+
+    default:
+      printf("error: invalid conn-state (read): %i\n", self->state);
 
   }
 
