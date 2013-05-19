@@ -129,7 +129,7 @@ int conn_write(conn_t* self) {
       if (self->buf_pos + 1 >= self->buf_limit) {
         if (self->http_req->keepalive) {
           conn_reset(self);
-          ev_watch(&self->worker->loop, self->sock, EV_READABLE, self); // FIXPAUL: can be opportunistic?
+          conn_read(self);
           return 0;
         } else {
           return -1;
