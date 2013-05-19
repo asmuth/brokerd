@@ -121,7 +121,6 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    printf("push connection\n");
     write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd));
   }
 

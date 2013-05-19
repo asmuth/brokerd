@@ -18,11 +18,12 @@ typedef struct {
 } ev_event_t;
 
 typedef struct {
-  fd_set      op_read;
-  fd_set      op_write;
-  ev_event_t* events;
-  int         max_fd;
-  int         setsize;
+  fd_set       op_read;
+  fd_set       op_write;
+  ev_event_t*  events;
+  ev_event_t** fired;
+  int          max_fd;
+  int          setsize;
 } ev_state_t;
 
 ev_state_t* ev_init();

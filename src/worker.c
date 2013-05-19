@@ -50,10 +50,10 @@ void worker_stop(worker_t* worker) {
 }
 
 void *worker_run(void* userdata) {
-  int fd, sock;
+  int num_events, sock;
   worker_t* self = userdata;
   conn_t *conn;
-  ev_event_t event;
+  ev_event_t *event;
 
   self->ev_state = ev_init();
   ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
@@ -77,21 +77,40 @@ void *worker_run(void* userdata) {
     }
     */
 
-    if (ev_poll(self->ev_state) == -1)
+   num_events = ev_poll(self->ev_state);
+
+   if (num_events == -1)
       continue;
 
-    for (fd = 0; fd <= self->ev_state->max_fd; fd++) {
-      event = self->ev_state->events[fd];
+    while (--num_events >= 0) {
+      event = self->ev_state->fired[num_events];
 
-      if (!event.fired)
+      if (!event->fired)
         continue;
 
+      if (event->userdata != NULL) {
+        conn = event->userdata;
+
+        if (event->fired & EV_WATCH_READ)
+          if (conn_read(conn) == -1) {
+            conn_close(conn);
+            continue;
+          }
+
+        if (event->fired & EV_WATCH_WRITE)
+          if (conn_write(conn) == -1) {
+            conn_close(conn);
+            continue;
+          }
+
+        //ev_unwatch(self->ev_state, conn->sock);
+      }
+
       // pops the next connection from the queue
-      if (fd == self->queue[0]) {
-        printf("new connection!\n");
+      else {
         ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
 
-        if (read(fd, &sock, sizeof(sock)) != sizeof(sock)) {
+        if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
           if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
             printf("error reading from conn_queue\n");
 
@@ -104,31 +123,12 @@ void *worker_run(void* userdata) {
         conn_set_nonblock(conn);
         ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
 
-        continue;
         //if (self->connections == NULL) {
         //  self->connections = conn;
         //} else {
         //  conn->next = self->connections;
         //  self->connections = conn;
         //}
-      }
-
-      else if (event.userdata) {
-        conn = event.userdata;
-
-        if (event.fired & EV_WATCH_READ)
-          if (conn_read(conn) == -1) {
-            conn_close(conn);
-            continue;
-          }
-
-        if (event.fired & EV_WATCH_WRITE)
-          if (conn_write(conn) == -1) {
-            conn_close(conn);
-            continue;
-          }
-
-        //ev_unwatch(self->ev_state, conn->sock);
       }
     }
   }

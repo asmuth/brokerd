@@ -56,7 +56,6 @@ void conn_set_nonblock(conn_t* conn) {
 }
 
 int conn_read(conn_t* self) {
-  printf("read!\n");
   int chunk, body_pos;
 
   if (self->buf_len - self->buf_pos <= 0) {
@@ -86,7 +85,6 @@ int conn_read(conn_t* self) {
   }
 
   if (body_pos > 0) {
-    printf("read complete!\n");
     // FIXPAUL handle request here !
     self->state = CONN_STATE_STREAM;
     ev_watch(self->worker->ev_state, self->sock, EV_WATCH_WRITE, self);
@@ -98,7 +96,6 @@ int conn_read(conn_t* self) {
     strcpy(self->buf, resp);
     // EOF STUB
   } else {
-    printf("read pending...\n");
     ev_watch(self->worker->ev_state, self->sock, EV_WATCH_READ, self);
   }
 

@@ -21,6 +21,8 @@ ev_state_t* ev_init() {
   state->events = malloc(sizeof(ev_event_t) * state->setsize);
   memset(state->events, 0, sizeof(ev_event_t) * state->setsize);
 
+  state->fired = malloc(sizeof(ev_event_t *) * state->setsize);
+
   FD_ZERO(&state->op_read);
   FD_ZERO(&state->op_write);
 
@@ -45,7 +47,7 @@ void ev_unwatch(ev_state_t* state, int fd) {
 
 int ev_poll(ev_state_t* state) {
   fd_set op_read, op_write;
-  int res, fd;
+  int res, fd, num_events = 0;
 
   memcpy(&op_read, &state->op_read, sizeof(fd_set));
   memcpy(&op_write, &state->op_write, sizeof(fd_set));
@@ -66,17 +68,20 @@ int ev_poll(ev_state_t* state) {
     state->events[fd].fired = 0;
 
     if (FD_ISSET(fd, &op_read)) {
-      printf("fire read!\n");
       state->events[fd].fired |= EV_WATCH_READ;
       FD_CLR(fd, &state->op_read);
     }
 
     if (FD_ISSET(fd, &op_write)) {
-      printf("fire write!\n");
       state->events[fd].fired |= EV_WATCH_WRITE;
       FD_CLR(fd, &state->op_write);
     }
+
+    if (state->events[fd].fired) {
+      state->fired[num_events] = &state->events[fd];
+      num_events++;
+    }
   }
 
-  return 0;
+  return num_events;
 }
