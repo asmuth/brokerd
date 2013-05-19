@@ -23,7 +23,6 @@ worker_t* worker_init() {
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
 
-  // FIXPAUL: make this non-blocking
   if (pipe(worker->queue) == -1) {
     printf("create pipe failed!\n");
     return NULL;
@@ -59,24 +58,6 @@ void *worker_run(void* userdata) {
   ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
 
   while (1) {
-    /*
-    for (conn = self->connections; conn != NULL; ) {
-      switch (conn->state) {
-
-        case CONN_STATE_HEAD:
-          ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
-          break;
-
-        case CONN_STATE_STREAM:
-          ev_watch(self->ev_state, conn->sock, EV_WATCH_WRITE, conn);
-          break;
-
-      }
-
-      conn = conn->next;
-    }
-    */
-
    num_events = ev_poll(self->ev_state);
 
    if (num_events == -1)
@@ -102,8 +83,6 @@ void *worker_run(void* userdata) {
             conn_close(conn);
             continue;
           }
-
-        //ev_unwatch(self->ev_state, conn->sock);
       }
 
       // pops the next connection from the queue
@@ -122,13 +101,6 @@ void *worker_run(void* userdata) {
         conn->worker = self;
         conn_set_nonblock(conn);
         ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
-
-        //if (self->connections == NULL) {
-        //  self->connections = conn;
-        //} else {
-        //  conn->next = self->connections;
-        //  self->connections = conn;
-        //}
       }
     }
   }
