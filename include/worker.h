@@ -14,13 +14,11 @@
 
 #include <pthread.h>
 
-#include "conn.h"
 #include "ev.h"
 
 typedef struct {
   pthread_t       thread;
   int             queue[2];
-  struct conn_s*  connections;
   ev_state_t*     ev_state;
 } worker_t;
 

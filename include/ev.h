@@ -11,9 +11,8 @@
 #define EV_WATCH_READ 1
 #define EV_WATCH_WRITE 2
 
-#include "conn.h"
-
 typedef struct {
+  int   watch;
   int   fired;
   void* userdata;
 } ev_event_t;

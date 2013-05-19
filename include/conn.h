@@ -10,7 +10,7 @@
 
 #include <sys/socket.h>
 #include "http.h"
-//#include "worker.h"
+#include "worker.h"
 
 #define CONN_STATE_HEAD 1
 #define CONN_STATE_BODY 2
@@ -29,7 +29,7 @@ typedef struct conn_s {
   int              buf_limit;
   http_req_t*      http_req;
   struct conn_s*   next;
-  void*            worker;
+  worker_t*        worker;
 } conn_t;
 
 conn_t* conn_init();

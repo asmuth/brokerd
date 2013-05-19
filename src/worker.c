@@ -13,6 +13,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include "ev.h"
 #include "worker.h"
 #include "conn.h"
 
@@ -55,20 +56,18 @@ void *worker_run(void* userdata) {
   ev_event_t event;
 
   self->ev_state = ev_init();
+  ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
 
   while (1) {
-    ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
-
+    /*
     for (conn = self->connections; conn != NULL; ) {
       switch (conn->state) {
 
         case CONN_STATE_HEAD:
-          //FD_SET(conn->sock, &op_read);
           ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
           break;
 
         case CONN_STATE_STREAM:
-          //FD_SET(conn->sock, &op_write);
           ev_watch(self->ev_state, conn->sock, EV_WATCH_WRITE, conn);
           break;
 
@@ -76,6 +75,7 @@ void *worker_run(void* userdata) {
 
       conn = conn->next;
     }
+    */
 
     if (ev_poll(self->ev_state) == -1)
       continue;
@@ -87,9 +87,9 @@ void *worker_run(void* userdata) {
         continue;
 
       // pops the next connection from the queue
-      //if (FD_ISSET(self->queue[0], &self->ev_state->op_read)) { // FIXSELECT
       if (fd == self->queue[0]) {
         printf("new connection!\n");
+        ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
 
         if (read(fd, &sock, sizeof(sock)) != sizeof(sock)) {
           if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
@@ -102,19 +102,20 @@ void *worker_run(void* userdata) {
         conn->sock = sock;
         conn->worker = self;
         conn_set_nonblock(conn);
+        ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
 
-        if (self->connections == NULL) {
-          self->connections = conn;
-        } else {
-          conn->next = self->connections;
-          self->connections = conn;
-        }
+        continue;
+        //if (self->connections == NULL) {
+        //  self->connections = conn;
+        //} else {
+        //  conn->next = self->connections;
+        //  self->connections = conn;
+        //}
       }
 
       else if (event.userdata) {
         conn = event.userdata;
 
-        //if (FD_ISSET(conn->sock, &self->ev_state->op_read)) // FIXSELECT
         if (event.fired & EV_WATCH_READ)
           if (conn_read(conn) == -1) {
             conn_close(conn);
@@ -127,7 +128,7 @@ void *worker_run(void* userdata) {
             continue;
           }
 
-        ev_unwatch(self->ev_state, conn->sock);
+        //ev_unwatch(self->ev_state, conn->sock);
       }
     }
   }

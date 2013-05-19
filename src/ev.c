@@ -44,9 +44,13 @@ void ev_unwatch(ev_state_t* state, int fd) {
 }
 
 int ev_poll(ev_state_t* state) {
+  fd_set op_read, op_write;
   int res, fd;
 
-  res = select(state->max_fd, &state->op_read, &state->op_write, NULL, NULL);
+  memcpy(&op_read, &state->op_read, sizeof(fd_set));
+  memcpy(&op_write, &state->op_write, sizeof(fd_set));
+
+  res = select(state->max_fd, &op_read, &op_write, NULL, NULL);
 
   if (res == 0) {
     printf("timeout while selecting\n");
@@ -61,12 +65,17 @@ int ev_poll(ev_state_t* state) {
   for (fd = 0; fd <= state->max_fd; fd++) {
     state->events[fd].fired = 0;
 
-    if (FD_ISSET(fd, &state->op_read))
+    if (FD_ISSET(fd, &op_read)) {
+      printf("fire read!\n");
       state->events[fd].fired |= EV_WATCH_READ;
+      FD_CLR(fd, &state->op_read);
+    }
 
-    if (FD_ISSET(fd, &state->op_write))
+    if (FD_ISSET(fd, &op_write)) {
+      printf("fire write!\n");
       state->events[fd].fired |= EV_WATCH_WRITE;
-
+      FD_CLR(fd, &state->op_write);
+    }
   }
 
   return 0;
