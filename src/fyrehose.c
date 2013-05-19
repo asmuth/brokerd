@@ -19,10 +19,8 @@
 #include <signal.h>
 
 
-int ssock;
-int running = 1;
+int ssock, running = 1, num_workers = 1;
 worker_t** worker;
-int num_workers;
 
 void quit(int n) {
   if (!running)
