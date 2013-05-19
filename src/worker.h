@@ -19,6 +19,7 @@
 typedef struct {
   pthread_t       thread;
   int             queue[2];
+  int             running;
   ev_loop_t       loop;
 } worker_t;
 

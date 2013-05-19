@@ -23,6 +23,8 @@ worker_t* worker_init() {
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
 
+  worker->running = 1;
+
   if (pipe(worker->queue) == -1) {
     printf("create pipe failed!\n");
     return NULL;
@@ -74,7 +76,7 @@ void *worker_run(void* userdata) {
   ev_init(&self->loop);
   ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
 
-  for(;;) {
+  while(self->running) {
     num_events = ev_poll(&self->loop);
 
     if (num_events == -1)
@@ -105,6 +107,8 @@ void *worker_run(void* userdata) {
       }
     }
   }
+
+  return NULL;
 }
 
 void worker_accept(worker_t* self) {
@@ -121,6 +125,7 @@ void worker_accept(worker_t* self) {
   }
 
   if (sock == -1) {
+    self->running = 0;
     worker_cleanup(self);
     return;
   }
