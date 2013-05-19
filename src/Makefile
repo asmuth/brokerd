@@ -11,7 +11,7 @@ FLAGS        =
 CFLAGS       = -Wall -Wextra
 LDFLAGS      = -lpthread
 DEBUGFLAGS   = -g3 -O0 -D _DEBUG
-RELEASEFLAGS = -O3 -march=native -mtune=native -D NDEBUG -combine -fwhole-program
+RELEASEFLAGS = -O3 -march=native -mtune=native -D NDEBUG -fwhole-program
 
 TARGET       = fyrehose
 SOURCES      = fyrehose.c ev.c conn.c http.c worker.c
@@ -27,4 +27,4 @@ clean:
 	rm fyrehose *.o
 
 $(TARGET): $(OBJECTS)
-	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)
+	$(CC) $(FLAGS) $(CFLAGS) $(RELEASEFLAGS) -o $(TARGET) $(OBJECTS)
