@@ -71,7 +71,7 @@ int conn_read(conn_t* self) {
   return -1;
 }
 
-int conn_read_head(conn_t* self) {
+inline int conn_read_head(conn_t* self) {
   int chunk, body_pos;
 
   if (self->buf_len - self->buf_pos <= 0) {
@@ -131,7 +131,7 @@ int conn_write(conn_t* self) {
   return -1;
 }
 
-int conn_write_flush(conn_t* self) {
+inline int conn_write_flush(conn_t* self) {
   int chunk;
 
   chunk = write(self->sock, self->buf + self->buf_pos,
@@ -164,7 +164,7 @@ int conn_write_flush(conn_t* self) {
   return 0;
 }
 
-void conn_handle(conn_t* self) {
+inline void conn_handle(conn_t* self) {
   char*  url = self->http_req->uri;
   size_t url_len = sizeof(self->http_req->uri);
 
@@ -174,7 +174,7 @@ void conn_handle(conn_t* self) {
     conn_handle_404(self);
 }
 
-void conn_handle_ping(conn_t* self) {
+inline void conn_handle_ping(conn_t* self) {
   char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 6\r\n\r\npong\r\n";
 
   self->state = CONN_STATE_FLUSH;
@@ -185,7 +185,7 @@ void conn_handle_ping(conn_t* self) {
   conn_write(self); // <--- opportunistic write :)
 }
 
-void conn_handle_404(conn_t* self) {
+inline void conn_handle_404(conn_t* self) {
   char* resp = "HTTP/1.1 404 Not Found\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 11\r\n\r\nnot found\r\n";
 
   self->state = CONN_STATE_FLUSH;
