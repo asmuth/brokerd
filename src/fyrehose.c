@@ -121,7 +121,8 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd));
+    if (write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd)) != sizeof(fd))
+      printf("error writing to work queue\n");
   }
 
   return 0;
