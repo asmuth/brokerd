@@ -49,7 +49,7 @@ void conn_close(conn_t* self) {
 
 void conn_set_nonblock(conn_t* conn) {
   int flags = fcntl(conn->sock, F_GETFL, 0);
-  flags = flags & O_NONBLOCK;
+  flags = flags | O_NONBLOCK;
 
   if (fcntl(conn->sock, F_SETFL, flags) != 0)
     printf("fnctl failed!\n");
