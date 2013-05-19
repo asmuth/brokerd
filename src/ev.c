@@ -16,7 +16,7 @@ ev_state_t* ev_init() {
   ev_state_t* state = malloc(sizeof(ev_state_t));
 
   state->setsize = FD_SETSIZE;
-  state->max_fd = FD_SETSIZE - 1;
+  state->max_fd  = 1;
 
   state->events = malloc(sizeof(ev_event_t) * state->setsize);
   memset(state->events, 0, sizeof(ev_event_t) * state->setsize);
@@ -32,6 +32,9 @@ ev_state_t* ev_init() {
 void ev_watch(ev_state_t* state, int fd, int flags, void* userdata) {
   if (fd >= FD_SETSIZE)
     return;
+
+  if (fd > state->max_fd)
+    state->max_fd = fd;
 
   state->events[fd].userdata = userdata;
 
@@ -52,7 +55,7 @@ int ev_poll(ev_state_t* state) {
   memcpy(&op_read, &state->op_read, sizeof(fd_set));
   memcpy(&op_write, &state->op_write, sizeof(fd_set));
 
-  res = select(state->max_fd, &op_read, &op_write, NULL, NULL);
+  res = select(state->max_fd + 1, &op_read, &op_write, NULL, NULL);
 
   if (res == 0) {
     printf("timeout while selecting\n");
