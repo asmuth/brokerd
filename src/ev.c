@@ -49,6 +49,7 @@ void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata) {
 
 void ev_unwatch(ev_loop_t* loop, int fd) {
   loop->events[fd].fired = 0;
+  loop->events[fd].userdata = NULL;
   FD_CLR(fd, &loop->op_read);
   FD_CLR(fd, &loop->op_write);
 }

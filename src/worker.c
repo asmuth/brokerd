@@ -42,22 +42,29 @@ worker_t* worker_init() {
   return worker;
 }
 
-void worker_stop(worker_t* worker) {
+void worker_stop(worker_t* self) {
   int cancel = -1;
   void* ret;
 
   for (;;)
-    if (write(worker->queue[1], (char *) &cancel, sizeof(cancel)) == sizeof(cancel))
+    if (write(self->queue[1], (char *) &cancel, sizeof(cancel)) == sizeof(cancel))
       break;
 
-  pthread_join(worker->thread, &ret);
+  pthread_join(self->thread, &ret);
 
-  ev_free(&worker->loop);
-  free(worker);
+  ev_free(&self->loop);
+  free(self);
 }
 
-void worker_cleanup(worker_t* worker) {
-  printf("TODO: cleanup all connections\n");
+void worker_cleanup(worker_t* self) {
+  int n;
+
+  for (n = 0; n <= self->loop.max_fd; n++) {
+    if (!self->loop.events[n].userdata)
+      continue;
+
+    conn_close((conn_t *) self->loop.events[n].userdata);
+  }
 }
 
 void *worker_run(void* userdata) {
