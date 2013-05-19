@@ -36,8 +36,7 @@ void quit(int n) {
   for (n = 0; n < num_workers; n++)
     worker_stop(worker[n]);
 
-  printf("goodbye...\n");
-  //exit(0);
+  free(worker);
 }
 
 int main(int argc, char** argv) {
@@ -130,5 +129,6 @@ int main(int argc, char** argv) {
       printf("error writing to work queue\n");
   }
 
+  quit(0);
   return 0;
 }
