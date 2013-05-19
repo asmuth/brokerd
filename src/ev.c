@@ -30,7 +30,7 @@ ev_state_t* ev_init() {
 }
 
 void ev_watch(ev_state_t* state, int fd, int flags, void* userdata) {
-  if (fd >= FD_SETSIZE)
+  if (fd >= state->setsize)
     return;
 
   if (fd > state->max_fd)
