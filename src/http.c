@@ -21,6 +21,12 @@ http_req_t* http_req_init() {
   return req;
 }
 
+void http_req_reset(http_req_t* self) {
+  memset(self, 0, sizeof(http_req_t));
+  self->last_pos = 0;
+  self->state = HTTP_STATE_METHOD;
+}
+
 void http_req_free(http_req_t* self) {
   free(self);
 }

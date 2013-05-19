@@ -36,5 +36,6 @@ int http_read_uri(http_req_t* req, char* uri, int len);
 int http_read_version(http_req_t* req, char* version, int len);
 void http_read_header(http_req_t* req, char* hkey, int hkey_len, char* hval, int hval_len);
 void http_req_free(http_req_t* self);
+void http_req_reset(http_req_t* self);
 
 #endif

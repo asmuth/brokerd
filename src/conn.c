@@ -41,6 +41,12 @@ void conn_close(conn_t* self) {
   free(self);
 }
 
+void conn_reset(conn_t* self) {
+  self->state = CONN_STATE_HEAD;
+  self->buf_pos = 0;
+  http_req_reset(self->http_req);
+}
+
 void conn_set_nonblock(conn_t* conn) {
   int opt = 1;
   int flags = fcntl(conn->sock, F_GETFL, 0);
@@ -86,17 +92,13 @@ int conn_read(conn_t* self) {
       }
 
       if (body_pos > 0) {
-        // FIXPAUL handle request here !
-        self->state = CONN_STATE_FLUSH;
+        // if (post_body_pending) {
+        //   self->state = CONN_STATE_BODY;
+        //   conn_read(self); // opportunistic read
+        //   return 0;
+        // else
 
-        // STUB!!!
-        char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
-        self->buf_limit = strlen(resp);
-        self->buf_pos = 0;
-        strcpy(self->buf, resp);
-        conn_write(self); // <--- opportunistic write :)
-        //ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
-        // EOF STUB
+        conn_handle(self);
       } else {
         ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
       }
@@ -126,9 +128,8 @@ int conn_write(conn_t* self) {
 
       if (self->buf_pos + 1 >= self->buf_limit) {
         if (self->http_req->keepalive) {
-          self->buf_pos = 0;
-          self->state = CONN_STATE_HEAD;
-          ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
+          conn_reset(self);
+          ev_watch(&self->worker->loop, self->sock, EV_READABLE, self); // FIXPAUL: can be opportunistic?
           return 0;
         } else {
           return -1;
@@ -141,4 +142,40 @@ int conn_write(conn_t* self) {
   }
 
   return 0;
+}
+
+
+void conn_handle(conn_t* self) {
+  char*  url = self->http_req->uri;
+  size_t url_len = sizeof(self->http_req->uri);
+
+  printf("req: %s\n", url);
+
+  if (strncmp(url, "/ping", url_len) == 0)
+    conn_handle_ping(self);
+
+  else
+    conn_handle_404(self);
+}
+
+void conn_handle_ping(conn_t* self) {
+  char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 6\r\n\r\npong\r\n";
+
+  self->state = CONN_STATE_FLUSH;
+  self->buf_limit = strlen(resp);
+  self->buf_pos = 0;
+
+  strcpy(self->buf, resp);
+  conn_write(self); // <--- opportunistic write :)
+}
+
+void conn_handle_404(conn_t* self) {
+  char* resp = "HTTP/1.1 404 Not Found\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 11\r\n\r\nnot found\r\n";
+
+  self->state = CONN_STATE_FLUSH;
+  self->buf_limit = strlen(resp);
+  self->buf_pos = 0;
+
+  strcpy(self->buf, resp);
+  conn_write(self);
 }

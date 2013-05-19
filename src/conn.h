@@ -38,5 +38,9 @@ void conn_close();
 int conn_read(conn_t* self);
 int conn_write(conn_t* self);
 void conn_set_nonblock(conn_t* conn);
+void conn_reset(conn_t* self);
+void conn_handle(conn_t* self);
+void conn_handle_ping(conn_t* self);
+void conn_handle_404(conn_t* self);
 
 #endif
