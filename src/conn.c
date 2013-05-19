@@ -85,13 +85,14 @@ int conn_read(conn_t* self) {
   if (body_pos > 0) {
     // FIXPAUL handle request here !
     self->state = CONN_STATE_STREAM;
-    ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
 
     // STUB!!!
     char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
     self->buf_limit = strlen(resp);
     self->buf_pos = 0;
     strcpy(self->buf, resp);
+    conn_write(self); // <--- opportunistic write :)
+    //ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
     // EOF STUB
   } else {
     ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
