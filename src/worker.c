@@ -58,20 +58,18 @@ void worker_cleanup(worker_t* self) {
   int n;
 
   for (n = 0; n <= self->loop.max_fd; n++) {
-    if (!self->loop.events[n].userdata)
-      continue;
-
-    conn_close((conn_t *) self->loop.events[n].userdata);
+    if (self->loop.events[n].userdata)
+      conn_close((conn_t *) self->loop.events[n].userdata);
   }
 
   ev_free(&self->loop);
 }
 
 void *worker_run(void* userdata) {
-  int num_events, sock;
+  int num_events;
   worker_t* self = userdata;
-  conn_t *conn;
   ev_event_t *event;
+  conn_t *conn;
 
   ev_init(&self->loop);
   ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
@@ -88,7 +86,7 @@ void *worker_run(void* userdata) {
       if (!event->fired)
         continue;
 
-      if (event->userdata != NULL) {
+      if (event->userdata) {
         conn = event->userdata;
 
         if (event->fired & EV_READABLE)
@@ -102,30 +100,34 @@ void *worker_run(void* userdata) {
             conn_close(conn);
             continue;
           }
-      }
-
-      // pops the next connection from the queue
-      else {
-        ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
-
-        if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
-          if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
-            printf("error reading from conn_queue\n");
-
-          continue;
-        }
-
-        if (sock == -1) {
-          worker_cleanup(self);
-          return NULL;
-        }
-
-        conn = conn_init(4096);
-        conn->sock = sock;
-        conn->worker = self;
-        conn_set_nonblock(conn);
-        ev_watch(&self->loop, conn->sock, EV_READABLE, conn);
+      } else {
+        worker_accept(self);
       }
     }
   }
+}
+
+void worker_accept(worker_t* self) {
+  conn_t *conn;
+  int sock;
+
+  ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
+
+  if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
+    if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+      printf("error reading from conn_queue\n");
+
+    return;
+  }
+
+  if (sock == -1) {
+    worker_cleanup(self);
+    return;
+  }
+
+  conn = conn_init(4096);
+  conn->sock = sock;
+  conn->worker = self;
+  conn_set_nonblock(conn);
+  conn_read(conn);
 }

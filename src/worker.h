@@ -23,8 +23,9 @@ typedef struct {
 } worker_t;
 
 worker_t* worker_init();
-void* worker_run(void* self);
-void worker_stop(worker_t* worker);
-void worker_cleanup(worker_t* worker);
+void* worker_run(void* userdata);
+void worker_stop(worker_t* self);
+void worker_cleanup(worker_t* self);
+void worker_accept(worker_t* self);
 
 #endif

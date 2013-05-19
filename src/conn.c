@@ -48,15 +48,15 @@ void conn_reset(conn_t* self) {
   http_req_reset(self->http_req);
 }
 
-void conn_set_nonblock(conn_t* conn) {
+void conn_set_nonblock(conn_t* self) {
   int opt = 1;
-  int flags = fcntl(conn->sock, F_GETFL, 0);
+  int flags = fcntl(self->sock, F_GETFL, 0);
   flags = flags | O_NONBLOCK;
 
-  if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0)
+  if (setsockopt(self->sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0)
     perror("setsockopt(TCP_NODELAY)");
 
-  if (fcntl(conn->sock, F_SETFL, flags) != 0)
+  if (fcntl(self->sock, F_SETFL, flags) != 0)
     printf("fnctl failed!\n");
 }
 
@@ -82,10 +82,8 @@ inline int conn_read_head(conn_t* self) {
   chunk = read(self->sock, self->buf + self->buf_pos,
     self->buf_len - self->buf_pos);
 
-  if (chunk == 0) {
-    //printf("read EOF\n");
+  if (chunk == 0)
     return -1;
-  }
 
   if (chunk < 0) {
     if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
@@ -105,17 +103,10 @@ inline int conn_read_head(conn_t* self) {
     return -1;
   }
 
-  if (body_pos > 0) {
-    // if (post_body_pending) {
-    //   self->state = CONN_STATE_BODY;
-    //   conn_read(self); // opportunistic read
-    //   return 0;
-    // else
-
+  if (body_pos > 0)
     conn_handle(self);
-  } else {
+  else
     ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
-  }
 
   return 0;
 }
@@ -182,7 +173,7 @@ inline void conn_handle_ping(conn_t* self) {
   self->buf_pos = 0;
 
   strcpy(self->buf, resp);
-  conn_write(self); // <--- opportunistic write :)
+  conn_write(self);
 }
 
 inline void conn_handle_404(conn_t* self) {
