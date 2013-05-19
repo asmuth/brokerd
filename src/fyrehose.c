@@ -24,9 +24,7 @@ int running = 1;
 worker_t** worker;
 int num_workers;
 
-void quit(int fnord) {
-  int n;
-
+void quit(int n) {
   printf("shutdown...\n");
 
   running = 0;
@@ -40,7 +38,6 @@ void quit(int fnord) {
 int main(int argc, char** argv) {
   struct    sockaddr_in server_addr;
   int       n, opt, port = 2323;
-  conn_t*   conn;
 
   while ((opt = getopt(argc, argv, "t:p:vh?")) != -1) {
     switch (opt) {

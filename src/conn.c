@@ -33,7 +33,6 @@ void conn_close(conn_t* self) {
   ev_unwatch(&self->worker->loop, self->sock);
   self->state = CONN_STATE_CLOSED;
 
-  free:
   close(self->sock);
   http_req_free(self->http_req);
   free(self->buf);

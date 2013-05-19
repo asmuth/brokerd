@@ -16,5 +16,8 @@ BINDIR       = $(PREFIX)/bin
 
 all: $(TARGET)
 
+clean:
+	rm fyrehose *.o
+
 $(TARGET): $(OBJECTS)
 	$(CC) $(FLAGS) $(CFLAGS) $(DEBUGFLAGS) -o $(TARGET) $(OBJECTS)

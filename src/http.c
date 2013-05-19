@@ -137,7 +137,7 @@ int http_read_method(http_req_t* req, char* method, int len) {
 }
 
 int http_read_uri(http_req_t* req, char* uri, int len) {
-  if (len >= sizeof(req->uri))
+  if (len >= (int) sizeof(req->uri))
     return -1;
 
   strncpy(req->uri, uri, len);
