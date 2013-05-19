@@ -160,11 +160,8 @@ void conn_handle(conn_t* self) {
   char*  url = self->http_req->uri;
   size_t url_len = sizeof(self->http_req->uri);
 
-  printf("req: %s\n", url);
-
   if (strncmp(url, "/ping", url_len) == 0)
     conn_handle_ping(self);
-
   else
     conn_handle_404(self);
 }
