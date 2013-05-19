@@ -51,8 +51,6 @@ void worker_stop(worker_t* self) {
       break;
 
   pthread_join(self->thread, &ret);
-
-  ev_free(&self->loop);
   free(self);
 }
 
@@ -65,6 +63,8 @@ void worker_cleanup(worker_t* self) {
 
     conn_close((conn_t *) self->loop.events[n].userdata);
   }
+
+  ev_free(&self->loop);
 }
 
 void *worker_run(void* userdata) {

@@ -30,11 +30,6 @@ void quit(int n) {
 
   running = 0;
   close(ssock);
-
-  for (n = 0; n < num_workers; n++)
-    worker_stop(worker[n]);
-
-  free(worker);
 }
 
 int main(int argc, char** argv) {
@@ -127,6 +122,9 @@ int main(int argc, char** argv) {
       printf("error writing to work queue\n");
   }
 
-  quit(0);
+  for (n = 0; n < num_workers; n++)
+    worker_stop(worker[n]);
+
+  free(worker);
   return 0;
 }
