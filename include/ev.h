@@ -24,11 +24,11 @@ typedef struct {
   ev_event_t** fired;
   int          max_fd;
   int          setsize;
-} ev_state_t;
+} ev_loop_t;
 
-ev_state_t* ev_init();
-void ev_watch(ev_state_t* state, int fd, int flags, void* userdata);
-void ev_unwatch(ev_state_t* state, int fd);
-int  ev_poll(ev_state_t* state);
+ev_loop_t* ev_init(ev_loop_t* loop);
+void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata);
+void ev_unwatch(ev_loop_t* loop, int fd);
+int  ev_poll(ev_loop_t* loop);
 
 #endif

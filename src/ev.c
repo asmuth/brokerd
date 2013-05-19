@@ -12,50 +12,51 @@
 
 #include "ev.h"
 
-ev_state_t* ev_init() {
-  ev_state_t* state = malloc(sizeof(ev_state_t));
+ev_loop_t* ev_init(ev_loop_t* loop) {
+  if (loop == NULL)
+    loop = malloc(sizeof(ev_loop_t));
 
-  state->setsize = FD_SETSIZE;
-  state->max_fd  = 1;
+  loop->setsize = FD_SETSIZE;
+  loop->max_fd  = 1;
 
-  state->events = malloc(sizeof(ev_event_t) * state->setsize);
-  memset(state->events, 0, sizeof(ev_event_t) * state->setsize);
+  loop->events = malloc(sizeof(ev_event_t) * loop->setsize);
+  memset(loop->events, 0, sizeof(ev_event_t) * loop->setsize);
 
-  state->fired = malloc(sizeof(ev_event_t *) * state->setsize);
+  loop->fired = malloc(sizeof(ev_event_t *) * loop->setsize);
 
-  FD_ZERO(&state->op_read);
-  FD_ZERO(&state->op_write);
+  FD_ZERO(&loop->op_read);
+  FD_ZERO(&loop->op_write);
 
-  return state;
+  return loop;
 }
 
-void ev_watch(ev_state_t* state, int fd, int flags, void* userdata) {
-  if (fd >= state->setsize)
+void ev_watch(ev_loop_t* loop, int fd, int flags, void* userdata) {
+  if (fd >= loop->setsize)
     return;
 
-  if (fd > state->max_fd)
-    state->max_fd = fd;
+  if (fd > loop->max_fd)
+    loop->max_fd = fd;
 
-  state->events[fd].userdata = userdata;
+  loop->events[fd].userdata = userdata;
 
-  if (flags & EV_WATCH_READ) FD_SET(fd, &state->op_read);
-  if (flags & EV_WATCH_WRITE) FD_SET(fd, &state->op_write);
+  if (flags & EV_WATCH_READ) FD_SET(fd, &loop->op_read);
+  if (flags & EV_WATCH_WRITE) FD_SET(fd, &loop->op_write);
 }
 
-void ev_unwatch(ev_state_t* state, int fd) {
-  state->events[fd].fired = 0;
-  FD_CLR(fd, &state->op_read);
-  FD_CLR(fd, &state->op_write);
+void ev_unwatch(ev_loop_t* loop, int fd) {
+  loop->events[fd].fired = 0;
+  FD_CLR(fd, &loop->op_read);
+  FD_CLR(fd, &loop->op_write);
 }
 
-int ev_poll(ev_state_t* state) {
+int ev_poll(ev_loop_t* loop) {
   fd_set op_read, op_write;
   int res, fd, num_events = 0;
 
-  memcpy(&op_read, &state->op_read, sizeof(fd_set));
-  memcpy(&op_write, &state->op_write, sizeof(fd_set));
+  memcpy(&op_read, &loop->op_read, sizeof(fd_set));
+  memcpy(&op_write, &loop->op_write, sizeof(fd_set));
 
-  res = select(state->max_fd + 1, &op_read, &op_write, NULL, NULL);
+  res = select(loop->max_fd + 1, &op_read, &op_write, NULL, NULL);
 
   if (res == 0) {
     printf("timeout while selecting\n");
@@ -67,21 +68,21 @@ int ev_poll(ev_state_t* state) {
     return -1;
   }
 
-  for (fd = 0; fd <= state->max_fd; fd++) {
-    state->events[fd].fired = 0;
+  for (fd = 0; fd <= loop->max_fd; fd++) {
+    loop->events[fd].fired = 0;
 
     if (FD_ISSET(fd, &op_read)) {
-      state->events[fd].fired |= EV_WATCH_READ;
-      FD_CLR(fd, &state->op_read);
+      loop->events[fd].fired |= EV_WATCH_READ;
+      FD_CLR(fd, &loop->op_read);
     }
 
     if (FD_ISSET(fd, &op_write)) {
-      state->events[fd].fired |= EV_WATCH_WRITE;
-      FD_CLR(fd, &state->op_write);
+      loop->events[fd].fired |= EV_WATCH_WRITE;
+      FD_CLR(fd, &loop->op_write);
     }
 
-    if (state->events[fd].fired) {
-      state->fired[num_events] = &state->events[fd];
+    if (loop->events[fd].fired) {
+      loop->fired[num_events] = &loop->events[fd];
       num_events++;
     }
   }

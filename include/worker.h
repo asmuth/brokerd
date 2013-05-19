@@ -19,7 +19,7 @@
 typedef struct {
   pthread_t       thread;
   int             queue[2];
-  ev_state_t*     ev_state;
+  ev_loop_t       loop;
 } worker_t;
 
 worker_t* worker_init();

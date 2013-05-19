@@ -30,7 +30,7 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* self) {
-  ev_unwatch(((worker_t *) self->worker)->ev_state, self->sock);
+  ev_unwatch(&self->worker->loop, self->sock);
   self->state = CONN_STATE_CLOSED;
 
   free:
@@ -80,7 +80,7 @@ int conn_read(conn_t* self) {
   if (body_pos > 0) {
     // FIXPAUL handle request here !
     self->state = CONN_STATE_STREAM;
-    ev_watch(self->worker->ev_state, self->sock, EV_WATCH_WRITE, self);
+    ev_watch(&self->worker->loop, self->sock, EV_WATCH_WRITE, self);
 
     // STUB!!!
     char* resp = "HTTP/1.1 200 OK\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 10\r\n\r\nfnord :)\r\n";
@@ -89,7 +89,7 @@ int conn_read(conn_t* self) {
     strcpy(self->buf, resp);
     // EOF STUB
   } else {
-    ev_watch(self->worker->ev_state, self->sock, EV_WATCH_READ, self);
+    ev_watch(&self->worker->loop, self->sock, EV_WATCH_READ, self);
   }
 
   return 0;
@@ -113,13 +113,13 @@ int conn_write(conn_t* self) {
     if (self->http_req->keepalive) {
       self->buf_pos = 0;
       self->state = CONN_STATE_HEAD;
-      ev_watch(self->worker->ev_state, self->sock, EV_WATCH_READ, self);
+      ev_watch(&self->worker->loop, self->sock, EV_WATCH_READ, self);
       return 0;
     } else {
       return -1;
     }
   }
 
-  ev_watch(self->worker->ev_state, self->sock, EV_WATCH_WRITE, self);
+  ev_watch(&self->worker->loop, self->sock, EV_WATCH_WRITE, self);
   return 0;
 }

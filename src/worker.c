@@ -54,17 +54,17 @@ void *worker_run(void* userdata) {
   conn_t *conn;
   ev_event_t *event;
 
-  self->ev_state = ev_init();
-  ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
+  ev_init(&self->loop);
+  ev_watch(&self->loop, self->queue[0], EV_WATCH_READ, NULL);
 
   while (1) {
-   num_events = ev_poll(self->ev_state);
+   num_events = ev_poll(&self->loop);
 
    if (num_events == -1)
       continue;
 
     while (--num_events >= 0) {
-      event = self->ev_state->fired[num_events];
+      event = self->loop.fired[num_events];
 
       if (!event->fired)
         continue;
@@ -87,7 +87,7 @@ void *worker_run(void* userdata) {
 
       // pops the next connection from the queue
       else {
-        ev_watch(self->ev_state, self->queue[0], EV_WATCH_READ, NULL);
+        ev_watch(&self->loop, self->queue[0], EV_WATCH_READ, NULL);
 
         if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
           if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
@@ -100,7 +100,7 @@ void *worker_run(void* userdata) {
         conn->sock = sock;
         conn->worker = self;
         conn_set_nonblock(conn);
-        ev_watch(self->ev_state, conn->sock, EV_WATCH_READ, conn);
+        ev_watch(&self->loop, conn->sock, EV_WATCH_READ, conn);
       }
     }
   }
