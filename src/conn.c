@@ -20,7 +20,6 @@
 #include "worker.h"
 
 conn_t* conn_init(int buf_len) {
-  printf("conn_init!\n");
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
   bzero(conn, sizeof(conn_t));
 
@@ -34,7 +33,6 @@ conn_t* conn_init(int buf_len) {
 }
 
 void conn_close(conn_t* self) {
-  printf("conn_close!\n");
   ev_unwatch(&self->worker->loop, self->sock);
   self->state = CONN_STATE_CLOSED;
 
