@@ -9,8 +9,11 @@
 
 #include "msg.h"
 
-msg_t* msg_init(){
+// FIXPAUL: this shouldnt need two mallocs!
+msg_t* msg_init(size_t len){
   msg_t* self = malloc(sizeof(msg_t));
+  self->data = malloc(len);
+  self->len  = len;
   self->refc = 1;
   return self;
 }
@@ -23,5 +26,6 @@ void msg_decref(msg_t* self) {
   if (__sync_sub_and_fetch(&self->refc, 1) != 0)
     return;
 
+  free(self->data);
   free(self);
 }

@@ -25,13 +25,15 @@ conn_t* conn_init(int buf_len) {
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
   bzero(conn, sizeof(conn_t));
 
-  conn->addr_len = sizeof(conn->addr);
-  conn->buf      = malloc(buf_len);
-  conn->buf_len  = buf_len;
-  conn->http_req = http_req_init();
-  conn->next_sub = NULL;
-  conn->rbuf     = NULL;
-  conn->state    = CONN_STATE_HEAD;
+  conn->addr_len  = sizeof(conn->addr);
+  conn->buf       = malloc(buf_len);
+  conn->buf_len   = buf_len;
+  conn->http_req  = http_req_init();
+  conn->next_sub  = NULL;
+  conn->rbuf      = NULL;
+  conn->state     = CONN_STATE_HEAD;
+  conn->write_pos = 0;
+
   return conn;
 }
 
@@ -132,8 +134,12 @@ int conn_write(conn_t* self) {
     case CONN_STATE_FLUSHWAIT:
       return conn_write_flush(self);
 
+    case CONN_STATE_STREAM:
+    case CONN_STATE_STREAMWAIT:
+      return conn_write_stream(self);
+
     default:
-      printf("error: invalid conn-state (read): %i\n", self->state);
+      printf("error: invalid conn-state (write): %i\n", self->state);
 
   }
 
@@ -163,7 +169,7 @@ inline int conn_write_flush(conn_t* self) {
 
   if (self->buf_pos + 1 >= self->buf_limit) {
     if (self->state == CONN_STATE_FLUSHWAIT) {
-      printf("now wait...\n");
+      //printf("now wait...\n");
       self->state = CONN_STATE_WAIT;
       return 0;
     } if (self->http_req->keepalive) {
@@ -179,6 +185,56 @@ inline int conn_write_flush(conn_t* self) {
   ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
   return 0;
 }
+
+inline int conn_write_stream(conn_t* self) {
+  int chunk;
+
+  for (;;) {
+    msg_t* msg = rbuf_head(self->rbuf);
+
+    if (msg == NULL) {
+      printf("fnoooooord!\n"); // FIXPAUL
+      return -1;
+    }
+
+    chunk = write(self->sock, msg->data + self->write_pos,
+      msg->len - self->write_pos);
+
+    if (chunk == -1) {
+      if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
+        perror("error while writing...");
+        conn_close(self);
+        return -1;
+      }
+
+      ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+      return 0;
+    }
+
+    if (chunk > 0)
+      self->write_pos += chunk;
+
+    if (!(self->write_pos + 1 >= msg->len))
+      break;
+
+    //printf("finish message!\n");
+    self->write_pos = 0;
+    msg_decref(msg);
+    rbuf_pop(self->rbuf);
+
+    if (self->rbuf->len > 0)
+      continue;
+
+    //printf("now wait again...\n");
+
+    self->state = CONN_STATE_WAIT;
+    return 0;
+  }
+
+  ev_watch(&self->worker->loop, self->sock, EV_WRITEABLE, self);
+  return 0;
+}
+
 
 #define conn_http_argv_eq(N, S, L) ((argv[(N) + 1] - argv[(N)]) == (L) && \
   strncmp(argv[(N)], (S), (argv[(N) + 1] - argv[(N)])) == 0)
@@ -242,22 +298,25 @@ inline void conn_handle_subscribe(conn_t* self) {
 }
 
 inline void conn_handle_deliver(conn_t* self) {
-  char* resp = "HTTP/1.1 201 Created\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 4\r\n\r\nok\r\n";
+  char* resp1 = "HTTP/1.1 201 Created\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 4\r\n\r\nok\r\n";
+  char* resp2 = "fnordyfnord! :)\r\n";
 
   char* chan_key = self->http_req->uri_argv[1];
   int   chan_len = self->http_req->uri_argv[2] - chan_key;
 
   chan_t* chan = chan_lookup(chan_key, chan_len);
-  msg_t*  msg  = msg_init();
+  msg_t*  msg  = msg_init(strlen(resp2));
+
+  strncpy(msg->data, resp2, msg->len);
 
   chan_deliver(chan, msg, self->worker);
   msg_decref(msg);
 
   self->state = CONN_STATE_FLUSH;
-  self->buf_limit = strlen(resp);
+  self->buf_limit = strlen(resp1);
   self->buf_pos = 0;
 
-  strcpy(self->buf, resp);
+  strcpy(self->buf, resp1);
   conn_write(self);
 }
 

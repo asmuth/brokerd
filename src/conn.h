@@ -16,10 +16,11 @@
 #define CONN_STATE_HEAD 1
 #define CONN_STATE_BODY 2
 #define CONN_STATE_STREAM 3
-#define CONN_STATE_WAIT 4
-#define CONN_STATE_FLUSH 5
-#define CONN_STATE_FLUSHWAIT 6
-#define CONN_STATE_CLOSED 7
+#define CONN_STATE_STREAMWAIT 4
+#define CONN_STATE_WAIT 5
+#define CONN_STATE_FLUSH 6
+#define CONN_STATE_FLUSHWAIT 7
+#define CONN_STATE_CLOSED 8
 
 typedef struct conn_s {
   int              state;
@@ -35,6 +36,7 @@ typedef struct conn_s {
   worker_t*        worker;
   void*            channel;
   rbuf_t*          rbuf;
+  int              write_pos;
 } conn_t;
 
 conn_t* conn_init();
@@ -43,6 +45,7 @@ int conn_read(conn_t* self);
 int conn_read_head(conn_t* self);
 int conn_write(conn_t* self);
 int conn_write_flush(conn_t* self);
+int conn_write_stream(conn_t* self);
 void conn_set_nonblock(conn_t* self);
 void conn_reset(conn_t* self);
 void conn_handle(conn_t* self);

@@ -18,5 +18,6 @@ typedef struct {
 rbuf_t* rbuf_init(int limit);
 rbuf_t* rbuf_free(rbuf_t* self);
 int rbuf_put(rbuf_t* self, void* item);
+void* rbuf_head(rbuf_t* self);
 
 #endif
