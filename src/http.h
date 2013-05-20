@@ -19,14 +19,14 @@
 #define HTTP_METHOD_POST 2
 
 #define HTTP_URI_LEN 1024
-#define HTTP_URI_DEPTH 10
+#define HTTP_URI_MAXARGS 255
 
 typedef struct {
   int   method;
   int   keepalive;
   char  uri[HTTP_URI_LEN];
   int   uri_len;
-  char* uri_argv[HTTP_URI_DEPTH + 1];
+  char* uri_argv[HTTP_URI_MAXARGS + 1];
   int   uri_argc;
   int   state;
   int   last_pos;

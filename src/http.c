@@ -153,11 +153,16 @@ int http_read_uri(http_req_t* req, char* uri, int len) {
   req->uri[len] = 0;
   req->uri_len  = len;
 
-  for (; *end == ' ' || *end == '/'; end--);
+  for (; *end == ' ' || *end == '/' ||*end == '?' ||
+    *end == '&'; end--);
 
-  for (n = 0; n < HTTP_URI_DEPTH && uri < end; n++) {
+  for (n = 0; n < HTTP_URI_MAXARGS && uri < end; n++) {
     req->uri_argv[n] = uri;
-    for (uri++; uri < end && *uri != '/'; uri++);
+
+    if (*uri == '&') *uri = '?';
+
+    for (uri++; uri < end &&
+      *uri != '/' && *uri != '?' && *uri != '&'; uri++);
   }
 
   req->uri_argv[n] = uri + 1;
