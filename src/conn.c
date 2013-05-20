@@ -168,35 +168,52 @@ inline int conn_write_flush(conn_t* self) {
 
 inline void conn_handle(conn_t* self) {
   char* url = self->http_req->uri;
-  int channel, offset, url_len = self->http_req->uri_len;
+  int p1, p2, offset, batch;
+  int url_len = self->http_req->uri_len;
 
-  for (channel = 1; channel < url_len &&
-      url[channel] != '/'; channel++);
+  for (p1 = 1; p1 < url_len && url[p1] != '/'; p1++);
 
-  for (offset = channel + 1; offset < url_len &&
-      url[offset] != '/'; offset++);
-
-  if (channel == 1)
+  if (p1 == 1)
     goto not_found;
 
   if (self->http_req->method == HTTP_METHOD_POST) {
-    if (url_len > channel + 1)
+    if (url_len > p1 + 1)
       goto not_found;
 
     printf("post to channel...\n");
     return;
   }
 
-  url[channel] = 0; printf("channel: %s\n", url + 1);
-  url[offset] = 0; printf("offset: %s\n", url + channel + 1);
+  if (p1 + 1 >= url_len) {
+    printf("goto get...\n");
+    goto get_actions;
+  }
 
-  if (strncmp(url + 1, "ping", channel) == 0) {
-    conn_handle_ping(self);
+  for (p2 = p1 + 1; p2 < url_len && url[p2] != '/'; p2++);
+
+  if (url[p1 + 1] == 's') {
+    if (p2 - p1 != 7)
+      goto not_found;
+
+    if (strncmp(url + p1 + 1, "stream", p2 - p1 - 1) != 0)
+      goto not_found;
+
+    printf("handle stream...\n");
     return;
   }
 
+  url[p1] = 0; printf("p1: %s\n", url + 1);
+  url[p2] = 0; printf("p2: %s\n", url + p1 + 1);
+
+
+get_actions:
+
+  if (strncmp(url + 1, "ping", p1 - 1) == 0)
+    return conn_handle_ping(self);
+
 not_found:
   conn_handle_404(self);
+
 }
 
 inline void conn_handle_ping(conn_t* self) {
