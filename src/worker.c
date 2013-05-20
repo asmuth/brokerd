@@ -60,6 +60,7 @@ void worker_stop(worker_t* self) {
 void worker_cleanup(worker_t* self) {
   int n;
 
+  // FIXPAUL; this wont clean connections that are currently in the WAIT state...
   for (n = 0; n <= self->loop.max_fd; n++) {
     if (self->loop.events[n].userdata)
       conn_close((conn_t *) self->loop.events[n].userdata);
