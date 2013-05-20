@@ -17,7 +17,8 @@
 #define CONN_STATE_STREAM 3
 #define CONN_STATE_WAIT 4
 #define CONN_STATE_FLUSH 5
-#define CONN_STATE_CLOSED 6
+#define CONN_STATE_FLUSHWAIT 6
+#define CONN_STATE_CLOSED 7
 
 typedef struct conn_s {
   int              state;
@@ -42,6 +43,7 @@ int conn_write_flush(conn_t* self);
 void conn_set_nonblock(conn_t* self);
 void conn_reset(conn_t* self);
 void conn_handle(conn_t* self);
+void conn_handle_subscribe(conn_t* self);
 void conn_handle_deliver(conn_t* self);
 void conn_handle_ping(conn_t* self);
 void conn_handle_404(conn_t* self);

@@ -8,7 +8,7 @@ fyrehose is a http based pub/sub daemon. it is quite similar to apache's kafka.
 
 in one shell, type this:
 
-    curl localhost:4242/mychannel/stream
+    curl localhost:4242/mychannel/subscribe
 
 in another shell run this:
 
@@ -23,7 +23,7 @@ publish to a channel:
 
 subscribe to a channel (responds with http multipart, keep connection open... not supported by all http clients=
 
-    GET /:channel/stream
+    GET /:channel/subscribe
 
 retrieve a message at a specific offset (regular http response)
 
