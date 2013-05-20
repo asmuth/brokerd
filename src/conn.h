@@ -22,6 +22,8 @@
 #define CONN_STATE_FLUSHWAIT 7
 #define CONN_STATE_CLOSED 8
 
+#define CONN_RBUF_LEN 1024
+
 typedef struct conn_s {
   int              state;
   int              sock;

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "chan.h"
+#include "conn.h"
 
 extern int num_workers;
 chan_t* global_channel;
@@ -69,7 +70,7 @@ void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
     //printf("deliver local...\n");
 
     if (!cur->rbuf)
-      cur->rbuf = rbuf_init(10); // FIXPAUL
+      cur->rbuf = rbuf_init(CONN_RBUF_LEN); // FIXPAUL
 
     if (rbuf_put(cur->rbuf, msg) == 0) {
       cur->state = CONN_STATE_STREAMWAIT;
