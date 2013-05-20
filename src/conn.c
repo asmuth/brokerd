@@ -49,12 +49,8 @@ void conn_reset(conn_t* self) {
 }
 
 void conn_set_nonblock(conn_t* self) {
-  int opt = 1;
   int flags = fcntl(self->sock, F_GETFL, 0);
   flags = flags | O_NONBLOCK;
-
-  if (setsockopt(self->sock, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0)
-    perror("setsockopt(TCP_NODELAY)");
 
   if (fcntl(self->sock, F_SETFL, flags) != 0)
     printf("fnctl failed!\n");
