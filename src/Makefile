@@ -15,8 +15,8 @@ RELEASEFLAGS = -O3 -march=native -mtune=native -D NDEBUG -fwhole-program
 
 TARGET       = fyrehose
 TARGET_DBG   = fyrehose-dbg
-SOURCES      = fyrehose.c ev.c conn.c http.c worker.c
-HEADERS      = fyrehose.h ev.h conn.h http.h worker.h
+SOURCES      = fyrehose.c ev.c conn.c http.c worker.c chan.c
+HEADERS      = fyrehose.h ev.h conn.h http.h worker.h chan.h
 OBJECTS      = $(SOURCES:.c=.o)
 
 PREFIX       = $(DESTDIR)/usr/local

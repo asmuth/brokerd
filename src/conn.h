@@ -42,6 +42,7 @@ int conn_write_flush(conn_t* self);
 void conn_set_nonblock(conn_t* self);
 void conn_reset(conn_t* self);
 void conn_handle(conn_t* self);
+void conn_handle_deliver(conn_t* self);
 void conn_handle_ping(conn_t* self);
 void conn_handle_404(conn_t* self);
 

@@ -18,6 +18,7 @@
 #include "conn.h"
 #include "http.h"
 #include "worker.h"
+#include "chan.h"
 
 conn_t* conn_init(int buf_len) {
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
@@ -186,8 +187,7 @@ inline void conn_handle(conn_t* self) {
     if (argc != 1)
       goto not_found;
 
-    printf("post to channel...\n");
-    return;
+    return conn_handle_deliver(self);
   }
 
   else if (argc == 0)
@@ -213,6 +213,22 @@ not_found:
 
   conn_handle_404(self);
 
+}
+
+inline void conn_handle_deliver(conn_t* self) {
+  char* resp = "HTTP/1.1 201 Created\r\nServer: fyrehose-v0.0.1\r\nConnection: Keep-Alive\r\nContent-Length: 4\r\n\r\nok\r\n";
+
+  char* chan_key = self->http_req->uri_argv[1];
+  int   chan_len = self->http_req->uri_argv[2] - chan_key;
+
+  chan_t* chan = chan_lookup(chan_key, chan_len);
+
+  self->state = CONN_STATE_FLUSH;
+  self->buf_limit = strlen(resp);
+  self->buf_pos = 0;
+
+  strcpy(self->buf, resp);
+  conn_write(self);
 }
 
 inline void conn_handle_ping(conn_t* self) {
