@@ -68,14 +68,22 @@ void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
 
   for(; cur != NULL; cur = cur->next_sub) {
     printf("deliver local...\n");
-    // STUB
-    cur->state = CONN_STATE_FLUSHWAIT;
-    cur->buf_limit = strlen(resp);
-    cur->buf_pos = 0;
-    strncpy(cur->buf, resp, cur->buf_limit);
-    ev_watch(&worker->loop, cur->sock, EV_WRITEABLE, cur);
-    // STUB
-  }
 
+    if (!cur->rbuf)
+      cur->rbuf = rbuf_init(10);
+
+    if (rbuf_put(cur->rbuf, msg) == 0) {
+      msg_incref(msg);
+
+      cur->state = CONN_STATE_FLUSHWAIT;
+      cur->buf_limit = strlen(resp);
+      cur->buf_pos = 0;
+      strncpy(cur->buf, resp, cur->buf_limit);
+      ev_watch(&worker->loop, cur->sock, EV_WRITEABLE, cur);
+    } else {
+      printf("rbuf full...\n");
+      conn_close(cur);
+    }
+  }
 }
 

@@ -30,6 +30,7 @@ conn_t* conn_init(int buf_len) {
   conn->buf_len  = buf_len;
   conn->http_req = http_req_init();
   conn->next_sub = NULL;
+  conn->rbuf     = NULL;
   conn->state    = CONN_STATE_HEAD;
   return conn;
 }
@@ -40,6 +41,9 @@ void conn_close(conn_t* self) {
 
   if (self->channel)
     chan_unsubscribe(self->channel, self);
+
+  if (self->rbuf)
+    rbuf_free(self->rbuf);
 
   close(self->sock);
   http_req_free(self->http_req);

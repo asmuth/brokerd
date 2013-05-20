@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include "http.h"
 #include "worker.h"
+#include "rbuf.h"
 
 #define CONN_STATE_HEAD 1
 #define CONN_STATE_BODY 2
@@ -33,6 +34,7 @@ typedef struct conn_s {
   struct conn_s*   next_sub;
   worker_t*        worker;
   void*            channel;
+  rbuf_t*          rbuf;
 } conn_t;
 
 conn_t* conn_init();
