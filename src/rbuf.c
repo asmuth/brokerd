@@ -14,7 +14,7 @@ rbuf_t* rbuf_init(int limit) {
   rbuf_t* self = malloc(sizeof(rbuf_t));
   self->buf    = malloc(sizeof(void *) * limit);
   self->len    = 0;
-  self->pos    = 3;
+  self->pos    = 0;
   self->limit  = limit;
   return self;
 }

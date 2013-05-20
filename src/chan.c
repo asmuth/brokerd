@@ -19,7 +19,7 @@ chan_t* chan_init(/*char* key, int key_len*/) {
   self->sublist = malloc(sizeof(conn_t *) * num_workers);
 
   memset(self->sublist, 0, sizeof(conn_t *) * num_workers);
-  pthread_mutex_init(&self->lock, NULL);
+  //pthread_mutex_init(&self->lock, NULL);
 
   return self;
 }
@@ -31,9 +31,9 @@ chan_t* chan_lookup(char* key, int key_len) {
 void chan_subscribe(chan_t* self, conn_t* conn) {
   int wid = conn->worker->id;
 
-  pthread_mutex_lock(&self->lock);
+  //pthread_mutex_lock(&self->lock);
   // subscribe worker...
-  pthread_mutex_unlock(&self->lock);
+  //pthread_mutex_unlock(&self->lock);
 
   conn->channel      = self;
   conn->next_sub     = self->sublist[wid];
@@ -41,9 +41,9 @@ void chan_subscribe(chan_t* self, conn_t* conn) {
 }
 
 void chan_unsubscribe(chan_t* self, conn_t* conn) {
-  pthread_mutex_lock(&self->lock);
+  //pthread_mutex_lock(&self->lock);
   // unsubscribe worker
-  pthread_mutex_unlock(&self->lock);
+  //pthread_mutex_unlock(&self->lock);
 
   printf("close!\n");
 
