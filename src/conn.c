@@ -174,7 +174,7 @@ inline int conn_write_flush(conn_t* self) {
       return 0;
     } if (self->http_req->keepalive) {
       conn_reset(self);
-      conn_read(self);
+      ev_watch(&self->worker->loop, self->sock, EV_READABLE, self);
       return 0;
     } else {
       conn_close(self);
