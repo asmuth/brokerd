@@ -167,14 +167,26 @@ inline int conn_write_flush(conn_t* self) {
 }
 
 inline void conn_handle(conn_t* self) {
-  int  offset, batch,
-       url_len = self->http_req->uri_len;
+  int    argc = self->http_req->uri_argc;
+  char** argv = self->http_req->uri_argv;
 
-  char *p1, *p2,
-       *url = self->http_req->uri,
-       *end = url + url_len;
+  int n;
+  char buf[1024];
 
-  for (p1 = url + 1; p1 < end && *p1 != '/'; p1++);
+  printf("req... parts: %i\n", self->http_req->uri_argc);
+
+  for (n = 0; n < argc; n++) {
+    strncpy(buf, argv[n], argv[n+1]-argv[n]);
+    buf[argv[n+1]-argv[n]] = 0;
+    printf(">> arg(%i): '%s'\n", argv[n+1] - argv[n], buf);
+  }
+
+/*
+  if (self->http_req->method == HTTP_METHOD_POST) {
+    if (n 
+  if (n == 1)
+
+
 
   if (p1 - url == 1)
     goto not_found;
@@ -210,6 +222,7 @@ get_actions:
 
   if (strncmp(url + 1, "ping", p1 - url - 1) == 0)
     return conn_handle_ping(self);
+*/
 
 not_found:
   conn_handle_404(self);

@@ -143,6 +143,9 @@ int http_read_method(http_req_t* req, char* method, int len) {
 }
 
 int http_read_uri(http_req_t* req, char* uri, int len) {
+  char *end = uri + len;
+  int  n;
+
   if (len >= (int) sizeof(req->uri))
     return -1;
 
@@ -150,7 +153,17 @@ int http_read_uri(http_req_t* req, char* uri, int len) {
   req->uri[len] = 0;
   req->uri_len  = len;
 
+  for (; *end == ' ' || *end == '/'; end--);
+
+  for (n = 0; n < HTTP_URI_DEPTH && uri < end; n++) {
+    req->uri_argv[n] = uri;
+    for (uri++; uri < end && *uri != '/'; uri++);
+  }
+
+  req->uri_argv[n] = uri + 1;
+  req->uri_argc = n;
   req->state = HTTP_STATE_VERSION;
+
   return 0;
 }
 
