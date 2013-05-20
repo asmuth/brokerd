@@ -15,7 +15,7 @@ extern int num_workers;
 chan_t* global_channel;
 
 chan_t* chan_init(/*char* key, int key_len*/) {
-  chan_t* self  = malloc(sizeof(chan_t *));
+  chan_t* self  = malloc(sizeof(chan_t));
   self->sublist = malloc(sizeof(conn_t *) * num_workers);
 
   memset(self->sublist, 0, sizeof(conn_t *) * num_workers);
