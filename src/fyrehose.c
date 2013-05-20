@@ -16,11 +16,14 @@
 
 #include "conn.h"
 #include "worker.h"
+#include "chan.h"
 #include <signal.h>
 
 
 int ssock, running = 1, num_workers = 1;
 worker_t** worker;
+
+extern chan_t* global_channel;
 
 void quit(int n) {
   if (!running)
@@ -57,6 +60,10 @@ int main(int argc, char** argv) {
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
+
+  // TMP
+  global_channel = chan_init();
+  // TMP
 
   worker = malloc(sizeof(worker_t *) * num_workers);
 

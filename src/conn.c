@@ -28,7 +28,7 @@ conn_t* conn_init(int buf_len) {
   conn->buf      = malloc(buf_len);
   conn->buf_len  = buf_len;
   conn->http_req = http_req_init();
-  conn->next     = NULL;
+  conn->next_sub = NULL;
   conn->state    = CONN_STATE_HEAD;
   return conn;
 }
@@ -36,6 +36,9 @@ conn_t* conn_init(int buf_len) {
 void conn_close(conn_t* self) {
   ev_unwatch(&self->worker->loop, self->sock);
   self->state = CONN_STATE_CLOSED;
+
+  if (self->channel)
+    chan_unsubscribe(self->channel, self);
 
   close(self->sock);
   http_req_free(self->http_req);
@@ -156,7 +159,7 @@ inline int conn_write_flush(conn_t* self) {
   if (self->buf_pos + 1 >= self->buf_limit) {
     if (self->state == CONN_STATE_FLUSHWAIT) {
       printf("now wait...\n");
-      self->state = CONN_STATE_WAIT;
+      self->state = CONN_STATE_HEAD; conn_read(self);// FIXPAUL!!!!
       return 0;
     } if (self->http_req->keepalive) {
       conn_reset(self);
@@ -179,14 +182,14 @@ inline void conn_handle(conn_t* self) {
   int n, argc = self->http_req->uri_argc;
   char** argv = self->http_req->uri_argv;
 
-  // DBG
+  /*
   char buf[1024];
   printf("req... parts: %i\n", self->http_req->uri_argc);
   for (n = 0; n < argc; n++) {
     strncpy(buf, argv[n], argv[n+1]-argv[n]); buf[argv[n+1]-argv[n]] = 0;
     printf(">> arg(%i): '%s'\n", argv[n+1] - argv[n], buf);
   }
-  // DBG
+  */
 
   if (self->http_req->method == HTTP_METHOD_POST) {
     if (argc != 1)
@@ -223,6 +226,7 @@ inline void conn_handle_subscribe(conn_t* self) {
   int   chan_len = self->http_req->uri_argv[2] - chan_key;
 
   chan_t* chan = chan_lookup(chan_key, chan_len);
+  chan_subscribe(chan, self); // FIXPAUL: when is this unsubscribed???
 
   self->state = CONN_STATE_FLUSHWAIT;
   self->buf_limit = strlen(resp);

@@ -30,8 +30,9 @@ typedef struct conn_s {
   int              buf_pos;
   int              buf_limit;
   http_req_t*      http_req;
-  struct conn_s*   next;
+  struct conn_s*   next_sub;
   worker_t*        worker;
+  void*            channel;
 } conn_t;
 
 conn_t* conn_init();
