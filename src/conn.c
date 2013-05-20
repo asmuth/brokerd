@@ -166,65 +166,51 @@ inline int conn_write_flush(conn_t* self) {
   return 0;
 }
 
+#define conn_http_argv_eq(N, S, L) ((argv[(N) + 1] - argv[(N)]) == (L) && \
+  strncmp(argv[(N)], (S), (argv[(N) + 1] - argv[(N)])) == 0)
+
 inline void conn_handle(conn_t* self) {
-  int    argc = self->http_req->uri_argc;
+  int n, argc = self->http_req->uri_argc;
   char** argv = self->http_req->uri_argv;
 
-  int n;
+  // DBG
   char buf[1024];
-
   printf("req... parts: %i\n", self->http_req->uri_argc);
-
   for (n = 0; n < argc; n++) {
-    strncpy(buf, argv[n], argv[n+1]-argv[n]);
-    buf[argv[n+1]-argv[n]] = 0;
+    strncpy(buf, argv[n], argv[n+1]-argv[n]); buf[argv[n+1]-argv[n]] = 0;
     printf(">> arg(%i): '%s'\n", argv[n+1] - argv[n], buf);
   }
-
-/*
-  if (self->http_req->method == HTTP_METHOD_POST) {
-    if (n 
-  if (n == 1)
-
-
-
-  if (p1 - url == 1)
-    goto not_found;
+  // DBG
 
   if (self->http_req->method == HTTP_METHOD_POST) {
-    if (end - p1 > 1)
+    if (argc != 1)
       goto not_found;
 
     printf("post to channel...\n");
     return;
   }
 
-  if (end - p1 <= 1)
+  else if (argc == 0)
+    goto not_found;
+
+  else if (argc == 1)
     goto get_actions;
 
-  for (p2 = p1 + 1; p2 < end && *p2 != '/'; p2++);
-
-  if (p1[1] == 's') {
-    if ((end - p2) > 1)
-      goto not_found;
-
-    if (strncmp(p1 + 1, "stream", (p2 - p1) - 1) != 0)
-      goto not_found;
-
+  else if (argc == 2 && conn_http_argv_eq(1, "/stream", 7)) {
     printf("handle stream...\n");
     return;
   }
 
-  //*p1 = 0; printf("p1: %s\n", url + 1);
-  //*p2 = 0; printf("p2: %s\n", p1 + 1);
-
 get_actions:
 
-  if (strncmp(url + 1, "ping", p1 - url - 1) == 0)
+  if (argc == 1 && conn_http_argv_eq(0, "/ping", 5)) {
+    printf("yp!");
     return conn_handle_ping(self);
-*/
+
+  }
 
 not_found:
+
   conn_handle_404(self);
 
 }

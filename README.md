@@ -37,6 +37,9 @@ retrieve the next :n messages after a specific offset (http multipart response):
 
     GET /:channel/:offset/next/:n
 
+responds with 'pong'
+
+    GET /ping
 
 License
 -------
