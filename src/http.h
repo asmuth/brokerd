@@ -18,10 +18,13 @@
 #define HTTP_METHOD_GET 1
 #define HTTP_METHOD_POST 2
 
+#define HTTP_MAX_URI_LEN 1024
+
 typedef struct {
   int   method;
   int   keepalive;
-  char  uri[4096];
+  char  uri[HTTP_MAX_URI_LEN];
+  int   uri_len;
   int   state;
   int   last_pos;
   char* cur_token;

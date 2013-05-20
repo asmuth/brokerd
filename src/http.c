@@ -148,6 +148,7 @@ int http_read_uri(http_req_t* req, char* uri, int len) {
 
   strncpy(req->uri, uri, len);
   req->uri[len] = 0;
+  req->uri_len  = len;
 
   req->state = HTTP_STATE_VERSION;
   return 0;

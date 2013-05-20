@@ -167,13 +167,36 @@ inline int conn_write_flush(conn_t* self) {
 }
 
 inline void conn_handle(conn_t* self) {
-  char*  url = self->http_req->uri;
-  size_t url_len = sizeof(self->http_req->uri);
+  char* url = self->http_req->uri;
+  int channel, offset, url_len = self->http_req->uri_len;
 
-  if (strncmp(url, "/ping", url_len) == 0)
+  for (channel = 1; channel < url_len &&
+      url[channel] != '/'; channel++);
+
+  for (offset = channel + 1; offset < url_len &&
+      url[offset] != '/'; offset++);
+
+  if (channel == 1)
+    goto not_found;
+
+  if (self->http_req->method == HTTP_METHOD_POST) {
+    if (url_len > channel + 1)
+      goto not_found;
+
+    printf("post to channel...\n");
+    return;
+  }
+
+  url[channel] = 0; printf("channel: %s\n", url + 1);
+  url[offset] = 0; printf("offset: %s\n", url + channel + 1);
+
+  if (strncmp(url + 1, "ping", channel) == 0) {
     conn_handle_ping(self);
-  else
-    conn_handle_404(self);
+    return;
+  }
+
+not_found:
+  conn_handle_404(self);
 }
 
 inline void conn_handle_ping(conn_t* self) {
