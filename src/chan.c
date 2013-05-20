@@ -58,9 +58,12 @@ void chan_unsubscribe(chan_t* self, conn_t* conn) {
 
 }
 
-void chan_deliver(chan_t* self, worker_t* worker) {
-  conn_t* cur = self->sublist[worker->id];
+void chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
+  chan_deliver_local(self, msg, worker);
+}
 
+void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
+  conn_t* cur = self->sublist[worker->id];
   char* resp = "fnord! :)\r\n";
 
   for(; cur != NULL; cur = cur->next_sub) {
@@ -72,7 +75,7 @@ void chan_deliver(chan_t* self, worker_t* worker) {
     strncpy(cur->buf, resp, cur->buf_limit);
     ev_watch(&worker->loop, cur->sock, EV_WRITEABLE, cur);
     // STUB
-
   }
 
 }
+

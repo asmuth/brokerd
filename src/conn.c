@@ -19,6 +19,7 @@
 #include "http.h"
 #include "worker.h"
 #include "chan.h"
+#include "msg.h"
 
 conn_t* conn_init(int buf_len) {
   conn_t* conn = (conn_t *) malloc(sizeof(conn_t));
@@ -243,7 +244,10 @@ inline void conn_handle_deliver(conn_t* self) {
   int   chan_len = self->http_req->uri_argv[2] - chan_key;
 
   chan_t* chan = chan_lookup(chan_key, chan_len);
-  chan_deliver(chan, self->worker);
+  msg_t*  msg  = msg_init();
+
+  chan_deliver(chan, msg, self->worker);
+  msg_decref(msg);
 
   self->state = CONN_STATE_FLUSH;
   self->buf_limit = strlen(resp);

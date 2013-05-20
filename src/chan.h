@@ -6,7 +6,9 @@
 // the License at: http://opensource.org/licenses/MIT
 
 #include <pthread.h>
+
 #include "conn.h"
+#include "msg.h"
 
 #ifndef CHAN_H
 #define CHAN_H
@@ -25,6 +27,7 @@ chan_t* chan_init();
 chan_t* chan_lookup(char* key, int key_len);
 void chan_subscribe(chan_t* chan, conn_t* conn);
 void chan_unsubscribe(chan_t* chan, conn_t* conn);
-void chan_deliver(chan_t* self, worker_t* worker);
+void chan_deliver(chan_t* self, msg_t* msg, worker_t* worker);
+void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker);
 
 #endif
