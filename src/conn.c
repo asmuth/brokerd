@@ -44,8 +44,10 @@ void conn_close(conn_t* self) {
   if (self->channel)
     chan_unsubscribe(self->channel, self);
 
-  if (self->rbuf)
+  if (self->rbuf) {
+    // FIXPAUL: decref all outstanding messages!
     rbuf_free(self->rbuf);
+  }
 
   close(self->sock);
   http_req_free(self->http_req);
