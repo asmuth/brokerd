@@ -25,5 +25,6 @@ chan_t* chan_init();
 chan_t* chan_lookup(char* key, int key_len);
 void chan_subscribe(chan_t* chan, conn_t* conn);
 void chan_unsubscribe(chan_t* chan, conn_t* conn);
+void chan_deliver(chan_t* self, worker_t* worker);
 
 #endif

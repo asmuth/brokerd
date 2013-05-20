@@ -159,7 +159,7 @@ inline int conn_write_flush(conn_t* self) {
   if (self->buf_pos + 1 >= self->buf_limit) {
     if (self->state == CONN_STATE_FLUSHWAIT) {
       printf("now wait...\n");
-      self->state = CONN_STATE_HEAD; conn_read(self);// FIXPAUL!!!!
+      self->state = CONN_STATE_WAIT;
       return 0;
     } if (self->http_req->keepalive) {
       conn_reset(self);
@@ -243,6 +243,7 @@ inline void conn_handle_deliver(conn_t* self) {
   int   chan_len = self->http_req->uri_argv[2] - chan_key;
 
   chan_t* chan = chan_lookup(chan_key, chan_len);
+  chan_deliver(chan, self->worker);
 
   self->state = CONN_STATE_FLUSH;
   self->buf_limit = strlen(resp);

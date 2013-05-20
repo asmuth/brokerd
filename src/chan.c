@@ -57,3 +57,22 @@ void chan_unsubscribe(chan_t* self, conn_t* conn) {
     *cur = (*cur)->next_sub;
 
 }
+
+void chan_deliver(chan_t* self, worker_t* worker) {
+  conn_t* cur = self->sublist[worker->id];
+
+  char* resp = "fnord! :)\r\n";
+
+  for(; cur != NULL; cur = cur->next_sub) {
+    printf("deliver local...\n");
+    // STUB
+    cur->state = CONN_STATE_FLUSHWAIT;
+    cur->buf_limit = strlen(resp);
+    cur->buf_pos = 0;
+    strncpy(cur->buf, resp, cur->buf_limit);
+    ev_watch(&worker->loop, cur->sock, EV_WRITEABLE, cur);
+    // STUB
+
+  }
+
+}
