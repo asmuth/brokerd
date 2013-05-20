@@ -17,7 +17,7 @@
 
 typedef struct {
   char            key[CHAN_KEYLEN];
-  conn_t*         sublist;
+  conn_t**        sublist;
   pthread_mutex_t lock;
 } chan_t;
 

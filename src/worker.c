@@ -17,12 +17,13 @@
 #include "worker.h"
 #include "conn.h"
 
-worker_t* worker_init() {
+worker_t* worker_init(int id) {
   int err;
 
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
 
+  worker->id = id;
   worker->running = 1;
 
   if (pipe(worker->queue) == -1) {

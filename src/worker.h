@@ -17,13 +17,14 @@
 #include "ev.h"
 
 typedef struct {
+  int             id;
   pthread_t       thread;
   int             queue[2];
   int             running;
   ev_loop_t       loop;
 } worker_t;
 
-worker_t* worker_init();
+worker_t* worker_init(int id);
 void* worker_run(void* userdata);
 void worker_stop(worker_t* self);
 void worker_cleanup(worker_t* self);

@@ -7,15 +7,20 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <string.h>
 
 #include "chan.h"
 
+extern int num_workers;
 chan_t* global_channel;
 
 chan_t* chan_init(/*char* key, int key_len*/) {
-  chan_t* self = malloc(sizeof(chan_t *));
-  self->sublist = NULL;
+  chan_t* self  = malloc(sizeof(chan_t *));
+  self->sublist = malloc(sizeof(conn_t *) * num_workers);
+
+  memset(self->sublist, 0, sizeof(conn_t *) * num_workers);
   pthread_mutex_init(&self->lock, NULL);
+
   return self;
 }
 
@@ -24,20 +29,25 @@ chan_t* chan_lookup(char* key, int key_len) {
 }
 
 void chan_subscribe(chan_t* self, conn_t* conn) {
+  int wid = conn->worker->id;
+
   pthread_mutex_lock(&self->lock);
-
-  conn->channel  = self;
-  conn->next_sub = self->sublist;
-  self->sublist  = conn;
-
+  // subscribe worker...
   pthread_mutex_unlock(&self->lock);
+
+  conn->channel      = self;
+  conn->next_sub     = self->sublist[wid];
+  self->sublist[wid] = conn;
 }
 
 void chan_unsubscribe(chan_t* self, conn_t* conn) {
   pthread_mutex_lock(&self->lock);
+  // unsubscribe worker
+  pthread_mutex_unlock(&self->lock);
+
   printf("close!\n");
 
-  conn_t** cur = &self->sublist;
+  conn_t** cur = &self->sublist[conn->worker->id];
   conn->channel = NULL;
 
   while(*cur != NULL && (*cur)->sock != conn->sock)
@@ -46,5 +56,4 @@ void chan_unsubscribe(chan_t* self, conn_t* conn) {
   if (*cur)
     *cur = (*cur)->next_sub;
 
-  pthread_mutex_unlock(&self->lock);
 }
