@@ -200,6 +200,7 @@ inline void worker_flush_outbox(worker_t* self) {
           perror("error writing to worker->worker pipe");
 
         printf("interrupt...\n");
+        ev_watch(&self->loop, pipe, EV_WRITEABLE, NULL);
         break;
       }
 
