@@ -107,7 +107,7 @@ void worker_cleanup(worker_t* self) {
 }
 
 void *worker_run(void* userdata) {
-  int num_events;
+  int num_events, flush_outbox;
   worker_t* self = userdata;
   ev_event_t *event;
   conn_t *conn;
@@ -117,6 +117,7 @@ void *worker_run(void* userdata) {
 
   while(self->running) {
     num_events = ev_poll(&self->loop);
+    flush_outbox = 0;
 
     if (num_events == -1)
       continue;
@@ -127,30 +128,84 @@ void *worker_run(void* userdata) {
       if (!event->fired)
         continue;
 
-      if (event->userdata == self) {
-        printf("accept!\n");
+      if (!event->userdata) {
+        if (event->fired & EV_READABLE) {
+          worker_flush_inbox(self);
+        } else {
+          flush_outbox = 1;
+          continue;
+        }
+
+      } else if (event->userdata == self) {
         worker_accept(self);
-
-      } else if (event->userdata) {
-        conn = event->userdata;
-
-        if (event->fired & EV_READABLE)
-          if (conn_read(conn) == -1)
-            continue;
-
-        if (event->fired & EV_WRITEABLE)
-          if (conn_write(conn) == -1)
-            continue;
-
-      } else {
-        printf("NO USERDATA!\n");
+        continue;
       }
 
+      conn = event->userdata;
+
+      if (event->fired & EV_READABLE)
+        if (conn_read(conn) == -1)
+          continue;
+
+      if (event->fired & EV_WRITEABLE)
+        if (conn_write(conn) == -1)
+          continue;
+
     }
+
+    if (flush_outbox)
+      worker_flush_outbox(self);
   }
 
   worker_cleanup(self);
   return NULL;
+}
+
+inline void worker_flush_inbox(worker_t* self) {
+  printf("flush outbox!\n");
+}
+
+inline void worker_flush_outbox(worker_t* self) {
+  int n, pipe;
+  void* data;
+  ev_event_t* event;
+
+  printf("flush outbox!\n");
+
+  for (n = 0; n < num_workers; n++) {
+    if (workers[n] == self)
+      continue;
+
+    if (self->outbox[n]->len < 1)
+      continue;
+
+    event = &self->loop.events[workers[n]->msg_queue[0]];
+
+    if (!event->fired & EV_WRITEABLE)
+      continue;
+
+    printf("watcher has fired for worker %i\n", n);
+
+    pipe = workers[n]->msg_queue[1];
+
+    printf("pending messages for worker %i -> %i (fd %i)\n", self->id, n, pipe);
+    // FIXPAUL: this could batch-write multiple entries at the same time!
+    while (self->outbox[n]->len > 0) {
+      printf("write single message to worker %i\n", n);
+      data = rbuf_head(self->outbox[n]);
+      printf(".... (%i)\n", pipe);
+
+      if (write(pipe, &data, sizeof(data)) != sizeof(data)) {
+        if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+          perror("error writing to worker->worker pipe");
+
+        printf("interrupt...\n");
+        break;
+      }
+
+      rbuf_pop(self->outbox[n]);
+    }
+  }
 }
 
 inline void worker_accept(worker_t* self) {

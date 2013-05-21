@@ -33,5 +33,7 @@ void worker_start(worker_t* self);
 void worker_stop(worker_t* self);
 void worker_cleanup(worker_t* self);
 void worker_accept(worker_t* self);
+void worker_flush_outbox(worker_t* self);
+void worker_flush_inbox(worker_t* self);
 
 #endif

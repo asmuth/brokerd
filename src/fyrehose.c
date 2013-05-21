@@ -28,6 +28,8 @@
 //  - free all msgs on conn close
 //  - chan_lookup + thread lokal hashmap cache
 //  - close conns in WAIT state on shutdown
+//  - batch delivery in worker_flush_outbox
+//  - inline lots of structs...
 
 int ssock, running = 1, num_workers = 1;
 worker_t** workers;
