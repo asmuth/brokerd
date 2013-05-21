@@ -46,7 +46,7 @@ void quit(int n) {
 
 int main(int argc, char** argv) {
   struct    sockaddr_in server_addr;
-  int       n, opt, port = 2323;
+  int       n, opt, port = 2323, fd, queue;
 
   while ((opt = getopt(argc, argv, "t:p:vh?")) != -1) {
     switch (opt) {
@@ -82,6 +82,9 @@ int main(int argc, char** argv) {
     if (worker[n] == NULL)
       return 1;
   }
+
+  for (n = 0; n < num_workers; n++)
+    worker_start(worker[n]);
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -124,7 +127,7 @@ int main(int argc, char** argv) {
   }
 
   for (n = 0; running == 1; n++) {
-    int fd = accept(ssock, NULL, NULL);
+    fd = accept(ssock, NULL, NULL);
 
     if (!running)
       break;
@@ -134,7 +137,9 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    if (write(worker[n % num_workers]->queue[1], (char *) &fd, sizeof(fd)) != sizeof(fd))
+    queue = worker[n % num_workers]->conn_queue[1];
+
+    if (write(queue, (char *) &fd, sizeof(fd)) != sizeof(fd))
       printf("error writing to work queue\n");
   }
 

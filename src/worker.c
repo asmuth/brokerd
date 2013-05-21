@@ -18,40 +18,49 @@
 #include "conn.h"
 
 worker_t* worker_init(int id) {
-  int err;
-
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
 
   worker->id = id;
   worker->running = 1;
 
-  if (pipe(worker->queue) == -1) {
+  if (pipe(worker->conn_queue) == -1) {
     printf("create pipe failed!\n");
     return NULL;
   }
 
-  if (fcntl(worker->queue[0], F_SETFL, O_NONBLOCK) == -1) {
+  if (fcntl(worker->conn_queue[0], F_SETFL, O_NONBLOCK) == -1)
     perror("fcntl(pipe, O_NONBLOCK)");
-  }
 
-  err = pthread_create(&worker->thread, NULL, worker_run, worker);
-
-  if (err) {
-    printf("error starting worker: %i\n", err);
+  if (pipe(worker->msg_queue) == -1) {
+    printf("create pipe failed!\n");
     return NULL;
   }
+
+  if (fcntl(worker->msg_queue[0], F_SETFL, O_NONBLOCK) == -1)
+    perror("fcntl(pipe, O_NONBLOCK)");
+
+  if (fcntl(worker->msg_queue[1], F_SETFL, O_NONBLOCK) == -1)
+    perror("fcntl(pipe, O_NONBLOCK)");
 
   return worker;
 }
 
+void worker_start(worker_t* self) {
+  int err;
+
+  err = pthread_create(&self->thread, NULL, worker_run, self);
+
+  if (err)
+    printf("error starting worker: %i\n", err);
+}
+
 void worker_stop(worker_t* self) {
-  int cancel = -1;
+  int op = -1;
   void* ret;
 
-  for (;;)
-    if (write(self->queue[1], (char *) &cancel, sizeof(cancel)) == sizeof(cancel))
-      break;
+  while (write(self->conn_queue[1], (char *) &op,
+    sizeof(op)) != sizeof(op));
 
   pthread_join(self->thread, &ret);
   free(self);
@@ -76,7 +85,7 @@ void *worker_run(void* userdata) {
   conn_t *conn;
 
   ev_init(&self->loop);
-  ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
+  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, NULL);
 
   while(self->running) {
     num_events = ev_poll(&self->loop);
@@ -115,9 +124,9 @@ inline void worker_accept(worker_t* self) {
   conn_t *conn;
   int sock;
 
-  ev_watch(&self->loop, self->queue[0], EV_READABLE, NULL);
+  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, NULL);
 
-  if (read(self->queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
+  if (read(self->conn_queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
     if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
       printf("error reading from conn_queue\n");
 

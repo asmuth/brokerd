@@ -19,13 +19,15 @@
 typedef struct {
   int             id;
   pthread_t       thread;
-  int             queue[2];
+  int             conn_queue[2];
+  int             msg_queue[2];
   int             running;
   ev_loop_t       loop;
 } worker_t;
 
 worker_t* worker_init(int id);
 void* worker_run(void* userdata);
+void worker_start(worker_t* self);
 void worker_stop(worker_t* self);
 void worker_cleanup(worker_t* self);
 void worker_accept(worker_t* self);
