@@ -27,6 +27,11 @@ chan_t* chan_init(/*char* key, int key_len*/) {
   return self;
 }
 
+void chan_free(chan_t* self) {
+  free(self->sublist);
+  free(self);
+}
+
 chan_t* chan_lookup(char* key, int key_len) {
   return global_channel;
 }

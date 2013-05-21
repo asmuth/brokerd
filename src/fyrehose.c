@@ -147,5 +147,7 @@ int main(int argc, char** argv) {
     worker_stop(workers[n]);
 
   free(workers);
+  chan_free(global_channel);
+
   return 0;
 }

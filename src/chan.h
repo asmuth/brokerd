@@ -25,6 +25,7 @@ typedef struct {
 
 chan_t* chan_init();
 chan_t* chan_lookup(char* key, int key_len);
+void chan_free(chan_t* self);
 void chan_subscribe(chan_t* chan, conn_t* conn);
 void chan_unsubscribe(chan_t* chan, conn_t* conn);
 int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker);
