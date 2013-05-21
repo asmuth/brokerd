@@ -70,7 +70,7 @@ void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
     //printf("deliver local...\n");
 
     if (!cur->rbuf)
-      cur->rbuf = rbuf_init(CONN_RBUF_LEN); // FIXPAUL
+      cur->rbuf = rbuf_init(CONN_RBUF_LEN);
 
     if (rbuf_put(cur->rbuf, msg) == 0) {
       cur->state = CONN_STATE_STREAMWAIT;

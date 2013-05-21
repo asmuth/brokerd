@@ -19,6 +19,15 @@
 #include "chan.h"
 #include <signal.h>
 
+// TODO
+//  - read post body from conn->msg chunk-wise
+//  - worker-worker rbufs + delivery via pipe
+//  - msg malloc impl. cleanup
+//  - msg pipe/tee implementation
+//  - ev_epoll backend
+//  - free all msgs on conn close
+//  - chan_lookup + thread lokal hashmap cache
+//  - close conns in WAIT state on shutdown
 
 int ssock, running = 1, num_workers = 1;
 worker_t** worker;

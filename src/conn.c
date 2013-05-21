@@ -289,7 +289,7 @@ inline void conn_handle_subscribe(conn_t* self) {
   int   chan_len = self->http_req->uri_argv[2] - chan_key;
 
   chan_t* chan = chan_lookup(chan_key, chan_len);
-  chan_subscribe(chan, self); // FIXPAUL: when is this unsubscribed???
+  chan_subscribe(chan, self);
 
   self->state = CONN_STATE_FLUSHWAIT;
   self->buf_limit = strlen(resp);
