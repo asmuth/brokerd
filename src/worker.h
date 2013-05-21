@@ -15,6 +15,7 @@
 #include <pthread.h>
 
 #include "ev.h"
+#include "rbuf.h"
 
 typedef struct {
   int             id;
@@ -22,6 +23,7 @@ typedef struct {
   int             conn_queue[2];
   int             msg_queue[2];
   int             running;
+  rbuf_t**        outbox;
   ev_loop_t       loop;
 } worker_t;
 

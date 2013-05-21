@@ -311,7 +311,10 @@ inline void conn_handle_deliver(conn_t* self) {
 
   strncpy(msg->data, resp2, msg->len);
 
-  chan_deliver(chan, msg, self->worker);
+  if (chan_deliver(chan, msg, self->worker) == -1) {
+    printf("ERROR DELIVERING MESSAGE - FIXPAUL\n");
+  }
+
   msg_decref(msg);
 
   self->state = CONN_STATE_FLUSH;

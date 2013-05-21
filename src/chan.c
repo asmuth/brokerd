@@ -13,6 +13,8 @@
 #include "conn.h"
 
 extern int num_workers;
+extern worker_t** workers;
+
 chan_t* global_channel;
 
 chan_t* chan_init(/*char* key, int key_len*/) {
@@ -59,8 +61,19 @@ void chan_unsubscribe(chan_t* self, conn_t* conn) {
 
 }
 
-void chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
+int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
+  int n;
+
+  for (n = num_workers; n < num_workers; n++) {
+    if (workers[n] == worker)
+      continue;
+
+    if (worker->outbox[n]->len >= worker->outbox[n]->limit)
+      return -1;
+  }
+
   chan_deliver_local(self, msg, worker);
+  return 0;
 }
 
 void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {

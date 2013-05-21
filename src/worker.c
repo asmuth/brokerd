@@ -17,9 +17,20 @@
 #include "worker.h"
 #include "conn.h"
 
+extern int num_workers;
+
 worker_t* worker_init(int id) {
+  int n;
+
   worker_t* worker = malloc(sizeof(worker_t));
   bzero(worker, sizeof(worker_t));
+
+  worker->outbox = malloc(sizeof(rbuf_t *) * num_workers);
+
+  for (n = 0; n < num_workers; n++) {
+    if (n != id)
+      worker->outbox[n] = rbuf_init(10); // FIXPAUL
+  }
 
   worker->id = id;
   worker->running = 1;
@@ -56,13 +67,20 @@ void worker_start(worker_t* self) {
 }
 
 void worker_stop(worker_t* self) {
-  int op = -1;
+  int n, op = -1;
   void* ret;
 
   while (write(self->conn_queue[1], (char *) &op,
     sizeof(op)) != sizeof(op));
 
   pthread_join(self->thread, &ret);
+
+  for (n = 0; n < num_workers; n++) {
+    if (n != self->id)
+      rbuf_free(self->outbox[n]);
+  }
+
+  free(self->outbox);
   free(self);
 }
 

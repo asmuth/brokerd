@@ -30,7 +30,7 @@
 //  - close conns in WAIT state on shutdown
 
 int ssock, running = 1, num_workers = 1;
-worker_t** worker;
+worker_t** workers;
 
 extern chan_t* global_channel;
 
@@ -74,17 +74,17 @@ int main(int argc, char** argv) {
   global_channel = chan_init();
   // TMP
 
-  worker = malloc(sizeof(worker_t *) * num_workers);
+  workers = malloc(sizeof(worker_t *) * num_workers);
 
   for (n = 0; n < num_workers; n++) {
-    worker[n] = worker_init(n);
+    workers[n] = worker_init(n);
 
-    if (worker[n] == NULL)
+    if (workers[n] == NULL)
       return 1;
   }
 
   for (n = 0; n < num_workers; n++)
-    worker_start(worker[n]);
+    worker_start(workers[n]);
 
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -137,15 +137,15 @@ int main(int argc, char** argv) {
       continue;
     }
 
-    queue = worker[n % num_workers]->conn_queue[1];
+    queue = workers[n % num_workers]->conn_queue[1];
 
     if (write(queue, (char *) &fd, sizeof(fd)) != sizeof(fd))
       printf("error writing to work queue\n");
   }
 
   for (n = 0; n < num_workers; n++)
-    worker_stop(worker[n]);
+    worker_stop(workers[n]);
 
-  free(worker);
+  free(workers);
   return 0;
 }
