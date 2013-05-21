@@ -69,6 +69,7 @@ int main(int argc, char** argv) {
 
   signal(SIGQUIT, quit);
   signal(SIGINT, quit);
+  signal(SIGPIPE, SIG_IGN);
 
   // TMP
   global_channel = chan_init();

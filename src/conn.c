@@ -45,7 +45,11 @@ void conn_close(conn_t* self) {
     chan_unsubscribe(self->channel, self);
 
   if (self->rbuf) {
-    // FIXPAUL: decref all outstanding messages!
+    while(self->rbuf->len > 0) {
+      msg_decref(rbuf_head(self->rbuf));
+      rbuf_pop(self->rbuf);
+    }
+
     rbuf_free(self->rbuf);
   }
 
@@ -221,8 +225,8 @@ inline int conn_write_stream(conn_t* self) {
 
     //printf("finish message!\n");
     self->write_pos = 0;
-    msg_decref(msg);
     rbuf_pop(self->rbuf);
+    msg_decref(msg);
 
     if (self->rbuf->len > 0)
       continue;
