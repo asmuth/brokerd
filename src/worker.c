@@ -18,6 +18,7 @@
 #include "conn.h"
 
 extern int num_workers;
+extern worker_t** workers;
 
 worker_t* worker_init(int id) {
   int n;
@@ -85,12 +86,21 @@ void worker_stop(worker_t* self) {
 }
 
 void worker_cleanup(worker_t* self) {
-  int n;
+  int n, i, s;
 
   // FIXPAUL; this wont clean connections that are currently in the WAIT state...
   for (n = 0; n <= self->loop.max_fd; n++) {
-    if (self->loop.events[n].userdata)
-      conn_close((conn_t *) self->loop.events[n].userdata);
+    if (self->loop.events[n].userdata) {
+      s = 1;
+
+      for (i = 0; i < num_workers; i++) {
+        if (workers[i] == self->loop.events[n].userdata)
+          s = 0;
+      }
+
+      if (s == 1)
+        conn_close((conn_t *) self->loop.events[n].userdata);
+    }
   }
 
   ev_free(&self->loop);
@@ -103,7 +113,7 @@ void *worker_run(void* userdata) {
   conn_t *conn;
 
   ev_init(&self->loop);
-  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, NULL);
+  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, self);
 
   while(self->running) {
     num_events = ev_poll(&self->loop);
@@ -117,7 +127,11 @@ void *worker_run(void* userdata) {
       if (!event->fired)
         continue;
 
-      if (event->userdata) {
+      if (event->userdata == self) {
+        printf("accept!\n");
+        worker_accept(self);
+
+      } else if (event->userdata) {
         conn = event->userdata;
 
         if (event->fired & EV_READABLE)
@@ -129,8 +143,9 @@ void *worker_run(void* userdata) {
             continue;
 
       } else {
-        worker_accept(self);
+        printf("NO USERDATA!\n");
       }
+
     }
   }
 
@@ -142,7 +157,7 @@ inline void worker_accept(worker_t* self) {
   conn_t *conn;
   int sock;
 
-  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, NULL);
+  ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, self);
 
   if (read(self->conn_queue[0], &sock, sizeof(sock)) != sizeof(sock)) {
     if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)

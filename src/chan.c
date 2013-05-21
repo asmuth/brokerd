@@ -77,6 +77,23 @@ int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
       return -1;
   }
 
+  for (n = num_workers; n < num_workers; n++) {
+    if (workers[n] == worker)
+      continue;
+
+    if (rbuf_put(worker->outbox[n], msg) != 0)
+      return 0;
+
+    printf("deliver remote...\n");
+
+    /*
+    msg_incref(msg);
+
+    ev_watch(&worker->loop, workers[n]->msg_queue[1],
+      EV_WRITEABLE, NULL);
+    */
+  }
+
   chan_deliver_local(self, msg, worker);
   return 0;
 }
