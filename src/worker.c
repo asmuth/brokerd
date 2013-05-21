@@ -16,6 +16,7 @@
 #include "ev.h"
 #include "worker.h"
 #include "conn.h"
+#include "msg.h"
 
 extern int num_workers;
 extern worker_t** workers;
@@ -114,6 +115,7 @@ void *worker_run(void* userdata) {
 
   ev_init(&self->loop);
   ev_watch(&self->loop, self->conn_queue[0], EV_READABLE, self);
+  ev_watch(&self->loop, self->msg_queue[0], EV_READABLE, NULL);
 
   while(self->running) {
     num_events = ev_poll(&self->loop);
@@ -129,12 +131,12 @@ void *worker_run(void* userdata) {
         continue;
 
       if (!event->userdata) {
-        if (event->fired & EV_READABLE) {
+        if (event->fired & EV_READABLE)
           worker_flush_inbox(self);
-        } else {
+        else
           flush_outbox = 1;
-          continue;
-        }
+
+        continue;
 
       } else if (event->userdata == self) {
         worker_accept(self);
@@ -162,7 +164,24 @@ void *worker_run(void* userdata) {
 }
 
 inline void worker_flush_inbox(worker_t* self) {
-  printf("flush outbox!\n");
+  msg_t* msg;
+
+  printf("flush inbox!\n");
+  ev_watch(&self->loop, self->msg_queue[0], EV_READABLE, NULL);
+
+  // FIXPAUL: this can be speed up with a batch read...
+  for (;;) {
+    if (read(self->msg_queue[0], &msg, sizeof(msg)) != sizeof(msg)) {
+      if (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+        printf("error reading from msg_queue\n");
+
+      break;
+    }
+
+    printf("read next message yeah! %p\n", msg);
+    chan_deliver_local(msg, self);
+    msg_decref(msg);
+  }
 }
 
 inline void worker_flush_outbox(worker_t* self) {

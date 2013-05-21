@@ -13,11 +13,10 @@
 #ifndef CHAN_H
 #define CHAN_H
 
-
 #define CHAN_KEYLEN 256
 #define CHAN_MAXSUBSCRIBERS 256
 
-typedef struct {
+typedef struct chan_s {
   char            key[CHAN_KEYLEN];
   conn_t**        sublist;
   pthread_mutex_t lock;
@@ -29,6 +28,6 @@ void chan_free(chan_t* self);
 void chan_subscribe(chan_t* chan, conn_t* conn);
 void chan_unsubscribe(chan_t* chan, conn_t* conn);
 int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker);
-void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker);
+void chan_deliver_local(msg_t* msg, worker_t* worker);
 
 #endif

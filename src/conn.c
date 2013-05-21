@@ -279,7 +279,6 @@ get_actions:
   if (argc == 1 && conn_http_argv_eq(0, "/ping", 5))
     return conn_handle_ping(self);
 
-
 not_found:
 
   conn_handle_404(self);
@@ -315,8 +314,11 @@ inline void conn_handle_deliver(conn_t* self) {
 
   strncpy(msg->data, resp2, msg->len);
 
-  if (chan_deliver(chan, msg, self->worker) == -1) {
-    printf("ERROR DELIVERING MESSAGE - FIXPAUL\n");
+  int n;
+  for (n = 0; n < 3; n++) {
+    if (chan_deliver(chan, msg, self->worker) == -1) {
+      printf("ERROR DELIVERING MESSAGE - FIXPAUL\n");
+    }
   }
 
   msg_decref(msg);

@@ -21,6 +21,7 @@
 
 // TODO
 //  - read post body from conn->msg chunk-wise
+//  - smarter worker->worker delivery via shared worker->channel subscriptions
 //  - worker-worker rbufs + delivery via pipe
 //  - msg malloc impl. cleanup
 //  - msg pipe/tee implementation
@@ -29,6 +30,7 @@
 //  - chan_lookup + thread lokal hashmap cache
 //  - close conns in WAIT state on shutdown
 //  - batch delivery in worker_flush_outbox
+//  - batch delivery in worker_flush_inbox
 //  - inline lots of structs...
 
 int ssock, running = 1, num_workers = 1;

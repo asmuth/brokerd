@@ -5,13 +5,17 @@
 // file except in compliance with the License. You may obtain a copy of
 // the License at: http://opensource.org/licenses/MIT
 
+
 #ifndef MSG_H
 #define MSG_H
 
-typedef struct {
-  int    refc;
-  char*  data;
-  size_t len;
+typedef struct chan_s* chan_p;
+
+typedef struct msg_s {
+  chan_p  channel;
+  int     refc;
+  char*   data;
+  size_t  len;
 } msg_t;
 
 msg_t* msg_init();

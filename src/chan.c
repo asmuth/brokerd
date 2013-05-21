@@ -69,6 +69,8 @@ void chan_unsubscribe(chan_t* self, conn_t* conn) {
 int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
   int n;
 
+  msg->channel = self;
+
   for (n = num_workers; n < num_workers; n++) {
     if (workers[n] == worker)
       continue;
@@ -91,12 +93,12 @@ int chan_deliver(chan_t* self, msg_t* msg, worker_t* worker) {
       EV_WRITEABLE, NULL);
   }
 
-  chan_deliver_local(self, msg, worker);
+  chan_deliver_local(msg, worker);
   return 0;
 }
 
-void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
-  conn_t* cur = self->sublist[worker->id];
+void chan_deliver_local(msg_t* msg, worker_t* worker) {
+  conn_t* cur = msg->channel->sublist[worker->id];
 
   for(; cur != NULL; cur = cur->next_sub) {
     printf("deliver local...\n");
@@ -108,6 +110,7 @@ void chan_deliver_local(chan_t* self, msg_t* msg, worker_t* worker) {
       cur->state = CONN_STATE_STREAMWAIT;
       ev_watch(&worker->loop, cur->sock, EV_WRITEABLE, cur);
       msg_incref(msg);
+
     } else {
       printf("rbuf full...\n");
       conn_close(cur);
