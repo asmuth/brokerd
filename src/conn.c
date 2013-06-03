@@ -45,7 +45,7 @@ void conn_close(conn_t* self) {
     chan_unsubscribe(self->channel, self);
 
   if (self->rbuf) {
-    while(self->rbuf->len > 0) {
+    while (self->rbuf->len > 0) {
       msg_decref(rbuf_head(self->rbuf));
       rbuf_pop(self->rbuf);
     }
