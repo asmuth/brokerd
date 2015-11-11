@@ -1,7 +1,7 @@
-fyrehose
+brokerd
 ========
 
-fyrehose is a http based pub/sub daemon. it is quite similar to apache's kafka.
+brokerd is a http based pub/sub daemon. it is quite similar to apache's kafka.
 
 
 ### Curl Example:
