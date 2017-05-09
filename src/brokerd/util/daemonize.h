@@ -12,9 +12,5 @@
 #include <unistd.h>
 #include "return_code.h"
 
-namespace fnordmetric {
-
 ReturnCode daemonize();
-
-} // namespace fnordmetric
 

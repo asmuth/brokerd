@@ -9,92 +9,201 @@
  */
 #include <stdlib.h>
 #include <unistd.h>
+#include <cstring>
+#include <iostream>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/file.h>
+#include <brokerd/util/flagparser.h>
+#include <brokerd/util/logging.h>
+#include <brokerd/util/daemonize.h>
 
 int main(int argc, const char** argv) {
-  //Application::init();
-  //Application::logToStderr();
+  FlagParser flags;
 
-  //cli::FlagParser flags;
+  flags.defineFlag(
+      "listen_http",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      NULL);
 
-  //flags.defineFlag(
-  //    "http",
-  //    cli::FlagParser::T_INTEGER,
-  //    false,
-  //    NULL,
-  //    "8000",
-  //    "Start the http server on this port",
-  //    "<port>");
+  flags.defineFlag(
+      "datadir",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      NULL);
 
-  //flags.defineFlag(
-  //    "loglevel",
-  //    cli::FlagParser::T_STRING,
-  //    false,
-  //    NULL,
-  //    "INFO",
-  //    "loglevel",
-  //    "<level>");
+  flags.defineFlag(
+      "disklimit",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      NULL);
 
-  //flags.defineFlag(
-  //    "datadir",
-  //    cli::FlagParser::T_STRING,
-  //    true,
-  //    NULL,
-  //    NULL,
-  //    "data dir",
-  //    "<path>");
+  flags.defineFlag(
+      "disklimit_disk",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      NULL);
 
-  //flags.defineFlag(
-  //    "statsd",
-  //    cli::FlagParser::T_STRING,
-  //    false,
-  //    NULL,
-  //    "127.0.0.1:8192",
-  //    "Submit statsd stats to this host:port",
-  //    "<addr>");
+  flags.defineFlag(
+      "loglevel",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      "INFO");
 
-  //flags.parseArgv(argc, argv);
+  flags.defineFlag(
+      "daemonize",
+      FlagParser::T_SWITCH,
+      false,
+      NULL,
+      NULL);
 
-  //Logger::get()->setMinimumLogLevel(
-  //    strToLogLevel(flags.getString("loglevel")));
+  flags.defineFlag(
+      "pidfile",
+      FlagParser::T_STRING,
+      false,
+      NULL,
+      NULL);
 
-  //thread::EventLoop event_loop;
-  //thread::ThreadPool tp(
-  //    std::unique_ptr<ExceptionHandler>(
-  //        new CatchAndLogExceptionHandler("cm.feedserver")));
+  flags.defineFlag(
+      "log_to_syslog",
+      FlagParser::T_SWITCH,
+      false,
+      NULL,
+      NULL);
 
-  //json::JSONRPC rpc;
-  //json::JSONRPCHTTPAdapter http(&rpc);
+  flags.defineFlag(
+      "nolog_to_stderr",
+      FlagParser::T_SWITCH,
+      false,
+      NULL,
+      NULL);
 
-  ///* set up logstream service */
-  //auto feeds_dir_path = flags.getString("datadir");
-  //FileUtil::mkdir_p(feeds_dir_path);
+  flags.defineFlag(
+      "help",
+      FlagParser::T_STRING,
+      false,
+      "?",
+      NULL);
 
-  //feeds::FeedService service{
-  //    feeds_dir_path,
-  //    "/brokerd"};
+  flags.defineFlag(
+      "version",
+      FlagParser::T_SWITCH,
+      false,
+      "V",
+      NULL);
 
-  //rpc.registerService(&service);
+  /* parse flags */
+  {
+    auto rc = flags.parseArgv(argc, argv);
+    if (!rc.isSuccess()) {
+      std::cerr << "ERROR: " << rc.getMessage() << std::endl;
+      return 1;
+    }
+  }
 
-  ///* set up rpc http server */
-  //http::HTTPRouter http_router;
-  //http_router.addRouteByPrefixMatch("/rpc", &http, &tp);
-  //http::HTTPServer http_server(&http_router, &event_loop);
-  //http_server.listen(flags.getInt("http"));
-  //http_server.stats()->exportStats("/brokerd/http");
+  /* setup logging */
+  if (!flags.isSet("nolog_to_stderr") && !flags.isSet("daemonize")) {
+    Logger::logToStderr("brokerd");
+  }
 
-  //stats::StatsHTTPServlet stats_servlet;
-  //http_router.addRouteByPrefixMatch("/stats", &stats_servlet);
+  if (flags.isSet("log_to_syslog")) {
+    Logger::logToSyslog("brokerd");
+  }
 
-  //feeds::BrokerServlet broker_servlet(&service);
-  //http_router.addRouteByPrefixMatch("/broker", &broker_servlet);
+  Logger::get()->setMinimumLogLevel(strToLogLevel(flags.getString("loglevel")));
 
-  //stats::StatsdAgent statsd_agent(
-  //    InetAddr::resolve(flags.getString("statsd")),
-  //    10 * kMicrosPerSecond);
+  /* print help */
+  if (flags.isSet("version")) {
+    std::cerr <<
+        StringUtil::format(
+            "brokerd $0\n"
+            "Copyright (c) 2016, Paul Asmuth et al. All rights reserved.\n\n",
+            BROKERD_VERSION);
 
-  //statsd_agent.start();
+    return 0;
+  }
 
-  //event_loop.run();
-  return 0;
+  if (flags.isSet("help")) {
+    std::cerr <<
+        "Usage: $ brokerd [OPTIONS]\n"
+        "   --listen_http <addr>          Listen for HTTP connection on this address\n"
+        "   --datadir <dir>               Set the data directory\n"
+        "   --disklimit <limit>           Delete old messages to keep total size < limit\n"
+        "   --disklimit_channel <limit>   Delete old messages to keep every channel size < limit\n"
+        "   --daemonize                   Daemonize the server\n"
+        "   --pidfile <file>              Write a PID file\n"
+        "   --loglevel <level>            Minimum log level (default: INFO)\n"
+        "   --[no]log_to_syslog           Do[n't] log to syslog\n"
+        "   --[no]log_to_stderr           Do[n't] log to stderr\n"
+        "   -?, --help                    Display this help text and exit\n"
+        "   -V, --version                 Display the version of this binary and exit\n"
+        "\n"
+        "Examples:\n"
+        "   $ brokerd --datadir /var/brokerd --listen_http localhost:8080\n"
+        "   $ brokerd --datadir /var/brokerd --listen_http localhost:8080 --disklimit 20GB\n";
+
+    return 0;
+  }
+
+  /* daemonize */
+  auto rc = ReturnCode::success();
+  if (rc.isSuccess() && flags.isSet("daemonize")) {
+    rc = daemonize();
+  }
+
+  /* write pidfile */
+  int pidfile_fd = -1;
+  auto pidfile_path = flags.getString("pidfile");
+  if (rc.isSuccess() && !pidfile_path.empty()) {
+    pidfile_fd = open(
+        pidfile_path.c_str(),
+        O_WRONLY | O_CREAT,
+        0666);
+
+    if (pidfile_fd < 0) {
+      rc = ReturnCode::errorf(
+          "IO_ERROR",
+          "writing pidfile failed: $0",
+          std::strerror(errno));
+    }
+
+    if (rc.isSuccess() && flock(pidfile_fd, LOCK_EX | LOCK_NB) != 0) {
+      close(pidfile_fd);
+      pidfile_fd = -1;
+      rc = ReturnCode::error("IO_ERROR", "locking pidfile failed");
+    }
+
+    if (rc.isSuccess() && ftruncate(pidfile_fd, 0) != 0) {
+      close(pidfile_fd);
+      pidfile_fd = -1;
+      rc = ReturnCode::error("IO_ERROR", "writing pidfile failed");
+    }
+
+    auto pid = StringUtil::toString(getpid());
+    if (rc.isSuccess() &&
+        write(pidfile_fd, pid.data(), pid.size()) != pid.size()) {
+      close(pidfile_fd);
+      pidfile_fd = -1;
+      rc = ReturnCode::error("IO_ERROR", "writing pidfile failed");
+    }
+  }
+
+  /* start service */
+
+
+  /* unlock pidfile */
+  if (pidfile_fd > 0) {
+    unlink(pidfile_path.c_str());
+    flock(pidfile_fd, LOCK_UN);
+    close(pidfile_fd);
+  }
+
+  return rc.isSuccess() ? 0 : 1;
 }
 

@@ -10,8 +10,6 @@
  */
 #include "daemonize.h"
 
-namespace fnordmetric {
-
 ReturnCode daemonize() {
 #if defined(_WIN32)
 #error "Application::daemonize() not yet implemented for windows"
@@ -32,7 +30,4 @@ ReturnCode daemonize() {
 #endif
   return ReturnCode::success();
 }
-
-
-} // namespace fnordmetric
 
