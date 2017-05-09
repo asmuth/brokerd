@@ -78,7 +78,7 @@ ReturnCode ChannelMap::findChannel(
   return ReturnCode::success();
 }
 
-std::string ChannelMap::getHostID() const noexcept {
+std::string ChannelMap::getUID() const noexcept {
   return hostid_;
 }
 

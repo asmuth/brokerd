@@ -56,6 +56,55 @@ void HTTPServer::handleRequest(
         return;
       }
 
+      if (path == "/serverid") {
+        handleRequest_SERVERID(req, res);
+        return;
+      }
+
+      if (path == "/stats") {
+        handleRequest_STATS(req, res);
+        return;
+      }
+
+      if (path_parts.size() == 2 &&
+          path_parts[0] == "channel") {
+        handleRequest_FETCH(req, res, path_parts[1]);
+        return;
+      }
+
+      if (path_parts.size() == 3 &&
+          path_parts[0] == "channel" &&
+          path_parts[2] == "subscribe") {
+        handleRequest_SUBSCRIBE(req, res, path_parts[1]);
+        return;
+      }
+
+      if (path_parts.size() == 3 &&
+          path_parts[0] == "channel") {
+        handleRequest_FETCH(req, res, path_parts[1], path_parts[2]);
+        return;
+      }
+
+      if (path_parts.size() == 4 &&
+          path_parts[0] == "channel" &&
+          path_parts[3] == "next") {
+        handleRequest_FETCH(req, res, path_parts[1], path_parts[2], true);
+        return;
+      }
+
+      if (path_parts.size() == 5 &&
+          path_parts[0] == "channel" &&
+          path_parts[3] == "next") {
+        handleRequest_FETCH(
+            req,
+            res,
+            path_parts[1],
+            path_parts[2],
+            true,
+            path_parts[4]);
+        return;
+      }
+
       break;
 
     case http::HTTPMessage::M_POST:
@@ -63,34 +112,16 @@ void HTTPServer::handleRequest(
         handleRequest_INSERT(req, res, path_parts[1]);
         return;
       }
+
       break;
+
   }
-
-  //if (StringUtil::endsWith(uri.path(), "/insert")) {
-  //  return insertRecord(req, res, &uri);
-  //}
-
-  //if (StringUtil::endsWith(uri.path(), "/fetch")) {
-  //  return fetchRecords(req, res, &uri);
-  //}
-
-  //if (StringUtil::endsWith(uri.path(), "/host_id")) {
-  //  return getHostID(req, res, &uri);
-  //}
 
   res->setStatus(http::kStatusNotFound);
   res->addBody("not found");
 } catch (const Exception& e) {
   res->setStatus(http::kStatusInternalServerError);
   res->addBody(StringUtil::format("error: $0: $1", e.getTypeName(), e.getMessage()));
-}
-
-void HTTPServer::handleRequest_PING(
-    http::HTTPRequest* req,
-    http::HTTPResponse* res) {
-  res->setStatus(http::kStatusOK);
-  res->addHeader("Content-Type", "text/plain; charset=utf-8");
-  res->addBody("pong");
 }
 
 void HTTPServer::handleRequest_INSERT(
@@ -119,7 +150,7 @@ void HTTPServer::handleRequest_INSERT(
   }
 
   if (rc.isSuccess()) {
-    res->addHeader("X-Broker-HostID", channel_map_->getHostID());
+    res->addHeader("X-Broker-ServerID", channel_map_->getUID());
     res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
     res->setStatus(http::kStatusCreated);
     res->addBody("ok");
@@ -129,15 +160,111 @@ void HTTPServer::handleRequest_INSERT(
   }
 }
 
-//void HTTPServer::getHostID(
-//    http::HTTPRequest* req,
-//    http::HTTPResponse* res,
-//    URI* uri) {
-//  res->addHeader("X-Broker-HostID", service_->hostID());
-//  res->addHeader("Content-Type", "text/plain");
-//  res->setStatus(http::kStatusOK);
-//  res->addBody(service_->hostID());
-//}
+void HTTPServer::handleRequest_FETCH(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res,
+    const std::string& channel_id_str,
+    const std::string& offset_str /* = "" */,
+    bool next /* = false */,
+    const std::string& batch_size_str /* = "" */) {
+  auto channel_id = ChannelID::fromString(channel_id_str);
+  if (channel_id.isEmpty()) {
+    res->setStatus(http::kStatusBadRequest);
+    res->addBody("error: invalid channel id");
+    return;
+  }
+
+  std::shared_ptr<Channel> channel;
+  {
+    auto rc = channel_map_->findChannel(channel_id.get(), true, &channel);
+    if (!rc.isSuccess()) {
+      res->setStatus(http::kStatusBadRequest);
+      res->addBody(StringUtil::format("error: $0", rc.getMessage()));
+      return;
+    }
+  }
+
+  uint64_t offset = 0;
+  if (!offset_str.empty()) {
+    try {
+      offset = std::stoull(offset_str);
+    } catch (...) {
+      res->setStatus(http::kStatusBadRequest);
+      res->addBody("error: invalid offset");
+      return;
+    }
+  }
+
+  uint64_t batch_size = 1;
+  if (!batch_size_str.empty()) {
+    try {
+      batch_size = std::stoull(batch_size_str);
+    } catch (...) {
+      res->setStatus(http::kStatusBadRequest);
+      res->addBody("error: invalid batch_size");
+      return;
+    }
+  }
+
+  if (next) {
+    ++batch_size;
+  }
+
+  std::list<Message> messages;
+  auto rc = channel->fetchMessages(offset, batch_size, &messages);
+  if (!rc.isSuccess()) {
+    res->setStatus(http::kStatusInternalServerError);
+    res->addBody(StringUtil::format("error: $0", rc.getMessage()));
+  }
+
+  if (next && !messages.empty() && messages.front().offset == offset) {
+    messages.pop_front();
+  }
+
+  res->setStatus(http::kStatusOK);
+  res->addBody("not yet implemented");
+}
+
+void HTTPServer::handleRequest_SUBSCRIBE(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res,
+    const std::string& channel_id_str) {
+  auto channel_id = ChannelID::fromString(channel_id_str);
+  if (channel_id.isEmpty()) {
+    res->setStatus(http::kStatusBadRequest);
+    res->addBody("error: invalid channel id");
+    return;
+  }
+
+  res->setStatus(http::kStatusOK);
+  res->addBody("not yet implemented");
+}
+
+void HTTPServer::handleRequest_SERVERID(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res) {
+  auto serverid = channel_map_->getUID();
+  res->addHeader("X-Broker-ServerID", serverid);
+  res->addHeader("Content-Type", "text/plain");
+  res->setStatus(http::kStatusOK);
+  res->addBody(serverid);
+}
+
+void HTTPServer::handleRequest_STATS(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res) {
+  res->setStatus(http::kStatusOK);
+  res->addHeader("Content-Type", "text/plain; charset=utf-8");
+  res->addBody("");
+}
+
+void HTTPServer::handleRequest_PING(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res) {
+  res->setStatus(http::kStatusOK);
+  res->addHeader("Content-Type", "text/plain; charset=utf-8");
+  res->addBody("pong");
+}
 
 } // namespace brokerd
 

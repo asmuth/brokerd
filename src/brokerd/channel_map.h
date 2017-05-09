@@ -41,7 +41,7 @@ public:
   /**
    * Return the unique server id
    */
-  std::string getHostID() const noexcept;
+  std::string getUID() const noexcept;
 
 protected:
 

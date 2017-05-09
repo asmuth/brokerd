@@ -59,5 +59,14 @@ ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) 
   return ReturnCode::success();
 }
 
+ReturnCode Channel::fetchMessages(
+    uint64_t start_offset,
+    int batch_size,
+    std::list<Message>* entries) {
+  std::unique_lock<std::mutex> lk(mutex_);
+  *entries = segments_.back().data;
+  return ReturnCode::success();
+}
+
 } // namespace brokerd
 

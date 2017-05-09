@@ -31,29 +31,35 @@ protected:
       http::HTTPRequest* req,
       http::HTTPResponse* res);
 
-  void handleRequest_PING(
-      http::HTTPRequest* req,
-      http::HTTPResponse* res);
-
   void handleRequest_INSERT(
       http::HTTPRequest* req,
       http::HTTPResponse* res,
       const std::string& channel_id);
 
-  void getHostID(
+  void handleRequest_SUBSCRIBE(
       http::HTTPRequest* req,
       http::HTTPResponse* res,
-      URI* uri);
+      const std::string& channel_id);
 
-  void insertRecord(
+  void handleRequest_FETCH(
       http::HTTPRequest* req,
       http::HTTPResponse* res,
-      URI* uri);
+      const std::string& channel_id,
+      const std::string& offset = "",
+      bool next = false,
+      const std::string& batch_size = "");
 
-  void fetchRecords(
+  void handleRequest_STATS(
       http::HTTPRequest* req,
-      http::HTTPResponse* res,
-      URI* uri);
+      http::HTTPResponse* res);
+
+  void handleRequest_SERVERID(
+      http::HTTPRequest* req,
+      http::HTTPResponse* res);
+
+  void handleRequest_PING(
+      http::HTTPRequest* req,
+      http::HTTPResponse* res);
 
   libtransport::http::HTTPServer http_server_;
   ChannelMap* channel_map_;
