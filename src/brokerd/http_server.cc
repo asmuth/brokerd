@@ -95,24 +95,37 @@ void HTTPServer::handleRequest_PING(
 void HTTPServer::handleRequest_INSERT(
     http::HTTPRequest* req,
     http::HTTPResponse* res,
-    const std::string& channel_id) {
+    const std::string& channel_id_str) {
   if (req->body().empty()) {
     res->setStatus(http::kStatusBadRequest);
     res->addBody("error: empty message (body_size == 0)");
     return;
   }
 
-  uint64_t offset;
-  auto rc = channel_map_->appendMessage(channel_id, req->body(), &offset);
-  if (!rc.isSuccess()) {
+  auto channel_id = ChannelID::fromString(channel_id_str);
+  if (channel_id.isEmpty()) {
+    res->setStatus(http::kStatusBadRequest);
+    res->addBody("error: invalid channel id");
+    return;
+  }
+
+  std::shared_ptr<Channel> channel;
+  auto rc = channel_map_->findChannel(channel_id.get(), true, &channel);
+
+  uint64_t offset = 0;
+  if (rc.isSuccess()) {
+    rc = channel->appendMessage(req->body(), &offset);
+  }
+
+  if (rc.isSuccess()) {
+    res->addHeader("X-Broker-HostID", channel_map_->getHostID());
+    res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
+    res->setStatus(http::kStatusCreated);
+  } else {
     res->setStatus(http::kStatusInternalServerError);
     res->addBody(StringUtil::format("error: $0", rc.getMessage()));
     return;
   }
-
-  res->addHeader("X-Broker-HostID", channel_map_->getHostID());
-  res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
-  res->setStatus(http::kStatusCreated);
 }
 
 //void HTTPServer::getHostID(

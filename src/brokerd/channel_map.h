@@ -23,43 +23,36 @@ namespace brokerd {
 class ChannelMap {
 public:
 
-  ChannelMap(const String& data_dir);
+  /**
+   * Open all channel files in a directory and aquire a lockfile
+   */
+  static ReturnCode openDirectory(
+      const std::string& data_dir,
+      std::unique_ptr<ChannelMap>* channel_map);
 
   /**
-   * Insert a record into the topic referenced by `topic` and return the offset
-   * at which the record was written. Will create a new topic if the referenced
-   * topic does not exist yet.
-   *
-   * @param topic the name/key of the topic
-   * @param record the record to append to the topic
-   * @return the offset at which the record was written
+   * Find and possibly create a channel
    */
-  ReturnCode appendMessage(
-      const std::string& channel,
-      const std::string& message,
-      uint64_t* offset);
+  ReturnCode findChannel(
+      const ChannelID& channel_id,
+      bool create,
+      std::shared_ptr<Channel>* channel);
 
   /**
-   * Read one or more entries from the stream at or after the provided start
-   * offset. If the start offset references a deleted/expired entry, the next
-   * valid entry will be returned. It is always valid to call this method with
-   * a start offset of zero to retrieve the first entry or entries from the
-   * stream.
-   *
-   * @param start_offset the start offset to read from
+   * Return the unique server id
    */
-  ReturnCode fetchMessages(
-      const std::string& channel,
-      uint64_t offset,
-      uint32_t batch_size,
-      std::list<Message>* entries);
-
-  std::string getHostID();
+  std::string getHostID() const noexcept;
 
 protected:
+
+  ChannelMap(
+      const String& data_dir,
+      FileLock&& data_dir_lock);
+
+  std::string data_dir_;
+  FileLock data_dir_lock_;
   std::mutex channels_mutex_;
-  std::map<std::string, std::unique_ptr<Channel>> channels_;
-  FileLock lock_;
+  std::map<std::string, std::shared_ptr<Channel>> channels_;
   std::string hostid_;
   Random rnd_;
 };

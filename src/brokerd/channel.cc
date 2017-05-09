@@ -13,7 +13,7 @@
 namespace brokerd {
 
 Option<ChannelID> ChannelID::fromString(const std::string& s) {
-  if (!StringUtil::isShellSafe(s)) {
+  if (s.empty() || !StringUtil::isShellSafe(s)) {
     return None<ChannelID>();
   }
 

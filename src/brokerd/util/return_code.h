@@ -57,6 +57,13 @@ public:
     return ReturnCode::error(code, StringUtil::format(message, args...));
   }
 
+  inline static ReturnCode error(const std::exception& e) {
+    ReturnCode rc(false);
+    rc.code_ = "ERUNTIME";
+    rc.message_ = e.what();
+    return rc;
+  }
+
   inline bool isError() const {
     return !success_;
   }

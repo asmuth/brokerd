@@ -6,6 +6,8 @@ BROKERD_COMMON_SRC = \
     LocalFeed.h \
     channel.h \
     channel.cc \
+    channel_map.h \
+    channel_map.cc \
     message.h \
     http_server.h \
     http_server.cc \

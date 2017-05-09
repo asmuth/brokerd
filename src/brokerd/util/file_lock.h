@@ -26,6 +26,7 @@ public:
 
   FileLock() = delete;
   FileLock(const FileLock& copy) = delete;
+  FileLock(FileLock&& move);
   FileLock& operator=(const FileLock& copy) = delete;
   ~FileLock();
 

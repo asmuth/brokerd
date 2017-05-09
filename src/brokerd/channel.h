@@ -41,10 +41,26 @@ public:
       const std::string& path,
       std::list<ChannelSegment> segments = {});
 
-  ReturnCode append(const std::string& entry);
+  /**
+   * Insert a messsage into the channel and return the offset at which the message
+   * was written.
+   *
+   * @param message the record to append to the topic
+   * @return the offset at which the record was written
+   */
+  ReturnCode appendMessage(const std::string& message, uint64_t* offset);
 
-  ReturnCode fetch(
-      uint64_t offset,
+  /**
+   * Read one or more entries from the channel at or after the provided start
+   * offset. If the channeloffset references a deleted/expired entry, the next
+   * valid entry will be returned. It is always valid to call this method with
+   * a start offset of zero to retrieve the first entry or entries from the
+   * channel.
+   *
+   * @param start_offset the start offset to read from
+   */
+  ReturnCode fetchMessages(
+      uint64_t start_offset,
       int batch_size,
       std::list<Message>* entries);
 
