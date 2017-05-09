@@ -11,12 +11,29 @@
 #include <unistd.h>
 #include <cstring>
 #include <iostream>
+#include <regex>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/file.h>
 #include <brokerd/util/flagparser.h>
 #include <brokerd/util/logging.h>
 #include <brokerd/util/daemonize.h>
+#include <brokerd/http_server.h>
+
+bool parseListenAddr(
+    const std::string& addr,
+    std::string* host,
+    uint16_t* port) {
+  std::smatch m;
+  std::regex listen_regex("([0-9a-zA-Z-_.]+):([0-9]+)");
+  if (std::regex_match(addr, m, listen_regex)) {
+    *host = m[1];
+    *port = std::stoul(m[2]);
+    return true;
+  } else {
+    return false;
+  }
+}
 
 int main(int argc, const char** argv) {
   FlagParser flags;
@@ -24,14 +41,14 @@ int main(int argc, const char** argv) {
   flags.defineFlag(
       "listen_http",
       FlagParser::T_STRING,
-      false,
+      true,
       NULL,
       NULL);
 
   flags.defineFlag(
       "datadir",
       FlagParser::T_STRING,
-      false,
+      true,
       NULL,
       NULL);
 
@@ -194,8 +211,23 @@ int main(int argc, const char** argv) {
     }
   }
 
-  /* start service */
+  /* start http server */
+  std::unique_ptr<brokerd::HTTPServer> http_server;
+  if (rc.isSuccess()) {
+    std::string http_bind;
+    uint16_t http_port;
+    auto parse_rc = parseListenAddr(
+        flags.getString("listen_http"),
+        &http_bind,
+        &http_port);
 
+    if (parse_rc) {
+      http_server.reset(new brokerd::HTTPServer(nullptr));
+      rc = http_server->listenAndRun(http_bind, http_port);
+    } else {
+      rc = ReturnCode::error("ERUNTIME", "invalid value for --listen_http");
+    }
+  }
 
   /* unlock pidfile */
   if (pidfile_fd > 0) {

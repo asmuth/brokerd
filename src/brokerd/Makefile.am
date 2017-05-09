@@ -5,6 +5,8 @@ BROKERD_COMMON_SRC = \
     FeedEntry.h \
     LocalFeed.cc \
     LocalFeed.h \
+    http_server.h \
+    http_server.cc \
     util/autoref.cc \
     util/autoref.h \
     util/autoref_impl.h \

@@ -7,27 +7,29 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-#ifndef _FNORD_BROKER_BROKERSERVLET_H
-#define _FNORD_BROKER_BROKERSERVLET_H
+#pragma once
+#include <brokerd/util/return_code.h>
+#include <libtransport/http/v1/http_server.h>
 #include <libtransport/http/http_request.h>
 #include <libtransport/http/http_response.h>
-#include <brokerd/FeedService.h>
 
-namespace stx {
-namespace feeds {
+namespace brokerd {
+class FeedService;
 
 namespace http = libtransport::http;
 
-class BrokerServlet {
+class HTTPServer {
 public:
 
-  BrokerServlet(FeedService* service);
+  HTTPServer(FeedService* service);
 
-  void handleHTTPRequest(
-      http::HTTPRequest* req,
-      http::HTTPResponse* res);
+  ReturnCode listenAndRun(const std::string& addr, int port);
 
 protected:
+
+  void handleRequest(
+      http::HTTPRequest* req,
+      http::HTTPResponse* res);
 
   void getHostID(
       http::HTTPRequest* req,
@@ -44,9 +46,9 @@ protected:
       http::HTTPResponse* res,
       URI* uri);
 
+  libtransport::http::HTTPServer http_server_;
   FeedService* service_;
 };
 
-}
-}
-#endif
+} // namespace brokerd
+
