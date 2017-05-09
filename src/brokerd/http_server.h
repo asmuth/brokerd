@@ -14,14 +14,14 @@
 #include <libtransport/http/http_response.h>
 
 namespace brokerd {
-class FeedService;
+class ChannelMap;
 
 namespace http = libtransport::http;
 
 class HTTPServer {
 public:
 
-  HTTPServer(FeedService* service);
+  HTTPServer(ChannelMap* channel_map);
 
   ReturnCode listenAndRun(const std::string& addr, int port);
 
@@ -30,6 +30,15 @@ protected:
   void handleRequest(
       http::HTTPRequest* req,
       http::HTTPResponse* res);
+
+  void handleRequest_PING(
+      http::HTTPRequest* req,
+      http::HTTPResponse* res);
+
+  void handleRequest_INSERT(
+      http::HTTPRequest* req,
+      http::HTTPResponse* res,
+      const std::string& channel_id);
 
   void getHostID(
       http::HTTPRequest* req,
@@ -47,7 +56,7 @@ protected:
       URI* uri);
 
   libtransport::http::HTTPServer http_server_;
-  FeedService* service_;
+  ChannelMap* channel_map_;
 };
 
 } // namespace brokerd

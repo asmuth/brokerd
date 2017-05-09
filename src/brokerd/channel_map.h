@@ -36,7 +36,8 @@ public:
    */
   ReturnCode appendMessage(
       const std::string& channel,
-      const std::string& message);
+      const std::string& message,
+      uint64_t* offset);
 
   /**
    * Read one or more entries from the stream at or after the provided start

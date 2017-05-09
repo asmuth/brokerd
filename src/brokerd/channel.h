@@ -30,6 +30,7 @@ class Channel {
 public:
 
   static const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
+  static const size_t kSegmentHeaderSize = 4096;
 
   struct ChannelSegment {
     uint64_t offset_begin;

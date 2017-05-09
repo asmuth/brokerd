@@ -53,27 +53,30 @@ HTTP API
 The HTTP+JSON API is very simple. Below is a list of all API methods. For more
 detailed documentation on the API please [check out the documentation](https://brokerd.org)
 
-    POST /:channel
-        Append a message to a channel (the message is the POST body)
+    POST /channel/:channel
+         Append a message to a channel (the message is the POST body)
 
-    GET /:channel/subscribe
-        Subscribe to a channel (returns a HTTP SSE stream of events)
-
-    GET /:channel/:offset
-        Retrieve a message at a specific offset
-
-    GET /:channel/:offset/next
-        Retrieve the next message after a specific offset
-
-    GET /:channel/:offset/next/:n
-        Retrieve the next N messages after a specific offset
-
-    GET /stats
-        Responds with a list of statistics
-
-    GET /ping
-        Responds with 'pong'
-
+     GET /channel/:channel/subscribe
+         Subscribe to a channel (returns a HTTP SSE stream of events)
+ 
+     GET /channel/:channel/:offset
+         Retrieve a message at a specific offset
+ 
+     GET /channel/:channel/:offset/next
+         Retrieve the next message after a specific offset
+ 
+     GET /channel/:channel/:offset/next/:n
+         Retrieve the next N messages after a specific offset
+ 
+     GET /stats
+         Responds with a list of statistics
+ 
+     GET /serverid
+         Returns a unique server ID
+ 
+     GET /ping
+         Responds with 'pong'
+ 
 
 Usage
 -----

@@ -7,15 +7,19 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
+#include <iostream>
 #include <libtransport/json/json.h>
 #include <brokerd/util/time.h>
 #include <brokerd/util/logging.h>
 #include <brokerd/util/buffer.h>
 #include <brokerd/http_server.h>
+#include <brokerd/channel_map.h>
 
 namespace brokerd {
 
-HTTPServer::HTTPServer(FeedService* service) : service_(service) {
+HTTPServer::HTTPServer(
+    ChannelMap* channel_map) :
+    channel_map_(channel_map) {
   http_server_.setRequestHandler(
       std::bind(
           &HTTPServer::handleRequest,
@@ -37,98 +41,80 @@ ReturnCode HTTPServer::listenAndRun(const std::string& addr, int port) {
 
 void HTTPServer::handleRequest(
     http::HTTPRequest* req,
-    http::HTTPResponse* res) {
+    http::HTTPResponse* res) try {
   URI uri(req->uri());
+  auto path = uri.path();
+  auto path_parts = StringUtil::split(path.substr(1), "/");
 
   res->addHeader("Access-Control-Allow-Origin", "*");
 
-  try {
-    //if (StringUtil::endsWith(uri.path(), "/insert")) {
-    //  return insertRecord(req, res, &uri);
-    //}
+  switch (req->method()) {
 
-    //if (StringUtil::endsWith(uri.path(), "/fetch")) {
-    //  return fetchRecords(req, res, &uri);
-    //}
+    case http::HTTPMessage::M_GET:
+      if (path == "/ping") {
+        handleRequest_PING(req, res);
+        return;
+      }
 
-    //if (StringUtil::endsWith(uri.path(), "/host_id")) {
-    //  return getHostID(req, res, &uri);
-    //}
+      break;
 
-    res->setStatus(http::kStatusNotFound);
-    res->addBody("not found");
-  } catch (const Exception& e) {
-    res->setStatus(http::kStatusInternalServerError);
-    res->addBody(StringUtil::format("error: $0: $1", e.getTypeName(), e.getMessage()));
+    case http::HTTPMessage::M_POST:
+      if (path_parts.size() == 2 && path_parts[0] == "channel") {
+        handleRequest_INSERT(req, res, path_parts[1]);
+      }
+      break;
   }
+
+  //if (StringUtil::endsWith(uri.path(), "/insert")) {
+  //  return insertRecord(req, res, &uri);
+  //}
+
+  //if (StringUtil::endsWith(uri.path(), "/fetch")) {
+  //  return fetchRecords(req, res, &uri);
+  //}
+
+  //if (StringUtil::endsWith(uri.path(), "/host_id")) {
+  //  return getHostID(req, res, &uri);
+  //}
+
+  res->setStatus(http::kStatusNotFound);
+  res->addBody("not found");
+} catch (const Exception& e) {
+  res->setStatus(http::kStatusInternalServerError);
+  res->addBody(StringUtil::format("error: $0: $1", e.getTypeName(), e.getMessage()));
 }
 
-//void HTTPServer::insertRecord(
-//    http::HTTPRequest* req,
-//    http::HTTPResponse* res,
-//    URI* uri) {
-//  const auto& params = uri->queryParams();
-//
-//  String topic;
-//  if (!URI::getParam(params, "topic", &topic)) {
-//    res->setStatus(http::kStatusBadRequest);
-//    res->addBody("error: missing ?topic=... parameter");
-//    return;
-//  }
-//
-//  if (req->body().size() == 0) {
-//    res->setStatus(http::kStatusBadRequest);
-//    res->addBody("error: empty record (body_size == 0)");
-//  }
-//
-//  auto offset = service_->insert(topic, req->body());
-//  res->addHeader("X-Broker-HostID", service_->hostID());
-//  res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
-//  res->setStatus(http::kStatusCreated);
-//}
-//
-//void HTTPServer::fetchRecords(
-//    http::HTTPRequest* req,
-//    http::HTTPResponse* res,
-//    URI* uri) {
-//  const auto& params = uri->queryParams();
-//
-//  String topic;
-//  if (!URI::getParam(params, "topic", &topic)) {
-//    res->setStatus(http::kStatusBadRequest);
-//    res->addBody("error: missing ?topic=... parameter");
-//    return;
-//  }
-//
-//  String offset;
-//  if (!URI::getParam(params, "offset", &offset)) {
-//    res->setStatus(http::kStatusBadRequest);
-//    res->addBody("error: missing ?offset=... parameter");
-//    return;
-//  }
-//
-//  String limit;
-//  if (!URI::getParam(params, "limit", &limit)) {
-//    res->setStatus(http::kStatusBadRequest);
-//    res->addBody("error: missing ?limit=... parameter");
-//    return;
-//  }
-//
-////  MessageList msg_list;
-////  service_->fetchSome(
-////      topic,
-////      std::stoull(offset),
-////      std::stoull(limit),
-////      [&msg_list] (const Message& msg) {
-////        *msg_list.add_messages() = msg;
-////      });
-////
-//  res->setStatus(http::kStatusOK);
-//  res->addHeader("X-Broker-HostID", service_->hostID());
-//  res->addHeader("Content-Type", "application/x-protobuf");
-//  //res->addBody(*msg::encode(msg_list));
-//}
-//
+void HTTPServer::handleRequest_PING(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res) {
+  res->setStatus(http::kStatusOK);
+  res->addHeader("Content-Type", "text/plain; charset=utf-8");
+  res->addBody("pong");
+}
+
+void HTTPServer::handleRequest_INSERT(
+    http::HTTPRequest* req,
+    http::HTTPResponse* res,
+    const std::string& channel_id) {
+  if (req->body().empty()) {
+    res->setStatus(http::kStatusBadRequest);
+    res->addBody("error: empty message (body_size == 0)");
+    return;
+  }
+
+  uint64_t offset;
+  auto rc = channel_map_->appendMessage(channel_id, req->body(), &offset);
+  if (!rc.isSuccess()) {
+    res->setStatus(http::kStatusInternalServerError);
+    res->addBody(StringUtil::format("error: $0", rc.getMessage()));
+    return;
+  }
+
+  res->addHeader("X-Broker-HostID", channel_map_->getHostID());
+  res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
+  res->setStatus(http::kStatusCreated);
+}
+
 //void HTTPServer::getHostID(
 //    http::HTTPRequest* req,
 //    http::HTTPResponse* res,
