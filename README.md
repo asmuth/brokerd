@@ -68,6 +68,9 @@ detailed documentation on the API please [check out the documentation](https://b
     GET /:channel/:offset/next/:n
         Retrieve the next N messages after a specific offset
 
+    GET /stats
+        Responds with a list of statistics
+
     GET /ping
         Responds with 'pong'
 
@@ -80,13 +83,22 @@ The brokerd program is the main server program and the second brokerctl program
 is a simple command line client. For more information please
 [check out the documentation](https://brokerd.org)
 
-    Usage: $ brokerctl <command> [OPTIONS]
-       -v, --verbose             Run in verbose mode
-       -?, --help                Display this help text and exit
-       -V, --version             Display the version of this binary and exit
+    Usage: $ brokerd [OPTIONS]
+       --listen_http <addr>          Listen for HTTP connection on this address
+       --datadir <dir>               Set the data directory
+       --disklimit <limit>           Delete old messages to keep total size < limit
+       --disklimit_channel <limit>   Delete old messages to keep every channel size < limit
+       --daemonize                   Daemonize the server
+       --pidfile <file>              Write a PID file
+       --loglevel <level>            Minimum log level (default: INFO)
+       --[no]log_to_syslog           Do[n't] log to syslog
+       --[no]log_to_stderr           Do[n't] log to stderr
+       -?, --help                    Display this help text and exit
+       -V, --version                 Display the version of this binary and exit
 
     Examples:
-       $ brokerctl tail mytopic
+       $ brokerd --datadir /var/brokerd --listen_http localhost:8080
+       $ brokerd --datadir /var/brokerd --listen_http localhost:8080 --disklimit 20GB
 
 
 Building
