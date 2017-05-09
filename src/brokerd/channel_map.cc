@@ -23,6 +23,17 @@ ReturnCode ChannelMap::openDirectory(
   FileLock data_dir_lock(FileUtil::joinPaths(data_dir, "~lock"));
   data_dir_lock.lock();
 
+  std::string hostid;
+  auto hostid_file = FileUtil::joinPaths(data_dir, "~serverid");
+  if (!FileUtil::exists(hostid_file)) {
+    hostid = Random::singleton()->hex128();
+    auto f = File::openFile(hostid_file + "~", File::O_CREATE | File::O_WRITE);
+    f.write(hostid.data(), hostid.size());
+    FileUtil::mv(hostid_file + "~", hostid_file);
+  } else {
+    hostid = FileUtil::read(hostid_file).toString();
+  }
+
   return ReturnCode::success();
 } catch (const std::exception& e) {
   return ReturnCode::error(e);
@@ -30,9 +41,11 @@ ReturnCode ChannelMap::openDirectory(
 
 ChannelMap::ChannelMap(
     const String& data_dir,
-    FileLock&& data_dir_lock) :
+    FileLock&& data_dir_lock,
+    const std::string& hostid) :
     data_dir_(data_dir),
-    data_dir_lock_(std::move(data_dir_lock_)) {}
+    data_dir_lock_(std::move(data_dir_lock_)),
+    hostid_(hostid) {}
 
 std::string ChannelMap::getHostID() const noexcept {
   return hostid_;
@@ -42,19 +55,7 @@ std::string ChannelMap::getHostID() const noexcept {
 //    lock_(FileUtil::joinPaths(data_dir, "index.lck")) {
 //  lock_.lock(false);
 //
-//  auto hostid_file = FileUtil::joinPaths(data_dir, "hostid.idx");
-//  if (!FileUtil::exists(hostid_file)) {
-//    hostid_ = rnd_.hex128();
-//
-//    {
-//      auto f = File::openFile(hostid_file + "~", File::O_CREATE | File::O_WRITE);
-//      f.write(hostid_.data(), hostid_.size());
-//    }
-//
-//    FileUtil::mv(hostid_file + "~", hostid_file);
-//  } else {
-//    hostid_ = FileUtil::read(hostid_file).toString();
-//  }
+
 //
 //  //file_repo_.listFiles([this] (const std::string& filename) -> bool {
 //  //  if (StringUtil::endsWith(filename, ".idx") ||

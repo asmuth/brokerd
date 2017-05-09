@@ -47,14 +47,14 @@ protected:
 
   ChannelMap(
       const String& data_dir,
-      FileLock&& data_dir_lock);
+      FileLock&& data_dir_lock,
+      const std::string& hostid);
 
   std::string data_dir_;
   FileLock data_dir_lock_;
   std::mutex channels_mutex_;
   std::map<std::string, std::shared_ptr<Channel>> channels_;
   std::string hostid_;
-  Random rnd_;
 };
 
 } // brokerd
