@@ -9,14 +9,16 @@
  */
 #ifndef _FNORD_BROKER_BROKERSERVLET_H
 #define _FNORD_BROKER_BROKERSERVLET_H
-#include "stx/http/httpservice.h"
-#include <stx/random.h>
+#include <libtransport/http/http_request.h>
+#include <libtransport/http/http_response.h>
 #include <brokerd/FeedService.h>
 
 namespace stx {
 namespace feeds {
 
-class BrokerServlet : public stx::http::HTTPService {
+namespace http = libtransport::http;
+
+class BrokerServlet {
 public:
 
   BrokerServlet(FeedService* service);

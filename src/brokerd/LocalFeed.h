@@ -14,12 +14,8 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "stx/io/filerepository.h"
-#include "stx/reflect/reflect.h"
 #include "brokerd/FeedEntry.h"
-#include "brokerd/Message.pb.h"
-#include "sstable/SSTableEditor.h"
-#include "stx/stats/counter.h"
+#include "brokerd/util/return_code.h"
 
 namespace stx {
 namespace feeds {
@@ -37,20 +33,14 @@ public:
   uint64_t append(const Buffer& entry);
   uint64_t append(const void* data, size_t size);
 
-  void fetch(
+  ReturnCode fetch(
       uint64_t offset,
       int batch_size,
-      Function<void (const Message&)> fn);
+      std::list<FeedEntry>* entries);
 
   struct TableHeader {
     uint64_t offset;
     std::string stream_name;
-
-    template <typename T>
-    static void reflect(T* meta) {
-      meta->prop(&TableHeader::offset, 1, "offset", false);
-      meta->prop(&TableHeader::stream_name, 2, "stream_name", false);
-    }
   };
 
   void reopenTable(const std::string& file_path);
@@ -60,7 +50,6 @@ protected:
   struct TableRef {
     uint64_t offset;
     std::string file_path;
-    std::unique_ptr<sstable::SSTableEditor> writer;
   };
 
   std::shared_ptr<TableRef> createTable();
@@ -72,11 +61,6 @@ protected:
   std::mutex tables_mutex_;
 
   uint64_t head_offset_;
-  stats::Counter<uint64_t> stat_head_offset_;
-
-#ifndef FNORD_NOTRACE
-  Random rnd_;
-#endif
 };
 
 

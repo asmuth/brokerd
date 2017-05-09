@@ -19,8 +19,6 @@
 #include <unistd.h>
 #include "file.h"
 
-namespace fnordmetric {
-
 void FileUtil::mkdir(const std::string& dirname) {
   if (::mkdir(dirname.c_str(), S_IRWXU) != 0) {
     RAISE_ERRNO(kIOError, "mkdir('%s') failed", dirname.c_str());
@@ -186,6 +184,11 @@ void FileUtil::rm(const std::string& filename) {
   unlink(filename.c_str());
 }
 
+void FileUtil::mv(const std::string& src, const std::string& dst) {
+  if (::rename(src.c_str(), dst.c_str()) < 0) {
+    RAISE_ERRNO(kIOError, "rename(%s, %s) failed", src.c_str(), dst.c_str());
+  }
+}
 
 void FileUtil::truncate(const std::string& filename, size_t new_size) {
   if (::truncate(filename.c_str(), new_size) < 0) {
@@ -211,7 +214,5 @@ Buffer FileUtil::read(
   } catch (const std::exception& e) {
     RAISEF(kIOError, "$0 while reading file '$1'", e.what(), filename);
   }
-}
-
 }
 

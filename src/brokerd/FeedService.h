@@ -14,14 +14,10 @@
 #include <set>
 #include <string>
 #include <unordered_map>
-#include "stx/stdtypes.h"
-#include "stx/random.h"
-#include "stx/io/filerepository.h"
-#include "stx/io/FileLock.h"
-#include "brokerd/LocalFeed.h"
-#include "brokerd/FeedEntry.h"
-#include "brokerd/Message.pb.h"
-#include "stx/reflect/reflect.h"
+#include "LocalFeed.h"
+#include "FeedEntry.h"
+#include <brokerd/util/file_lock.h>
+#include <brokerd/util/random.h>
 
 namespace stx {
 namespace feeds {
@@ -30,9 +26,7 @@ class FeedService {
   friend class LogStream;
 public:
 
-  FeedService(
-      const String& data_dir,
-      const String& stats_path = "/brokerd");
+  FeedService(const String& data_dir);
 
   /**
    * DEPRECATED
@@ -67,25 +61,11 @@ public:
    *
    * @param start_offset the start offset to read from
    */
-  std::vector<FeedEntry> fetch(
-      std::string stream,
-      uint64_t offset,
-      int batch_size);
-
-  /**
-   * Read one or more entries from the stream at or after the provided start
-   * offset. If the start offset references a deleted/expired entry, the next
-   * valid entry will be returned. It is always valid to call this method with
-   * a start offset of zero to retrieve the first entry or entries from the
-   * stream.
-   *
-   * @param start_offset the start offset to read from
-   */
-  void fetchSome(
+  ReturnCode fetch(
       std::string stream,
       uint64_t offset,
       int batch_size,
-      Function<void (const Message& msg)> fn);
+      std::list<FeedEntry>* entries);
 
   String hostID();
 
@@ -95,7 +75,6 @@ protected:
   LogStream* openStream(const std::string& name, bool create);
   void reopenTable(const std::string& file_path);
 
-  stx::FileRepository file_repo_;
   std::unordered_map<std::string, std::unique_ptr<LogStream>> streams_;
   std::mutex streams_mutex_;
   FileLock lock_;
@@ -105,22 +84,5 @@ protected:
 
 } // namespace logstream_service
 } // namespace stx
-
-template <> template <class T>
-void stx::reflect::MetaClass<
-    stx::feeds::FeedService>::reflect(T* t) {
-  t->method(
-      "FeedService.append",
-      &stx::feeds::FeedService::append,
-      "stream",
-      "entry");
-
-  t->method(
-      "FeedService.fetch",
-      &stx::feeds::FeedService::fetch,
-      "stream",
-      "offset",
-      "batch_size");
-}
 
 #endif

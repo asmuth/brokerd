@@ -1,6 +1,16 @@
 bin_PROGRAMS = brokerd brokerctl
 
 BROKERD_COMMON_SRC = \
+    brokerctl.cc \
+    BrokerCursor.h \
+    brokerd.cc \
+    BrokerServlet.cc \
+    BrokerServlet.h \
+    FeedEntry.h \
+    FeedService.cc \
+    FeedService.h \
+    LocalFeed.cc \
+    LocalFeed.h \
     util/autoref.cc \
     util/autoref.h \
     util/autoref_impl.h \

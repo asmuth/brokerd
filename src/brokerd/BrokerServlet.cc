@@ -7,14 +7,10 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-#include "stx/util/binarymessagewriter.h"
-#include "stx/json/json.h"
-#include <stx/wallclock.h>
-#include <stx/protobuf/msg.h>
-#include "stx/protobuf/MessageEncoder.h"
-#include "stx/protobuf/MessagePrinter.h"
-#include <stx/util/Base64.h>
-#include "brokerd/BrokerServlet.h"
+#include <libtransport/json/json.h>
+#include <brokerd/util/time.h>
+#include <brokerd/util/buffer.h>
+#include <brokerd/BrokerServlet.h>
 
 namespace stx {
 namespace feeds {
@@ -22,8 +18,8 @@ namespace feeds {
 BrokerServlet::BrokerServlet(FeedService* service) : service_(service) {}
 
 void BrokerServlet::handleHTTPRequest(
-    stx::http::HTTPRequest* req,
-    stx::http::HTTPResponse* res) {
+    http::HTTPRequest* req,
+    http::HTTPResponse* res) {
   URI uri(req->uri());
 
   res->addHeader("Access-Control-Allow-Origin", "*");
@@ -41,7 +37,7 @@ void BrokerServlet::handleHTTPRequest(
       return getHostID(req, res, &uri);
     }
 
-    res->setStatus(stx::http::kStatusNotFound);
+    res->setStatus(http::kStatusNotFound);
     res->addBody("not found");
   } catch (const Exception& e) {
     res->setStatus(http::kStatusInternalServerError);
@@ -57,13 +53,13 @@ void BrokerServlet::insertRecord(
 
   String topic;
   if (!URI::getParam(params, "topic", &topic)) {
-    res->setStatus(stx::http::kStatusBadRequest);
+    res->setStatus(http::kStatusBadRequest);
     res->addBody("error: missing ?topic=... parameter");
     return;
   }
 
   if (req->body().size() == 0) {
-    res->setStatus(stx::http::kStatusBadRequest);
+    res->setStatus(http::kStatusBadRequest);
     res->addBody("error: empty record (body_size == 0)");
   }
 
@@ -81,38 +77,38 @@ void BrokerServlet::fetchRecords(
 
   String topic;
   if (!URI::getParam(params, "topic", &topic)) {
-    res->setStatus(stx::http::kStatusBadRequest);
+    res->setStatus(http::kStatusBadRequest);
     res->addBody("error: missing ?topic=... parameter");
     return;
   }
 
   String offset;
   if (!URI::getParam(params, "offset", &offset)) {
-    res->setStatus(stx::http::kStatusBadRequest);
+    res->setStatus(http::kStatusBadRequest);
     res->addBody("error: missing ?offset=... parameter");
     return;
   }
 
   String limit;
   if (!URI::getParam(params, "limit", &limit)) {
-    res->setStatus(stx::http::kStatusBadRequest);
+    res->setStatus(http::kStatusBadRequest);
     res->addBody("error: missing ?limit=... parameter");
     return;
   }
 
-  MessageList msg_list;
-  service_->fetchSome(
-      topic,
-      std::stoull(offset),
-      std::stoull(limit),
-      [&msg_list] (const Message& msg) {
-        *msg_list.add_messages() = msg;
-      });
-
+//  MessageList msg_list;
+//  service_->fetchSome(
+//      topic,
+//      std::stoull(offset),
+//      std::stoull(limit),
+//      [&msg_list] (const Message& msg) {
+//        *msg_list.add_messages() = msg;
+//      });
+//
   res->setStatus(http::kStatusOK);
   res->addHeader("X-Broker-HostID", service_->hostID());
   res->addHeader("Content-Type", "application/x-protobuf");
-  res->addBody(*msg::encode(msg_list));
+  //res->addBody(*msg::encode(msg_list));
 }
 
 void BrokerServlet::getHostID(

@@ -11,7 +11,7 @@
 #define _FNORD_FEEDS_LOGSTREAMENTRY_H
 #include <stdlib.h>
 #include <string>
-#include "stx/UnixTime.h"
+#include <brokerd/util/time.h>
 
 namespace stx {
 namespace feeds {
@@ -23,14 +23,6 @@ struct FeedEntry {
   uint64_t next_offset;
   UnixTime time;
   std::string data;
-
-  template <typename T>
-  static void reflect(T* meta) {
-    meta->prop(&FeedEntry::offset, 1, "offset", false);
-    meta->prop(&FeedEntry::next_offset, 2, "next_offset", false);
-    meta->prop(&FeedEntry::data, 3, "data", false);
-    meta->prop(&FeedEntry::time, 4, "time", false);
-  }
 };
 
 } // namespace logstream_service

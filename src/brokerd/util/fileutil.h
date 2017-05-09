@@ -15,8 +15,6 @@
 #include <string>
 #include "buffer.h"
 
-namespace fnordmetric {
-
 class FileUtil {
 public:
 
@@ -73,6 +71,11 @@ public:
   static void rm(const std::string& filename);
 
   /**
+   * Move a file
+   */
+  static void mv(const std::string& src, const std::string& dst);
+
+  /**
    * Truncate a file
    */
   static void truncate(const std::string& filename, size_t size);
@@ -87,5 +90,4 @@ public:
 
 };
 
-}
 #endif

@@ -7,22 +7,14 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
-#include "stx/inspect.h"
-#include "stx/logging.h"
-#include "stx/io/fileutil.h"
-#include "stx/json/json.h"
-#include "sstable/sstablereader.h"
-#include "sstable/sstablerepair.h"
+#include <brokerd/util/logging.h>
+#include <brokerd/util/fileutil.h>
 #include "brokerd/FeedService.h"
 
 namespace stx {
 namespace feeds {
 
-FeedService::FeedService(
-    const String& data_dir,
-    const String& stats_path /* = "/brokerd" */) :
-    file_repo_(data_dir),
-    stats_path_(stats_path),
+FeedService::FeedService(const String& data_dir) :
     lock_(FileUtil::joinPaths(data_dir, "index.lck")) {
   lock_.lock(false);
 
@@ -40,15 +32,15 @@ FeedService::FeedService(
     hostid_ = FileUtil::read(hostid_file).toString();
   }
 
-  file_repo_.listFiles([this] (const std::string& filename) -> bool {
-    if (StringUtil::endsWith(filename, ".idx") ||
-        StringUtil::endsWith(filename, ".lck")) {
-      return true;
-    }
+  //file_repo_.listFiles([this] (const std::string& filename) -> bool {
+  //  if (StringUtil::endsWith(filename, ".idx") ||
+  //      StringUtil::endsWith(filename, ".lck")) {
+  //    return true;
+  //  }
 
-    reopenTable(filename);
-    return true;
-  });
+  //  reopenTable(filename);
+  //  return true;
+  //});
 }
 
 uint64_t FeedService::append(std::string stream_key, std::string entry) {
@@ -61,32 +53,14 @@ uint64_t FeedService::insert(const String& topic, const Buffer& record) {
   return stream->append(record);
 }
 
-std::vector<FeedEntry> FeedService::fetch(
-      std::string stream_key,
-      uint64_t offset,
-      int batch_size) {
-  Vector<FeedEntry> res;
-
-  auto stream = openStream(stream_key, false);
-  stream->fetch(offset, batch_size, [&res] (const Message& r) {
-    FeedEntry entry;
-    entry.offset = r.offset();
-    entry.next_offset = r.next_offset();
-    entry.time = r.time();
-    entry.data = r.data();
-    res.emplace_back(entry);
-  });
-
-  return res;
-}
-
-void FeedService::fetchSome(
+ReturnCode FeedService::fetch(
       std::string stream_key,
       uint64_t offset,
       int batch_size,
-      Function<void (const Message& msg)> fn) {
+      std::list<FeedEntry>* entries) {
   auto stream = openStream(stream_key, false);
-  return stream->fetch(offset, batch_size, fn);
+  stream->fetch(offset, batch_size, entries);
+  return ReturnCode::success();
 }
 
 LogStream* FeedService::openStream(const std::string& name, bool create) {
@@ -109,40 +83,40 @@ LogStream* FeedService::openStream(const std::string& name, bool create) {
   return stream;
 }
 
-void FeedService::reopenTable(const std::string& file_path) {
-  stx::sstable::SSTableRepair repair(file_path);
-  if (!repair.checkAndRepair(true)) {
-    RAISEF(kRuntimeError, "corrupt sstable: $0", file_path);
-  }
-
-  auto file = File::openFile(file_path, File::O_READ);
-  sstable::SSTableReader reader(std::move(file));
-
-  LogStream::TableHeader table_header;
-
-  try {
-    table_header = stx::json::fromJSON<LogStream::TableHeader>(
-        reader.readHeader());
-  } catch (const Exception& e) {
-    stx::logError(
-        "fnord.feed",
-        e,
-        "error while reading table header of file: $0",
-        file_path);
-
-    throw e;
-  }
-
-  if (reader.bodySize() == 0) {
-    auto writer = sstable::SSTableEditor::reopen(
-        file_path,
-        sstable::IndexProvider{});
-    writer->finalize();
-  }
-
-  auto stream = openStream(table_header.stream_name, true);
-  stream->reopenTable(file_path);
-}
+//void FeedService::reopenTable(const std::string& file_path) {
+//  stx::sstable::SSTableRepair repair(file_path);
+//  if (!repair.checkAndRepair(true)) {
+//    RAISEF(kRuntimeError, "corrupt sstable: $0", file_path);
+//  }
+//
+//  auto file = File::openFile(file_path, File::O_READ);
+//  sstable::SSTableReader reader(std::move(file));
+//
+//  LogStream::TableHeader table_header;
+//
+//  try {
+//    table_header = stx::json::fromJSON<LogStream::TableHeader>(
+//        reader.readHeader());
+//  } catch (const Exception& e) {
+//    stx::logError(
+//        "fnord.feed",
+//        e,
+//        "error while reading table header of file: $0",
+//        file_path);
+//
+//    throw e;
+//  }
+//
+//  if (reader.bodySize() == 0) {
+//    auto writer = sstable::SSTableEditor::reopen(
+//        file_path,
+//        sstable::IndexProvider{});
+//    writer->finalize();
+//  }
+//
+//  auto stream = openStream(table_header.stream_name, true);
+//  stream->reopenTable(file_path);
+//}
 
 String FeedService::hostID() {
   return hostid_;
