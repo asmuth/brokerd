@@ -14,19 +14,26 @@ The getnext operation reads a batch of messages from a channel starting at a giv
 offset. When consuming messages from a channel the client is responsible for
 storing the last offset it has consumed.
 
+If a disk space limit is configured using `--disklimit`, old messages will
+eventually be deleted from the beginning of the channel to reclaim space. When a
+client tries to read a message (offset) that has been gargbage collected, brokerd
+will return the next valid message in the channel. Reading from offset zero is
+therefore _always_ a valid operation and returns the first/oldest retained message
+from the channel.
+
 [Full Documentation](https://brokerd.org)
 
 
 Getting Started
 ---------------
 
-Execute the following command to start brokerd on HTTP port 8080. The channel
-files will be stored in `/var/brokerd`:
+Execute the following command to start brokerd on HTTP port 8080. The messages
+will be stored in `/var/brokerd`:
 
     $ mkdir /var/brokerd
     $ brokerd --datadir /var/brokerd --listen_http localhost:8080
 
-In one shell, start this command to read messages from the "testchan" channel
+In a shell, start this command to read messages from the "testchan" channel
 as they are being written (the command will not return or output anything for
 now but that is intended):
 
