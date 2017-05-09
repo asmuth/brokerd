@@ -1,45 +1,108 @@
 brokerd
 =======
 
-brokerd is a http based pub/sub daemon. it is quite similar to apache's kafka.
+brokerd is a lightweight message broker ("pub-sub") service. A brokerd instance
+manages a number of "channels". Each channel maps to a file on disk and supports
+two operations: `append(channel, msg)` and `getnext(channel, offset)`. 
+
+The append operation appends a message at the end of the file. Messages are then
+identified by the (logical) file offset at which they were written. The initial
+offset for the first message in a channel is zero and then increases monotonically
+with each subsequent message.
+
+The getnext operation reads a batch of messages from a channel starting at a given
+offset. When consuming messages from a channel the client is responsible for
+storing the last offset it has consumed.
+
+[Full Documentation](https://brokerd.org)
 
 
-### Curl Example:
+Getting Started
+---------------
 
-in one shell, type this:
+Execute the following command to start brokerd on HTTP port 8080. The channel
+files will be stored in `/var/brokerd`:
 
-    curl localhost:4242/mychannel/subscribe
+    $ mkdir /var/brokerd
+    $ brokerd --datadir /var/brokerd --listen_http localhost:8080
 
-in another shell run this:
+In one shell, start this command to read messages from the "testchan" channel
+as they are being written (the command will not return or output anything for
+now but that is intended):
 
-    curl -X POST -d "test" localhost:4242/mychannel
+    curl -v localhost:8080/testchan/subscribe
+
+Then open another shell and run this command to insert the message "testing"
+into our channel:
+
+    curl -X POST -d "testing" localhost:4242/testchan
+
+The output should look similar to this:
 
 
-### HTTP API
+HTTP API
+--------
 
-publish to a channel:
+The HTTP+JSON API is very simple. Below is a list of all API methods. For more
+detailed documentation on the API please [check out the documentation](https://brokerd.org)
 
     POST /:channel
-
-subscribe to a channel (responds with http multipart, keep connection open... not supported by all http clients=
+        Append a message to a channel (the message is the POST body)
 
     GET /:channel/subscribe
-
-retrieve a message at a specific offset (regular http response)
+        Subscribe to a channel (returns a HTTP SSE stream of events)
 
     GET /:channel/:offset
-
-retrieve the next message after a specific offset (regular http response)
+        Retrieve a message at a specific offset
 
     GET /:channel/:offset/next
-
-retrieve the next :n messages after a specific offset (http multipart response):
+        Retrieve the next message after a specific offset
 
     GET /:channel/:offset/next/:n
-
-responds with 'pong'
+        Retrieve the next :n messages after a specific offset:
 
     GET /ping
+        Responds with 'pong'
+
+
+Usage
+-----
+
+The brokerd distribution consists of two programs: `brokerd` and `brokerctl`.
+The brokerd program is the main server program and the second brokerctl program
+is a simple command line client. For more information please
+[check out the documentation](https://brokerd.org)
+
+    Usage: $ brokerctl <command> [OPTIONS]
+       -v, --verbose             Run in verbose mode
+       -?, --help                Display this help text and exit
+       -V, --version             Display the version of this binary and exit
+
+    Examples:
+       $ brokerctl tail mytopic
+
+
+Building
+--------
+
+Before we can start we need to install some build dependencies. Currently
+you need a modern c++ compiler, libz and autotools.
+
+    # Ubuntu
+    $ apt-get install clang make automake autoconf libtool zlib1g-dev
+
+    # OSX
+    $ brew install automake autoconf
+
+To build brokerd from a git checkout:
+
+    $ git clone git@github.com:paulasmuth/brokerd.git
+    $ cd brokerd
+    $ ./autogen.sh
+    $ ./configure
+    $ make V=1
+    $ sudo make install
+
 
 License
 -------
@@ -57,3 +120,4 @@ PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 FnordMetric. If not, see <http://www.gnu.org/licenses/>.
+
