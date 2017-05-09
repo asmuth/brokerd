@@ -16,7 +16,7 @@ namespace brokerd {
 ReturnCode ChannelMap::openDirectory(
     const std::string& data_dir,
     std::unique_ptr<ChannelMap>* channel_map) try {
-  if (!FileUtil::isDirectory(data_dir)) {
+  if (!FileUtil::exists(data_dir) || !FileUtil::isDirectory(data_dir)) {
     return ReturnCode::errorf("EARG", "not a directory: $0", data_dir);
   }
 
@@ -34,6 +34,12 @@ ReturnCode ChannelMap::openDirectory(
     hostid = FileUtil::read(hostid_file).toString();
   }
 
+  channel_map->reset(
+      new ChannelMap(
+          data_dir,
+          std::move(data_dir_lock),
+          hostid));
+
   return ReturnCode::success();
 } catch (const std::exception& e) {
   return ReturnCode::error(e);
@@ -47,105 +53,34 @@ ChannelMap::ChannelMap(
     data_dir_lock_(std::move(data_dir_lock_)),
     hostid_(hostid) {}
 
+ReturnCode ChannelMap::findChannel(
+    const ChannelID& channel_id,
+    bool create,
+    std::shared_ptr<Channel>* channel) {
+  std::unique_lock<std::mutex> lk(channels_mutex_);
+  auto iter = channels_.find(channel_id.str());
+  if (iter != channels_.end()) {
+    *channel = iter->second;
+    return ReturnCode::success();
+  }
+
+  if (!create) {
+    return ReturnCode::errorf("EARG", "channel not found: $0", channel_id.str());
+  }
+
+  auto channel_path = FileUtil::joinPaths(data_dir_, channel_id.str());
+  auto rc = Channel::createChannel(channel_path, channel);
+  if (!rc.isSuccess()) {
+    return rc;
+  }
+
+  channels_.emplace(channel_id.str(), *channel);
+  return ReturnCode::success();
+}
+
 std::string ChannelMap::getHostID() const noexcept {
   return hostid_;
 }
-
-//FeedService::FeedService(const String& data_dir) :
-//    lock_(FileUtil::joinPaths(data_dir, "index.lck")) {
-//  lock_.lock(false);
-//
-
-//
-//  //file_repo_.listFiles([this] (const std::string& filename) -> bool {
-//  //  if (StringUtil::endsWith(filename, ".idx") ||
-//  //      StringUtil::endsWith(filename, ".lck")) {
-//  //    return true;
-//  //  }
-//
-//  //  reopenTable(filename);
-//  //  return true;
-//  //});
-//}
-//
-//uint64_t FeedService::append(std::string stream_key, std::string entry) {
-//  auto stream = openStream(stream_key, true);
-//  return stream->append(entry);
-//}
-//
-//uint64_t FeedService::insert(const String& topic, const Buffer& record) {
-//  auto stream = openStream(topic, true);
-//  return stream->append(record);
-//}
-//
-//ReturnCode FeedService::fetch(
-//      std::string stream_key,
-//      uint64_t offset,
-//      int batch_size,
-//      std::list<FeedEntry>* entries) {
-//  auto stream = openStream(stream_key, false);
-//  stream->fetch(offset, batch_size, entries);
-//  return ReturnCode::success();
-//}
-//
-//LogStream* FeedService::openStream(const std::string& name, bool create) {
-//  std::unique_lock<std::mutex> l(streams_mutex_);
-//
-//  LogStream* stream = nullptr;
-//
-//  auto stream_iter = streams_.find(name);
-//  if (stream_iter == streams_.end()) {
-//    if (!create) {
-//      RAISEF(kIndexError, "no such stream: $0", name);
-//    }
-//
-//    stream = new LogStream(name, this);
-//    streams_.emplace(std::make_pair(name, std::unique_ptr<LogStream>(stream)));
-//  } else {
-//    stream = stream_iter->second.get();
-//  }
-//
-//  return stream;
-//}
-//
-////void FeedService::reopenTable(const std::string& file_path) {
-////  stx::sstable::SSTableRepair repair(file_path);
-////  if (!repair.checkAndRepair(true)) {
-////    RAISEF(kRuntimeError, "corrupt sstable: $0", file_path);
-////  }
-////
-////  auto file = File::openFile(file_path, File::O_READ);
-////  sstable::SSTableReader reader(std::move(file));
-////
-////  LogStream::TableHeader table_header;
-////
-////  try {
-////    table_header = stx::json::fromJSON<LogStream::TableHeader>(
-////        reader.readHeader());
-////  } catch (const Exception& e) {
-////    stx::logError(
-////        "fnord.feed",
-////        e,
-////        "error while reading table header of file: $0",
-////        file_path);
-////
-////    throw e;
-////  }
-////
-////  if (reader.bodySize() == 0) {
-////    auto writer = sstable::SSTableEditor::reopen(
-////        file_path,
-////        sstable::IndexProvider{});
-////    writer->finalize();
-////  }
-////
-////  auto stream = openStream(table_header.stream_name, true);
-////  stream->reopenTable(file_path);
-////}
-//
-//String FeedService::hostID() {
-//  return hostid_;
-//}
 
 } // namespace brokerd
 

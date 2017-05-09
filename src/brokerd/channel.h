@@ -35,11 +35,12 @@ public:
   struct ChannelSegment {
     uint64_t offset_begin;
     uint64_t offset_head;
+    std::list<Message> data;
   };
 
-  Channel(
+  static ReturnCode createChannel(
       const std::string& path,
-      std::list<ChannelSegment> segments = {});
+      std::shared_ptr<Channel>* channel);
 
   /**
    * Insert a messsage into the channel and return the offset at which the message
@@ -65,6 +66,12 @@ public:
       std::list<Message>* entries);
 
 protected:
+
+  Channel(
+      const std::string& path,
+      std::list<ChannelSegment> segments = {});
+
+  std::mutex mutex_;
   std::string path_;
   std::list<ChannelSegment> segments_;
 };

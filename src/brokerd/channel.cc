@@ -26,5 +26,38 @@ const std::string& ChannelID::str() const {
   return id_;
 }
 
+ReturnCode Channel::createChannel(
+    const std::string& path,
+    std::shared_ptr<Channel>* channel) {
+  ChannelSegment segment;
+  segment.offset_begin = 0;
+  segment.offset_head = 0;
+
+  channel->reset(new Channel(path, {segment}));
+  return ReturnCode::success();
+}
+
+Channel::Channel(
+    const std::string& path,
+    std::list<ChannelSegment> segments /* = {} */) :
+    path_(path),
+    segments_(segments) {}
+
+ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) {
+  std::unique_lock<std::mutex> lk(mutex_);
+
+  auto& seg = segments_.back();
+
+  *offset = ++seg.offset_head;
+
+  seg.data.emplace_back(Message {
+    .offset = seg.offset_head,
+    .next_offset = seg.offset_head + 1,
+    .data = message
+  });
+
+  return ReturnCode::success();
+}
+
 } // namespace brokerd
 

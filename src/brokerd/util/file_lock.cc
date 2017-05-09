@@ -8,14 +8,22 @@
  * <http://www.gnu.org/licenses/>.
  */
 #include <sys/file.h>
-#include <stx/exception.h>
-#include <stx/io/FileLock.h>
+#include <brokerd/util/exception.h>
+#include <brokerd/util/file_lock.h>
 
 FileLock::FileLock(
     const String& filename) :
     filename_(filename),
     file_(File::openFile(filename, File::O_CREATEOROPEN | File::O_WRITE)),
     locked_(false) {}
+
+FileLock::FileLock(
+    FileLock&& other) :
+    filename_(std::move(other.filename_)),
+    file_(std::move(other.file_)),
+    locked_(other.locked_) {
+  other.locked_ = false;
+}
 
 FileLock::~FileLock() {
   if (locked_) {

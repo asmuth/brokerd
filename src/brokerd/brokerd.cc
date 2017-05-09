@@ -212,6 +212,14 @@ int main(int argc, const char** argv) {
     }
   }
 
+  /* open channel map */
+  std::unique_ptr<brokerd::ChannelMap> channel_map;
+  if (rc.isSuccess()) {
+    rc = brokerd::ChannelMap::openDirectory(
+        flags.getString("datadir"),
+        &channel_map);
+  }
+
   /* start http server */
   std::unique_ptr<brokerd::HTTPServer> http_server;
   if (rc.isSuccess()) {
@@ -223,7 +231,7 @@ int main(int argc, const char** argv) {
         &http_port);
 
     if (parse_rc) {
-      http_server.reset(new brokerd::HTTPServer(nullptr));
+      http_server.reset(new brokerd::HTTPServer(channel_map.get()));
       rc = http_server->listenAndRun(http_bind, http_port);
     } else {
       rc = ReturnCode::error("ERUNTIME", "invalid value for --listen_http");
@@ -237,6 +245,11 @@ int main(int argc, const char** argv) {
     close(pidfile_fd);
   }
 
-  return rc.isSuccess() ? 0 : 1;
+  if (rc.isSuccess()) {
+    return 0;
+  } else {
+    std::cerr << "ERROR: " << rc.getMessage() << std::endl;
+    return 1;
+  }
 }
 

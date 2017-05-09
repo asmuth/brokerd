@@ -28,6 +28,8 @@ BROKERD_COMMON_SRC = \
     util/exception.h \
     util/file.cc \
     util/file.h \
+    util/file_lock.cc \
+    util/file_lock.h \
     util/fileutil.cc \
     util/fileutil.h \
     util/flagparser.cc \
@@ -46,6 +48,8 @@ BROKERD_COMMON_SRC = \
     util/option_impl.h \
     util/outputstream.cc \
     util/outputstream.h \
+    util/random.cc \
+    util/random.h \
     util/return_code.h \
     util/sha1.cc \
     util/sha1.h \

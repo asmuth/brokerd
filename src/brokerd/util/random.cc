@@ -8,9 +8,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 #include <assert.h>
-#include <stx/inspect.h>
-#include <stx/random.h>
-#include <stx/stringutil.h>
+#include "random.h"
+#include "stringutil.h"
 
 Random::Random() {
   std::random_device r;

@@ -61,6 +61,7 @@ void HTTPServer::handleRequest(
     case http::HTTPMessage::M_POST:
       if (path_parts.size() == 2 && path_parts[0] == "channel") {
         handleRequest_INSERT(req, res, path_parts[1]);
+        return;
       }
       break;
   }
@@ -121,10 +122,10 @@ void HTTPServer::handleRequest_INSERT(
     res->addHeader("X-Broker-HostID", channel_map_->getHostID());
     res->addHeader("X-Broker-Created-Offset", StringUtil::toString(offset));
     res->setStatus(http::kStatusCreated);
+    res->addBody("ok");
   } else {
     res->setStatus(http::kStatusInternalServerError);
     res->addBody(StringUtil::format("error: $0", rc.getMessage()));
-    return;
   }
 }
 
