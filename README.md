@@ -66,7 +66,7 @@ detailed documentation on the API please [check out the documentation](https://b
         Retrieve the next message after a specific offset
 
     GET /:channel/:offset/next/:n
-        Retrieve the next :n messages after a specific offset:
+        Retrieve the next N messages after a specific offset
 
     GET /ping
         Responds with 'pong'
