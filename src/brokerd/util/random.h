@@ -15,8 +15,6 @@
 #include <random>
 #include "sha1.h"
 
-namespace stx {
-
 class Random {
 public:
 
@@ -63,5 +61,4 @@ protected:
   std::mt19937_64 prng_;
 };
 
-}
 #endif

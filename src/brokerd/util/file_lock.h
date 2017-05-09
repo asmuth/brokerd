@@ -12,8 +12,6 @@
 
 #include "file.h"
 
-namespace stx {
-
 /**
  * A RAII File Lock class. Destructor automatically yields the lock if is was
  * aquired.
@@ -58,5 +56,4 @@ protected:
   bool locked_;
 };
 
-}
 #endif

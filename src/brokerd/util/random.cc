@@ -12,8 +12,6 @@
 #include <stx/random.h>
 #include <stx/stringutil.h>
 
-namespace stx {
-
 Random::Random() {
   std::random_device r;
   prng_.seed(r() ^ time(NULL));
@@ -85,4 +83,3 @@ Random* Random::singleton() {
   return &rnd;
 }
 
-}

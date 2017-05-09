@@ -11,8 +11,6 @@
 #include <stx/exception.h>
 #include <stx/io/FileLock.h>
 
-namespace stx {
-
 FileLock::FileLock(
     const String& filename) :
     filename_(filename),
@@ -54,4 +52,3 @@ void FileLock::unlock() {
   locked_ = false;
 }
 
-}

@@ -2,9 +2,11 @@ bin_PROGRAMS = brokerd brokerctl
 
 BROKERD_COMMON_SRC = \
     BrokerCursor.h \
-    FeedEntry.h \
     LocalFeed.cc \
     LocalFeed.h \
+    channel.h \
+    channel.cc \
+    message.h \
     http_server.h \
     http_server.cc \
     util/autoref.cc \

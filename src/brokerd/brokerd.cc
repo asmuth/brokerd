@@ -19,6 +19,7 @@
 #include <brokerd/util/logging.h>
 #include <brokerd/util/daemonize.h>
 #include <brokerd/http_server.h>
+#include <brokerd/channel_map.h>
 
 bool parseListenAddr(
     const std::string& addr,
