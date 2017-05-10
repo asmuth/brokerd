@@ -78,8 +78,43 @@ ReturnCode Channel::fetchMessages(
     uint64_t start_offset,
     int batch_size,
     std::list<Message>* entries) {
-  std::unique_lock<std::mutex> lk(mutex_);
-  //*entries = segments_.back().data;
+  entries->clear();
+
+  std::vector<ChannelSegment> segments;
+  {
+    std::unique_lock<std::mutex> lk(mutex_);
+    segments.insert(
+        segments.end(),
+        segments_archive_.begin(),
+        segments_archive_.end());
+
+    segments.push_back(ChannelSegment {
+      .offset_begin = segment_handle_->offset_begin,
+      .offset_head = segment_handle_->offset_head,
+    });
+  }
+
+  for (const auto& s : segments) {
+    while (start_offset < s.offset_head) {
+      auto rc = segmentRead(
+          s,
+          path_,
+          start_offset,
+          batch_size - entries->size(),
+          entries);
+
+      if (!rc.isSuccess()) {
+        return rc;
+      }
+
+      if (entries->empty() || entries->size() == batch_size) {
+        return ReturnCode::success();
+      }
+
+      start_offset = entries->back().next_offset;
+    }
+  }
+
   return ReturnCode::success();
 }
 
@@ -175,6 +210,78 @@ ReturnCode segmentCommit(ChannelSegmentHandle* segment) {
 
   if (rc < 0 || rc != tx_buf.size()) {
     return ReturnCode::errorf("EIO", "write() failed: $0", strerror(errno));
+  }
+
+  return ReturnCode::success();
+}
+
+ReturnCode segmentRead(
+    const ChannelSegment& segment,
+    const std::string& channel_path,
+    uint64_t start_offset,
+    size_t batch_size,
+    std::list<Message>* entries) {
+  if (start_offset < segment.offset_begin ||
+      start_offset >= segment.offset_head) {
+    return ReturnCode::error("EARG", "offset is out of bounds");
+  }
+
+  auto segment_path = StringUtil::format(
+      "$0~$1",
+      channel_path,
+      segment.offset_begin);
+
+  auto segment_file = File::openFile(segment_path, File::O_READ);
+  auto segment_file_offset = start_offset - segment.offset_begin;
+  auto segment_file_len = segment.offset_head - segment.offset_begin;
+
+  Message msg;
+  uint64_t msg_len = 0;
+  while (segment_file_offset < segment_file_len) {
+    std::array<uint8_t, 4096> buf;
+    int rc = ::pread(
+        segment_file.fd(),
+        buf.data(),
+        buf.size(),
+        segment_file_offset + kSegmentHeaderSize);
+
+    if (rc <= 0 || rc > buf.size()) {
+      return ReturnCode::errorf("EIO", "read() failed: $0", strerror(errno));
+    }
+
+    auto begin = (const char*) &buf[0];
+    auto cur = begin;
+    auto end = (const char*) cur + rc;
+    while (cur < end) {
+      if (!msg_len) {
+        auto message_offset = segment_file_offset + (cur - begin);
+
+        if (!readVarUInt(&cur, end, &msg_len)) {
+          return ReturnCode::errorf("EIO", "corrupt file: $0", segment_path);
+        }
+
+        msg.offset =  message_offset;
+        msg.next_offset = segment_file_offset + (cur - begin) + msg_len;
+      }
+
+      if (msg_len > end - cur) {
+        msg.data.append(cur, end - cur);
+        msg_len -= end - cur;
+        cur = end;
+        break;
+      } else {
+        msg.data.append(std::string(cur, msg_len));
+        entries->emplace_back(std::move(msg));
+        cur += msg_len;
+        msg_len = 0;
+      }
+
+      if (--batch_size == 0) {
+        return ReturnCode::success();
+      }
+    }
+
+    segment_file_offset += rc;
   }
 
   return ReturnCode::success();

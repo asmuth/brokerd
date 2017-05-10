@@ -35,7 +35,6 @@ protected:
 struct ChannelSegment {
   uint64_t offset_begin;
   uint64_t offset_head;
-  std::list<Message> data;
 };
 
 struct ChannelSegmentHandle {
@@ -104,6 +103,13 @@ ReturnCode segmentAppend(
     size_t message_len);
 
 ReturnCode segmentCommit(ChannelSegmentHandle* segment);
+
+ReturnCode segmentRead(
+    const ChannelSegment& segment,
+    const std::string& channel_path,
+    uint64_t start_offset,
+    size_t batch_size,
+    std::list<Message>* entries);
 
 void transactionEncode(
     const ChannelSegmentTransaction& tx,

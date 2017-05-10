@@ -208,6 +208,7 @@ void HTTPServer::handleRequest_FETCH(
   if (!rc.isSuccess()) {
     res->setStatus(http::kStatusInternalServerError);
     res->addBody(StringUtil::format("error: $0", rc.getMessage()));
+    return;
   }
 
   if (next && !messages.empty() && messages.front().offset == offset) {
