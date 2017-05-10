@@ -6,4 +6,5 @@
 - delayed commit
 - cache filedescriptors for reading
 - wait/block feature
+- allow slash in channel name
 - tests

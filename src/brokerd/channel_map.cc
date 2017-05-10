@@ -7,6 +7,8 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
+#include <iostream>
+#include <regex>
 #include <brokerd/util/logging.h>
 #include <brokerd/util/fileutil.h>
 #include <brokerd/channel_map.h>
@@ -39,6 +41,41 @@ ReturnCode ChannelMap::openDirectory(
           data_dir,
           std::move(data_dir_lock),
           hostid));
+
+  std::map<std::string, std::set<uint64_t>> file_map;
+  FileUtil::ls(data_dir, [&file_map] (const auto& file) -> bool {
+    std::regex regex("^([a-z0-9A-Z\\._-]+)~([0-9]+)$");
+    std::smatch regex_match;
+
+    if (std::regex_match(file, regex_match, regex)) {
+      file_map[regex_match[1]].insert(std::stoull(regex_match[2]));
+    }
+
+    return true;
+  });
+
+  for (const auto& e : file_map) {
+    auto channel_path = FileUtil::joinPaths(data_dir, e.first);
+
+    std::list<ChannelSegment> segments;
+    for (const auto& offset : e.second) {
+      ChannelSegment s;
+      auto rc = segmentReadHeader(channel_path, offset, &s);
+      if (!rc.isSuccess()) {
+        return rc;
+      }
+
+      segments.emplace_back(s);
+    }
+
+    std::shared_ptr<Channel> channel;
+    auto rc = Channel::openChannel(channel_path, segments, &channel);
+    if (!rc.isSuccess()) {
+      return rc;
+    }
+
+    channel_map->get()->channels_.emplace(e.first, std::move(channel));
+  }
 
   return ReturnCode::success();
 } catch (const std::exception& e) {

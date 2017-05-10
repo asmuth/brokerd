@@ -53,6 +53,21 @@ ReturnCode Channel::createChannel(
   return ReturnCode::success();
 }
 
+ReturnCode Channel::openChannel(
+    const std::string& path,
+    std::list<ChannelSegment> segments,
+    std::shared_ptr<Channel>* channel) {
+  std::unique_ptr<ChannelSegmentHandle> segment;
+  auto rc = segmentOpen(path, segments.back(), &segment);
+  if (!rc.isSuccess()) {
+    return rc;
+  }
+
+  segments.pop_back();
+  channel->reset(new Channel(path, segments, std::move(segment)));
+  return ReturnCode::success();
+}
+
 Channel::Channel(
     const std::string& path,
     std::list<ChannelSegment> segments_archive,
@@ -215,6 +230,27 @@ ReturnCode segmentCreate(
   return ReturnCode::success();
 }
 
+ReturnCode segmentOpen(
+    const std::string& channel_path,
+    const ChannelSegment& segment,
+    std::unique_ptr<ChannelSegmentHandle>* segment_handle) {
+  auto segment_path = StringUtil::format(
+      "$0~$1",
+      channel_path,
+      segment.offset_begin);
+
+  auto segment_file_offset =
+      (segment.offset_head - segment.offset_begin) + kSegmentHeaderSize;
+
+  auto segment_file = File::openFile(segment_path, File::O_WRITE);
+  segment_file.seekTo(segment_file_offset);
+  segment_handle->reset(new ChannelSegmentHandle());
+  segment_handle->get()->segment = segment;
+  segment_handle->get()->fd = segment_file.releaseFD();
+
+  return ReturnCode::success();
+}
+
 ReturnCode segmentAppend(
     ChannelSegmentHandle* segment,
     const char* message,
@@ -331,12 +367,70 @@ ReturnCode segmentRead(
   return ReturnCode::success();
 }
 
+ReturnCode segmentReadHeader(
+    const std::string& channel_path,
+    uint64_t start_offset,
+    ChannelSegment* segment) {
+  auto segment_path = StringUtil::format(
+      "$0~$1",
+      channel_path,
+      start_offset);
+
+  auto segment_file = File::openFile(segment_path, File::O_READ);
+
+  std::array<uint8_t, kSegmentHeaderSize> buf;
+  size_t buf_len = 0;
+  while (buf_len < kSegmentHeaderSize) {
+    int rc = ::read(
+        segment_file.fd(),
+        buf.data() + buf_len,
+        buf.size() - buf_len);
+
+    if (rc <= 0) {
+      return ReturnCode::errorf("EIO", "read() failed: $0", strerror(errno));
+    } else {
+      buf_len += rc;
+    }
+  }
+
+  if (memcmp(buf.data(), kMagicBytes.data(), kMagicBytes.size()) != 0) {
+    return ReturnCode::errorf("EIO", "corrupt file: $0", segment_path);
+  }
+
+  ChannelSegmentTransaction tx;
+  auto rc = transactionDecode(
+      (const char*) buf.data() + kSegmentHeaderTransactionOffset,
+      buf.size() - kSegmentHeaderTransactionOffset,
+      &tx);
+
+  if (!rc.isSuccess()) {
+    return ReturnCode::errorf("EIO", "corrupt file '$0': $1", rc.getMessage());
+  }
+
+  segment->offset_begin = start_offset;
+  segment->offset_head = tx.offset_head;
+
+  return ReturnCode::success();
+}
+
 void transactionEncode(
     const ChannelSegmentTransaction& tx,
     std::string* buf) {
   std::string b(sizeof(tx.offset_head), 0);
   memcpy(&b[0], &tx.offset_head, sizeof(tx.offset_head));
   buf->append(b);
+}
+
+ReturnCode transactionDecode(
+    const char* buf,
+    size_t buf_len,
+    ChannelSegmentTransaction* tx) {
+  if (buf_len < sizeof(tx->offset_head)) {
+    return ReturnCode::error("EIO", "invalid header");
+  }
+
+  memcpy(&tx->offset_head, buf, sizeof(tx->offset_head));
+  return ReturnCode::success();
 }
 
 } // namespace brokerd

@@ -15,7 +15,8 @@
 
 namespace brokerd {
 
-const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
+//const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
+const size_t kMaxSegmentSize = 125;
 const size_t kSegmentHeaderSize = 4096;
 const std::array<uint8_t, 4> kMagicBytes = { 0x17, 0xff, 0x23, 0x05 };
 const std::array<uint8_t, 4> kVersion = { 0x01, 0x00, 0x00, 0x00 };
@@ -54,6 +55,11 @@ public:
 
   static ReturnCode createChannel(
       const std::string& path,
+      std::shared_ptr<Channel>* channel);
+
+  static ReturnCode openChannel(
+      const std::string& path,
+      std::list<ChannelSegment> segments,
       std::shared_ptr<Channel>* channel);
 
   /**
@@ -105,6 +111,11 @@ ReturnCode segmentCreate(
     uint64_t start_offset,
     std::unique_ptr<ChannelSegmentHandle>* segment);
 
+ReturnCode segmentOpen(
+    const std::string& channel_path,
+    const ChannelSegment& segment,
+    std::unique_ptr<ChannelSegmentHandle>* segment_handle);
+
 ReturnCode segmentAppend(
     ChannelSegmentHandle* segment,
     const char* message,
@@ -119,9 +130,19 @@ ReturnCode segmentRead(
     size_t batch_size,
     std::list<Message>* entries);
 
+ReturnCode segmentReadHeader(
+    const std::string& channel_path,
+    uint64_t start_offset,
+    ChannelSegment* segment);
+
 void transactionEncode(
     const ChannelSegmentTransaction& tx,
     std::string* buf);
+
+ReturnCode transactionDecode(
+    const char* buf,
+    size_t buf_len,
+    ChannelSegmentTransaction* tx);
 
 } // namespace brokerd
 
