@@ -9,6 +9,7 @@ BROKERD_COMMON_SRC = \
     channel_map.h \
     channel_map.cc \
     message.h \
+    message.cc \
     http_server.h \
     http_server.cc \
     util/autoref.cc \

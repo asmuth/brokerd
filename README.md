@@ -46,6 +46,29 @@ into our channel:
 
 The output should look similar to this:
 
+    < HTTP/1.1 200 OK
+    < access-control-allow-origin: *
+    < content-type: application/json; charset=utf-8
+    < Content-Length: 944
+
+    [
+      {
+        "offset": 1,
+        "next_offset": 2,
+        "data": "testing"
+      },
+      {
+        "offset": 2,
+        "next_offset": 3,
+        "data": "testing"
+      },
+      {
+        "offset": 3,
+        "next_offset": 4,
+        "data": "testing"
+      },
+    ...
+
 
 HTTP API
 --------

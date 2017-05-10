@@ -10,6 +10,7 @@
 #pragma once
 #include <stdlib.h>
 #include <string>
+#include <list>
 #include <brokerd/util/time.h>
 
 namespace brokerd {
@@ -22,5 +23,7 @@ struct Message {
   std::string data;
 };
 
-} // namespace rokerd
+std::string toJSON(const std::list<Message>& messages);
+
+} // namespace brokerd
 

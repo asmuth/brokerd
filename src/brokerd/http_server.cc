@@ -222,7 +222,8 @@ void HTTPServer::handleRequest_FETCH(
   }
 
   res->setStatus(http::kStatusOK);
-  res->addBody("not yet implemented");
+  res->addHeader("Content-Type", "application/json; charset=utf-8");
+  res->addBody(toJSON(messages));
 }
 
 void HTTPServer::handleRequest_SUBSCRIBE(
