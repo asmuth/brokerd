@@ -13,6 +13,8 @@
 #include <brokerd/channel.h>
 #include <brokerd/util/stringutil.h>
 #include <brokerd/util/file.h>
+#include <brokerd/util/varint.h>
+#include <brokerd/util/fileutil.h>
 
 namespace brokerd {
 
@@ -62,17 +64,9 @@ Channel::Channel(
 ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  //auto& seg = segments_.back();
+  *offset = segment_handle_->offset_head;
 
-  //*offset = ++seg.offset_head;
-
-  //seg.data.emplace_back(Message {
-  //  .offset = seg.offset_head,
-  //  .next_offset = seg.offset_head + 1,
-  //  .data = message
-  //});
-
-  return ReturnCode::success();
+  return segmentAppend(segment_handle_.get(), message.data(), message.size());
 }
 
 ReturnCode Channel::fetchMessages(
@@ -126,12 +120,34 @@ ReturnCode segmentCreate(
     }
   }
 
+  FileUtil::mv(segment_path + "~", segment_path);
 
   std::unique_ptr<ChannelSegmentHandle> s(new ChannelSegmentHandle());
   s->offset_begin = start_offset;
   s->offset_head = start_offset;
+  s->fd = segment_file.releaseFD();
 
   *segment = std::move(s);
+  return ReturnCode::success();
+}
+
+ReturnCode segmentAppend(
+    ChannelSegmentHandle* segment,
+    const char* message,
+    size_t message_len) {
+
+  size_t message_envelope_size;
+  auto rc = messageWrite(
+      message,
+      message_len,
+      segment->fd,
+      &message_envelope_size);
+
+  if (!rc.isSuccess()) {
+    return rc;
+  }
+
+  segment->offset_head += message_envelope_size;
   return ReturnCode::success();
 }
 

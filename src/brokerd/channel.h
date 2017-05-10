@@ -98,6 +98,11 @@ ReturnCode segmentCreate(
     uint64_t start_offset,
     std::unique_ptr<ChannelSegmentHandle>* segment);
 
+ReturnCode segmentAppend(
+    ChannelSegmentHandle* segment,
+    const char* message,
+    size_t message_len);
+
 void transactionEncode(
     const ChannelSegmentTransaction& tx,
     std::string* buf);

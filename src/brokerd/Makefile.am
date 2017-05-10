@@ -59,7 +59,9 @@ BROKERD_COMMON_SRC = \
     util/stringutil_impl.h \
     util/time.cc \
     util/time.h \
-    util/time_impl.h
+    util/time_impl.h \
+    util/varint.cc \
+    util/varint.h
 
 brokerd_SOURCES = \
     $(BROKERD_COMMON_SRC) \

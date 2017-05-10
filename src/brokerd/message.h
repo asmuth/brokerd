@@ -12,6 +12,7 @@
 #include <string>
 #include <list>
 #include <brokerd/util/time.h>
+#include <brokerd/util/return_code.h>
 
 namespace brokerd {
 
@@ -24,6 +25,12 @@ struct Message {
 };
 
 std::string toJSON(const std::list<Message>& messages);
+
+ReturnCode messageWrite(
+    const char* msg,
+    size_t msg_len,
+    int fd,
+    size_t* msg_envelope_len);
 
 } // namespace brokerd
 
