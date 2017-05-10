@@ -14,6 +14,12 @@
 
 namespace brokerd {
 
+const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
+const size_t kSegmentHeaderSize = 4096;
+const std::array<uint8_t, 4> kMagicBytes = { 0x17, 0xff, 0x23, 0x05 };
+const std::array<uint8_t, 4> kVersion = { 0x01, 0x00, 0x00, 0x00 };
+const size_t kSegmentHeaderTransactionOffset = 8;
+
 class ChannelID {
 public:
 
@@ -26,17 +32,26 @@ protected:
   std::string id_;
 };
 
+struct ChannelSegment {
+  uint64_t offset_begin;
+  uint64_t offset_head;
+  std::list<Message> data;
+};
+
+struct ChannelSegmentHandle {
+  ChannelSegmentHandle();
+  ~ChannelSegmentHandle();
+  int fd;
+  uint64_t offset_begin;
+  uint64_t offset_head;
+};
+
+struct ChannelSegmentTransaction {
+  uint64_t offset_head;
+};
+
 class Channel {
 public:
-
-  static const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
-  static const size_t kSegmentHeaderSize = 4096;
-
-  struct ChannelSegment {
-    uint64_t offset_begin;
-    uint64_t offset_head;
-    std::list<Message> data;
-  };
 
   static ReturnCode createChannel(
       const std::string& path,
@@ -69,12 +84,23 @@ protected:
 
   Channel(
       const std::string& path,
-      std::list<ChannelSegment> segments = {});
+      std::list<ChannelSegment> segments_archive,
+      std::unique_ptr<ChannelSegmentHandle> segment_handle);
 
   std::mutex mutex_;
   std::string path_;
-  std::list<ChannelSegment> segments_;
+  std::list<ChannelSegment> segments_archive_;
+  std::unique_ptr<ChannelSegmentHandle> segment_handle_;
 };
+
+ReturnCode segmentCreate(
+    const std::string& channel_path,
+    uint64_t start_offset,
+    std::unique_ptr<ChannelSegmentHandle>* segment);
+
+void transactionEncode(
+    const ChannelSegmentTransaction& tx,
+    std::string* buf);
 
 } // namespace brokerd
 

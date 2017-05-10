@@ -7,8 +7,12 @@
  * copy of the GNU General Public License along with this program. If not, see
  * <http://www.gnu.org/licenses/>.
  */
+#include <assert.h>
+#include <unistd.h>
+#include <cstring>
 #include <brokerd/channel.h>
 #include <brokerd/util/stringutil.h>
+#include <brokerd/util/file.h>
 
 namespace brokerd {
 
@@ -26,35 +30,47 @@ const std::string& ChannelID::str() const {
   return id_;
 }
 
+ChannelSegmentHandle::ChannelSegmentHandle() : fd(-1) {}
+
+ChannelSegmentHandle::~ChannelSegmentHandle() {
+  if (fd >= 0) {
+    ::close(fd);
+  }
+}
+
 ReturnCode Channel::createChannel(
     const std::string& path,
     std::shared_ptr<Channel>* channel) {
-  ChannelSegment segment;
-  segment.offset_begin = 0;
-  segment.offset_head = 0;
+  std::unique_ptr<ChannelSegmentHandle> segment;
+  auto rc = segmentCreate(path, 0, &segment);
+  if (!rc.isSuccess()) {
+    return rc;
+  }
 
-  channel->reset(new Channel(path, {segment}));
+  channel->reset(new Channel(path, {}, std::move(segment)));
   return ReturnCode::success();
 }
 
 Channel::Channel(
     const std::string& path,
-    std::list<ChannelSegment> segments /* = {} */) :
+    std::list<ChannelSegment> segments_archive,
+    std::unique_ptr<ChannelSegmentHandle> segment_handle) :
     path_(path),
-    segments_(segments) {}
+    segments_archive_(segments_archive),
+    segment_handle_(std::move(segment_handle)) {}
 
 ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) {
   std::unique_lock<std::mutex> lk(mutex_);
 
-  auto& seg = segments_.back();
+  //auto& seg = segments_.back();
 
-  *offset = ++seg.offset_head;
+  //*offset = ++seg.offset_head;
 
-  seg.data.emplace_back(Message {
-    .offset = seg.offset_head,
-    .next_offset = seg.offset_head + 1,
-    .data = message
-  });
+  //seg.data.emplace_back(Message {
+  //  .offset = seg.offset_head,
+  //  .next_offset = seg.offset_head + 1,
+  //  .data = message
+  //});
 
   return ReturnCode::success();
 }
@@ -64,8 +80,67 @@ ReturnCode Channel::fetchMessages(
     int batch_size,
     std::list<Message>* entries) {
   std::unique_lock<std::mutex> lk(mutex_);
-  *entries = segments_.back().data;
+  //*entries = segments_.back().data;
   return ReturnCode::success();
+}
+
+ReturnCode segmentCreate(
+    const std::string& channel_path,
+    uint64_t start_offset,
+    std::unique_ptr<ChannelSegmentHandle>* segment) {
+  auto segment_path = StringUtil::format("$0~$1", channel_path, start_offset); 
+  auto segment_file = File::openFile(
+    segment_path + "~",
+    File::O_READ | File::O_WRITE | File::O_CREATEOROPEN | File::O_TRUNCATE,
+    0644);
+
+  ChannelSegmentTransaction tx;
+  tx.offset_head = start_offset;
+
+  std::string tx_buf;
+  transactionEncode(tx, &tx_buf);
+
+  std::string segment_header;
+  segment_header.append((const char*) kMagicBytes.data(), kMagicBytes.size());
+  segment_header.append((const char*) kVersion.data(), kVersion.size());
+  segment_header.append(tx_buf);
+
+  assert(segment_header.size() <= kSegmentHeaderSize);
+
+  if (segment_header.size() < kSegmentHeaderSize) {
+    segment_header.append(std::string(kSegmentHeaderSize - segment_header.size(), 0));
+  }
+
+  {
+    auto rc = ::write(
+        segment_file.fd(),
+        segment_header.data(),
+        segment_header.size());
+
+    if (rc < 0 || rc != segment_header.size()) {
+      return ReturnCode::errorf(
+          "EIO",
+          "can't write segment header to '$0': $1",
+          segment_path,
+          strerror(errno));
+    }
+  }
+
+
+  std::unique_ptr<ChannelSegmentHandle> s(new ChannelSegmentHandle());
+  s->offset_begin = start_offset;
+  s->offset_head = start_offset;
+
+  *segment = std::move(s);
+  return ReturnCode::success();
+}
+
+void transactionEncode(
+    const ChannelSegmentTransaction& tx,
+    std::string* buf) {
+  std::string b(sizeof(tx.offset_head), 0);
+  memcpy(&b[0], &tx.offset_head, sizeof(tx.offset_head));
+  buf->append(b);
 }
 
 } // namespace brokerd
