@@ -15,8 +15,7 @@
 
 namespace brokerd {
 
-//const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
-const size_t kMaxSegmentSize = 125;
+const size_t kMaxSegmentSize = (2 << 19) * 512; // 512 MB
 const size_t kSegmentHeaderSize = 4096;
 const std::array<uint8_t, 4> kMagicBytes = { 0x17, 0xff, 0x23, 0x05 };
 const std::array<uint8_t, 4> kVersion = { 0x01, 0x00, 0x00, 0x00 };

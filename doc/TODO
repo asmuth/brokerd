@@ -4,7 +4,7 @@
 - stats endpoint
 - website
 - delayed commit
+- allow slash in channel name
 - cache filedescriptors for reading
 - wait/block feature
-- allow slash in channel name
 - tests
