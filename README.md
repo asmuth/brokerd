@@ -1,9 +1,9 @@
 brokerd
 =======
 
-brokerd is a lightweight message broker ("pub-sub") service. A brokerd instance
-manages a number of "channels". Each channel maps to a file on disk and supports
-two operations: `append(channel, msg)` and `getnext(channel, offset)`. 
+brokerd is a minimalistic message broker service. A brokerd instance manages a
+number of "channels". Each channel maps to a file on disk and supports two
+operations: `append(channel, msg)` and `getnext(channel, offset)`. 
 
 The append operation appends a message at the end of the file. Messages are then
 identified by the (logical) file offset at which they were written. The initial
@@ -16,7 +16,7 @@ storing the last offset it has consumed.
 
 If a disk space limit is configured using `--disklimit`, old messages will
 eventually be deleted from the beginning of the channel to reclaim space. When a
-client tries to read a message (offset) that has been gargbage collected, brokerd
+client tries to read a message (offset) that has been garbage collected, brokerd
 will return the next valid message in the channel. Reading from offset zero is
 therefore _always_ a valid operation and returns the first/oldest retained message
 from the channel.
