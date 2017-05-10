@@ -8,6 +8,7 @@
  * <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <memory>
 #include <brokerd/util/return_code.h>
 #include <brokerd/util/option.h>
 #include <brokerd/message.h>
@@ -49,7 +50,7 @@ struct ChannelSegmentTransaction {
   uint64_t offset_head;
 };
 
-class Channel {
+class Channel : public std::enable_shared_from_this<Channel> {
 public:
 
   static ReturnCode createChannel(
@@ -79,6 +80,11 @@ public:
       int batch_size,
       std::list<Message>* entries);
 
+  /**
+   * Commit all recent changes to disk
+   */
+  ReturnCode commit();
+
 protected:
 
   Channel(
@@ -86,10 +92,13 @@ protected:
       std::list<ChannelSegment> segments_archive,
       std::unique_ptr<ChannelSegmentHandle> segment_handle);
 
+  ReturnCode commitWithLock();
+
   std::mutex mutex_;
   std::string path_;
   std::list<ChannelSegment> segments_archive_;
   std::unique_ptr<ChannelSegmentHandle> segment_handle_;
+  bool needs_commit_;
 };
 
 ReturnCode segmentCreate(

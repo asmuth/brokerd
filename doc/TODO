@@ -1,8 +1,9 @@
+- message checksums
 - brokerctl
-- disklimit
+- implement disklimit
 - stats endpoint
-----
 - website
 - delayed commit
+- cache filedescriptors for reading
 - wait/block feature
 - tests

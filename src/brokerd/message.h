@@ -16,8 +16,6 @@
 
 namespace brokerd {
 
-typedef uint64_t FeedOffset;
-
 struct Message {
   uint64_t offset;
   uint64_t next_offset;

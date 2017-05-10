@@ -64,6 +64,30 @@ Channel::Channel(
 ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) {
   std::unique_lock<std::mutex> lk(mutex_);
 
+  auto segment_size =
+      segment_handle_->offset_head -
+      segment_handle_->offset_begin;
+
+  if (segment_size > kMaxSegmentSize) {
+    auto rc = commitWithLock();
+    if (!rc.isSuccess()) {
+      return rc;
+    }
+
+    std::unique_ptr<ChannelSegmentHandle> s(new ChannelSegmentHandle());
+    rc = segmentCreate(path_, segment_handle_->offset_head, &s);
+    if (!rc.isSuccess()) {
+      return rc;
+    }
+
+    segments_archive_.emplace_back(ChannelSegment {
+      .offset_begin = segment_handle_->offset_begin,
+      .offset_head = segment_handle_->offset_head
+    });
+
+    segment_handle_ = std::move(s);
+  }
+
   *offset = segment_handle_->offset_head;
 
   auto rc = segmentAppend(segment_handle_.get(), message.data(), message.size());
@@ -71,7 +95,9 @@ ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) 
     return rc;
   }
 
-  return segmentCommit(segment_handle_.get());
+  needs_commit_ = true;
+
+  return commitWithLock();
 }
 
 ReturnCode Channel::fetchMessages(
@@ -116,6 +142,24 @@ ReturnCode Channel::fetchMessages(
   }
 
   return ReturnCode::success();
+}
+
+ReturnCode Channel::commit() {
+  std::unique_lock<std::mutex> lk(mutex_);
+  return commitWithLock();
+}
+
+ReturnCode Channel::commitWithLock() {
+  if (!needs_commit_) {
+    return ReturnCode::success();
+  }
+
+  auto rc = segmentCommit(segment_handle_.get());
+  if (rc.isSuccess()) {
+    needs_commit_ = false;
+  }
+
+  return rc;
 }
 
 ReturnCode segmentCreate(
@@ -260,8 +304,8 @@ ReturnCode segmentRead(
           return ReturnCode::errorf("EIO", "corrupt file: $0", segment_path);
         }
 
-        msg.offset =  message_offset;
-        msg.next_offset = segment_file_offset + (cur - begin) + msg_len;
+        msg.offset = message_offset + segment.offset_begin;
+        msg.next_offset = segment_file_offset + (cur - begin) + msg_len + segment.offset_begin;
       }
 
       if (msg_len > end - cur) {
