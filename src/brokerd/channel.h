@@ -42,8 +42,7 @@ struct ChannelSegmentHandle {
   ChannelSegmentHandle();
   ~ChannelSegmentHandle();
   int fd;
-  uint64_t offset_begin;
-  uint64_t offset_head;
+  ChannelSegment segment;
 };
 
 struct ChannelSegmentTransaction {

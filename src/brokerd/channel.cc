@@ -65,8 +65,8 @@ ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) 
   std::unique_lock<std::mutex> lk(mutex_);
 
   auto segment_size =
-      segment_handle_->offset_head -
-      segment_handle_->offset_begin;
+      segment_handle_->segment.offset_head -
+      segment_handle_->segment.offset_begin;
 
   if (segment_size > kMaxSegmentSize) {
     auto rc = commitWithLock();
@@ -75,20 +75,20 @@ ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) 
     }
 
     std::unique_ptr<ChannelSegmentHandle> s(new ChannelSegmentHandle());
-    rc = segmentCreate(path_, segment_handle_->offset_head, &s);
+    rc = segmentCreate(path_, segment_handle_->segment.offset_head, &s);
     if (!rc.isSuccess()) {
       return rc;
     }
 
     segments_archive_.emplace_back(ChannelSegment {
-      .offset_begin = segment_handle_->offset_begin,
-      .offset_head = segment_handle_->offset_head
+      .offset_begin = segment_handle_->segment.offset_begin,
+      .offset_head = segment_handle_->segment.offset_head
     });
 
     segment_handle_ = std::move(s);
   }
 
-  *offset = segment_handle_->offset_head;
+  *offset = segment_handle_->segment.offset_head;
 
   auto rc = segmentAppend(segment_handle_.get(), message.data(), message.size());
   if (!rc.isSuccess()) {
@@ -115,8 +115,8 @@ ReturnCode Channel::fetchMessages(
         segments_archive_.end());
 
     segments.push_back(ChannelSegment {
-      .offset_begin = segment_handle_->offset_begin,
-      .offset_head = segment_handle_->offset_head,
+      .offset_begin = segment_handle_->segment.offset_begin,
+      .offset_head = segment_handle_->segment.offset_head,
     });
   }
 
@@ -207,8 +207,8 @@ ReturnCode segmentCreate(
   FileUtil::mv(segment_path + "~", segment_path);
 
   std::unique_ptr<ChannelSegmentHandle> s(new ChannelSegmentHandle());
-  s->offset_begin = start_offset;
-  s->offset_head = start_offset;
+  s->segment.offset_begin = start_offset;
+  s->segment.offset_head = start_offset;
   s->fd = segment_file.releaseFD();
 
   *segment = std::move(s);
@@ -231,13 +231,13 @@ ReturnCode segmentAppend(
     return rc;
   }
 
-  segment->offset_head += message_envelope_size;
+  segment->segment.offset_head += message_envelope_size;
   return ReturnCode::success();
 }
 
 ReturnCode segmentCommit(ChannelSegmentHandle* segment) {
   ChannelSegmentTransaction tx;
-  tx.offset_head = segment->offset_head;
+  tx.offset_head = segment->segment.offset_head;
 
   std::string tx_buf;
   transactionEncode(tx, &tx_buf);
