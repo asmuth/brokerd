@@ -73,13 +73,6 @@ void HTTPServer::handleRequest(
       }
 
       if (path_parts.size() == 3 &&
-          path_parts[0] == "channel" &&
-          path_parts[2] == "subscribe") {
-        handleRequest_SUBSCRIBE(req, res, path_parts[1]);
-        return;
-      }
-
-      if (path_parts.size() == 3 &&
           path_parts[0] == "channel") {
         handleRequest_FETCH(req, res, path_parts[1], path_parts[2]);
         return;
@@ -224,21 +217,6 @@ void HTTPServer::handleRequest_FETCH(
   res->setStatus(http::kStatusOK);
   res->addHeader("Content-Type", "application/json; charset=utf-8");
   res->addBody(toJSON(messages));
-}
-
-void HTTPServer::handleRequest_SUBSCRIBE(
-    http::HTTPRequest* req,
-    http::HTTPResponse* res,
-    const std::string& channel_id_str) {
-  auto channel_id = ChannelID::fromString(channel_id_str);
-  if (channel_id.isEmpty()) {
-    res->setStatus(http::kStatusBadRequest);
-    res->addBody("error: invalid channel id");
-    return;
-  }
-
-  res->setStatus(http::kStatusOK);
-  res->addBody("not yet implemented");
 }
 
 void HTTPServer::handleRequest_SERVERID(

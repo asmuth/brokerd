@@ -36,11 +36,6 @@ protected:
       http::HTTPResponse* res,
       const std::string& channel_id);
 
-  void handleRequest_SUBSCRIBE(
-      http::HTTPRequest* req,
-      http::HTTPResponse* res,
-      const std::string& channel_id);
-
   void handleRequest_FETCH(
       http::HTTPRequest* req,
       http::HTTPResponse* res,

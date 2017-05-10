@@ -33,16 +33,14 @@ will be stored in `/var/brokerd`:
     $ mkdir /var/brokerd
     $ brokerd --datadir /var/brokerd --listen_http localhost:8080
 
-In a shell, start this command to read messages from the "testchan" channel
-as they are being written (the command will not return or output anything for
-now but that is intended):
+In a shell, run this command to insert the message "testing" into our channel (
+the channel will be created on first insert):
 
-    curl -v localhost:8080/testchan/subscribe
+    curl -X POST -d "testing" localhost:8080/channel/testchan
 
-Then open another shell and run this command to insert the message "testing"
-into our channel:
+Afterwards, run this command to read messages from the "testchan" channel:
 
-    curl -X POST -d "testing" localhost:4242/testchan
+    curl -v localhost:8080/channel/testchan
 
 The output should look similar to this:
 
@@ -79,27 +77,24 @@ detailed documentation on the API please [check out the documentation](https://b
     POST /channel/:channel
          Append a message to a channel (the message is the POST body)
 
-     GET /channel/:channel/subscribe
-         Subscribe to a channel (returns a HTTP SSE stream of events)
- 
      GET /channel/:channel/:offset
          Retrieve a message at a specific offset
- 
+
      GET /channel/:channel/:offset/next
          Retrieve the next message after a specific offset
- 
+
      GET /channel/:channel/:offset/next/:n
          Retrieve the next N messages after a specific offset
- 
+
      GET /stats
          Responds with a list of statistics
- 
+
      GET /serverid
          Returns a unique server ID
- 
+
      GET /ping
          Responds with 'pong'
- 
+
 
 Usage
 -----
