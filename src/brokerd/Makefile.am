@@ -1,9 +1,6 @@
 bin_PROGRAMS = brokerd brokerctl
 
 BROKERD_COMMON_SRC = \
-    BrokerCursor.h \
-    LocalFeed.cc \
-    LocalFeed.h \
     channel.h \
     channel.cc \
     channel_map.h \
