@@ -66,7 +66,12 @@ ReturnCode Channel::appendMessage(const std::string& message, uint64_t* offset) 
 
   *offset = segment_handle_->offset_head;
 
-  return segmentAppend(segment_handle_.get(), message.data(), message.size());
+  auto rc = segmentAppend(segment_handle_.get(), message.data(), message.size());
+  if (!rc.isSuccess()) {
+    return rc;
+  }
+
+  return segmentCommit(segment_handle_.get());
 }
 
 ReturnCode Channel::fetchMessages(
@@ -148,6 +153,30 @@ ReturnCode segmentAppend(
   }
 
   segment->offset_head += message_envelope_size;
+  return ReturnCode::success();
+}
+
+ReturnCode segmentCommit(ChannelSegmentHandle* segment) {
+  ChannelSegmentTransaction tx;
+  tx.offset_head = segment->offset_head;
+
+  std::string tx_buf;
+  transactionEncode(tx, &tx_buf);
+
+  if (::fdatasync(segment->fd) == -1) {
+    return ReturnCode::errorf("EIO", "fsync() failed: $0", strerror(errno));
+  }
+
+  int rc = ::pwrite(
+      segment->fd,
+      tx_buf.data(),
+      tx_buf.size(),
+      kSegmentHeaderTransactionOffset);
+
+  if (rc < 0 || rc != tx_buf.size()) {
+    return ReturnCode::errorf("EIO", "write() failed: $0", strerror(errno));
+  }
+
   return ReturnCode::success();
 }
 

@@ -103,6 +103,8 @@ ReturnCode segmentAppend(
     const char* message,
     size_t message_len);
 
+ReturnCode segmentCommit(ChannelSegmentHandle* segment);
+
 void transactionEncode(
     const ChannelSegmentTransaction& tx,
     std::string* buf);

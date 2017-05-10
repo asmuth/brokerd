@@ -1,6 +1,8 @@
 - brokerctl
 - disklimit
 - stats endpoint
+----
 - website
+- delayed commit
 - wait/block feature
 - tests
