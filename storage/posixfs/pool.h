@@ -4,9 +4,10 @@
 struct PoolState {
   std::string path;
   uint64_t segment_number;
-  int segment_fd;
+  bool segment_active;
   size_t segment_size;
   size_t segment_size_limit;
+  int segment_fd;
 };
 
 PoolState pool_init(
