@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <fmt/core.h>
 
 PoolState pool_init(
   const std::string& path
@@ -19,12 +20,12 @@ PoolState pool_init(
 bool pool_segment_open(
   PoolState* pool
 ) {
-  // FIXME: allocation
-  std::string segment_path;
-  segment_path += pool->path;
-  segment_path += "/";
-  segment_path += std::to_string(pool->segment_number);
-  segment_path += ".log";
+  // @malloc
+  auto segment_path = fmt::format(
+    "{}/{:09}.log",
+    pool->path,
+    pool->segment_number
+  );
 
   pool->segment_fd = ::open(
     segment_path.c_str(),
