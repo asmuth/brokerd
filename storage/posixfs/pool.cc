@@ -10,17 +10,17 @@ PoolState pool_init(
 ) {
   PoolState p;
   p.path = path;
+  p.segment_number_tail = 0;
   p.segment_number = 1;
   p.segment_active = false;
   p.segment_size = 0;
   p.segment_size_limit = 2 << 10;
+  p.segment_count_limit = 8;
   p.segment_fd = -1;
   return p;
 }
 
-bool pool_segment_allocate (
-  PoolState* pool
-) {
+bool pool_segment_allocate(PoolState* pool) {
   if (pool->segment_active) {
     fmt::print(stderr, "ERROR: segment not concluded\n");
     return false;
@@ -33,9 +33,7 @@ bool pool_segment_allocate (
   return true;
 }
 
-bool pool_segment_conclude(
-  PoolState* pool
-) {
+bool pool_segment_conclude(PoolState* pool) {
   if (!pool->segment_active) {
     fmt::print(stderr, "ERROR: segment not allocated\n");
     return false;
@@ -57,20 +55,18 @@ size_t pool_segment_free_space(const PoolState& pool) {
   return pool.segment_size_limit - pool.segment_size;
 }
 
-bool pool_segment_open(
-  PoolState* pool
-) {
+std::string pool_segment_path(const PoolState& pool, uint64_t n) {
+  // @malloc
+  return fmt::format("{}/{:09}.log", pool.path, n);
+}
+
+bool pool_segment_open(PoolState* pool) {
   if (!pool->segment_active) {
     fmt::print(stderr, "ERROR: segment not allocated\n");
     return false;
   }
 
-  // @malloc
-  auto segment_path = fmt::format(
-    "{}/{:09}.log",
-    pool->path,
-    pool->segment_number
-  );
+  auto segment_path = pool_segment_path(*pool, pool->segment_number);
 
   pool->segment_fd = ::open(
     segment_path.c_str(),
@@ -86,9 +82,7 @@ bool pool_segment_open(
   }
 }
 
-bool pool_segment_close(
-  PoolState* pool
-) {
+bool pool_segment_close(PoolState* pool) {
   if (!pool->segment_active) {
     fmt::print(stderr, "ERROR: segment not allocated\n");
     return false;
@@ -106,6 +100,32 @@ bool pool_segment_close(
     perror("close error");
     return false;
   }
+}
+
+uint64_t pool_segment_count(const PoolState& pool) {
+  return pool.segment_number - pool.segment_number_tail;
+}
+
+bool pool_rotate(
+  PoolState* pool,
+  uint64_t reserve = 0
+) {
+  while (pool_segment_count(*pool) + reserve >= pool->segment_count_limit) {
+    auto segment_path = pool_segment_path(*pool, pool->segment_number_tail);
+    if (::unlink(segment_path.c_str()) != 0) {
+      switch (errno) {
+        case ENOENT:
+          break;
+        default:
+          perror("delete error");
+          return false;
+      }
+    }
+
+    pool->segment_number_tail++;
+  }
+
+  return true;
 }
 
 bool pool_write(
@@ -128,6 +148,10 @@ bool pool_write(
 
   // Allocate a new segment if required
   if (!pool->segment_active) {
+    if (!pool_rotate(pool, 1)) {
+      return false;
+    }
+
     if (!pool_segment_allocate(pool)) {
       return false;
     }

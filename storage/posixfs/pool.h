@@ -3,10 +3,12 @@
 
 struct PoolState {
   std::string path;
+  uint64_t segment_number_tail;
   uint64_t segment_number;
   bool segment_active;
   size_t segment_size;
   size_t segment_size_limit;
+  size_t segment_count_limit;
   int segment_fd;
 };
 
