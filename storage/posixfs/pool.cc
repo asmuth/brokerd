@@ -10,11 +10,8 @@ PoolState pool_init(
 ) {
   PoolState p;
   p.path = path;
-  p.file_seq = 0;
   p.file_list[1] = 0;
   p.file_list[0] = 0;
-  p.file_fd = -1;
-  p.file_size = 0;
   p.file_size_limit = 2 << 10;
   p.file_count_limit = 8;
   return p;
@@ -30,54 +27,56 @@ uint64_t pool_file_count(const PoolState& pool) {
 }
 
 size_t pool_file_free_space(const PoolState& pool) {
-  if (!pool.file_seq) {
+  if (!pool.file) {
     return 0;
   }
 
-  if (pool.file_size > pool.file_size_limit) {
+  if (pool.file->size > pool.file_size_limit) {
     return 0;
   }
 
-  return pool.file_size_limit - pool.file_size;
+  return pool.file_size_limit - pool.file->size;
 }
 
 bool pool_file_allocate(PoolState* pool) {
-  if (pool->file_seq) {
+  if (pool->file) {
     fmt::print(stderr, "ERROR: file not concluded\n");
     return false;
   }
 
-  pool->file_seq = ++pool->file_list[1];
-  pool->file_size = 0;
+  pool->file = FileState{};
+  pool->file->seq = ++pool->file_list[1];
+  pool->file->size = 0;
+  pool->file->fd = -1;
 
   return true;
 }
 
 bool pool_file_conclude(PoolState* pool) {
-  if (!pool->file_seq) {
+  if (!pool->file) {
     fmt::print(stderr, "ERROR: file not allocated\n");
     return false;
   }
 
-  pool->file_seq = 0;
+  pool->file = std::nullopt;
   return true;
 }
 
 bool pool_file_open(PoolState* pool) {
-  if (!pool->file_seq) {
+  if (!pool->file) {
     fmt::print(stderr, "ERROR: file not allocated\n");
     return false;
   }
 
-  auto file_path = pool_file_path(*pool, pool->file_seq);
+  auto file_path = pool_file_path(*pool, pool->file->seq);
 
-  pool->file_fd = ::open(
+  pool->file->fd = ::open(
     file_path.c_str(),
     O_WRONLY | O_CREAT | O_EXCL,
     0644
   );
 
-  if (pool->file_fd >= 0) {
+  if (pool->file->fd >= 0) {
     return true;
   } else {
     perror("unable to open file");
@@ -86,18 +85,18 @@ bool pool_file_open(PoolState* pool) {
 }
 
 bool pool_file_close(PoolState* pool) {
-  if (!pool->file_seq) {
+  if (!pool->file) {
     fmt::print(stderr, "ERROR: file not allocated\n");
     return false;
   }
 
-  if (pool->file_fd < 0) {
+  if (pool->file->fd < 0) {
     fmt::print(stderr, "ERROR: file not open\n");
     return false;
   }
 
-  if (::close(pool->file_fd) == 0) {
-    pool->file_fd = -1;
+  if (::close(pool->file->fd) == 0) {
+    pool->file->fd = -1;
     return true;
   } else {
     perror("close error");
@@ -133,8 +132,8 @@ bool pool_write(
   size_t data_len
 ) {
   // Conclude the current file if writing would exceed the size limit
-  if (pool->file_seq && data_len > pool_file_free_space(*pool)) {
-    if (pool->file_fd >= 0) {
+  if (pool->file && data_len > pool_file_free_space(*pool)) {
+    if (pool->file->fd >= 0) {
       if (!pool_file_close(pool)) {
         return false;
       }
@@ -145,8 +144,8 @@ bool pool_write(
     }
   }
 
-  // Allocate a new file_sequence number if required
-  if (!pool->file_seq) {
+  // Allocate a new file sequence number if required
+  if (!pool->file) {
     if (!pool_rotate(pool, 1)) {
       return false;
     }
@@ -157,7 +156,7 @@ bool pool_write(
   }
 
   // Open the current file if required
-  if (pool->file_fd < 0) {
+  if (pool->file->fd < 0) {
     if (!pool_file_open(pool)) {
       return false;
     }
@@ -166,14 +165,14 @@ bool pool_write(
   // Write the data to the current file
   for (size_t write_pos = 0; write_pos < data_len; ) {
     auto write_result = ::write(
-      pool->file_fd,
+      pool->file->fd,
       data + write_pos,
       data_len - write_pos
     );
 
     if (write_result >= 0) {
       write_pos += write_result;
-      pool->file_size += write_result;
+      pool->file->size += write_result;
     } else {
       perror("write error");
       return false;

@@ -1,21 +1,27 @@
 #pragma once
 #include <string>
+#include <optional>
+
+struct FileState {
+  // The sequence number of the file
+  uint64_t seq;
+
+  // The size of the file in bytes
+  size_t size;
+
+  // The file descriptor for the file
+  int fd;
+};
 
 struct PoolState {
   // The directory in which files are stored
   std::string path;
 
+  // The currently active file
+  std::optional<FileState> file;
+
   // The (lowest, highest) sequence number of all existing files
   uint64_t file_list[2];
-
-  // The sequence number of the current file
-  uint64_t file_seq;
-
-  // The file descriptor for the current file
-  int file_fd;
-
-  // The size of the current file in bytes
-  size_t file_size;
 
   // The maximum file size in bytes
   size_t file_size_limit;
