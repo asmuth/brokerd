@@ -2,14 +2,26 @@
 #include <string>
 
 struct PoolState {
+  // The directory in which files are stored
   std::string path;
-  uint64_t segment_number_tail;
-  uint64_t segment_number;
-  bool segment_active;
-  size_t segment_size;
-  size_t segment_size_limit;
-  size_t segment_count_limit;
-  int segment_fd;
+
+  // The (lowest, highest) sequence number of all existing files
+  uint64_t file_list[2];
+
+  // The sequence number of the current file
+  uint64_t file_seq;
+
+  // The file descriptor for the current file
+  int file_fd;
+
+  // The size of the current file in bytes
+  size_t file_size;
+
+  // The maximum file size in bytes
+  size_t file_size_limit;
+
+  // The maximum number of files to retain
+  size_t file_count_limit;
 };
 
 PoolState pool_init(

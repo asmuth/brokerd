@@ -10,91 +10,94 @@ PoolState pool_init(
 ) {
   PoolState p;
   p.path = path;
-  p.segment_number_tail = 0;
-  p.segment_number = 1;
-  p.segment_active = false;
-  p.segment_size = 0;
-  p.segment_size_limit = 2 << 10;
-  p.segment_count_limit = 8;
-  p.segment_fd = -1;
+  p.file_seq = 0;
+  p.file_list[1] = 0;
+  p.file_list[0] = 0;
+  p.file_fd = -1;
+  p.file_size = 0;
+  p.file_size_limit = 2 << 10;
+  p.file_count_limit = 8;
   return p;
 }
 
-bool pool_segment_allocate(PoolState* pool) {
-  if (pool->segment_active) {
-    fmt::print(stderr, "ERROR: segment not concluded\n");
-    return false;
-  }
-
-  pool->segment_number++;
-  pool->segment_active = true;
-  pool->segment_size = 0;
-
-  return true;
-}
-
-bool pool_segment_conclude(PoolState* pool) {
-  if (!pool->segment_active) {
-    fmt::print(stderr, "ERROR: segment not allocated\n");
-    return false;
-  }
-
-  pool->segment_active = false;
-  return true;
-}
-
-size_t pool_segment_free_space(const PoolState& pool) {
-  if (!pool.segment_active) {
-    return 0;
-  }
-
-  if (pool.segment_size > pool.segment_size_limit) {
-    return 0;
-  }
-
-  return pool.segment_size_limit - pool.segment_size;
-}
-
-std::string pool_segment_path(const PoolState& pool, uint64_t n) {
+std::string pool_file_path(const PoolState& pool, uint64_t n) {
   // @malloc
   return fmt::format("{}/{:09}.log", pool.path, n);
 }
 
-bool pool_segment_open(PoolState* pool) {
-  if (!pool->segment_active) {
-    fmt::print(stderr, "ERROR: segment not allocated\n");
+uint64_t pool_file_count(const PoolState& pool) {
+  return pool.file_list[1] - pool.file_list[0];
+}
+
+size_t pool_file_free_space(const PoolState& pool) {
+  if (!pool.file_seq) {
+    return 0;
+  }
+
+  if (pool.file_size > pool.file_size_limit) {
+    return 0;
+  }
+
+  return pool.file_size_limit - pool.file_size;
+}
+
+bool pool_file_allocate(PoolState* pool) {
+  if (pool->file_seq) {
+    fmt::print(stderr, "ERROR: file not concluded\n");
     return false;
   }
 
-  auto segment_path = pool_segment_path(*pool, pool->segment_number);
+  pool->file_seq = ++pool->file_list[1];
+  pool->file_size = 0;
 
-  pool->segment_fd = ::open(
-    segment_path.c_str(),
+  return true;
+}
+
+bool pool_file_conclude(PoolState* pool) {
+  if (!pool->file_seq) {
+    fmt::print(stderr, "ERROR: file not allocated\n");
+    return false;
+  }
+
+  pool->file_seq = 0;
+  return true;
+}
+
+bool pool_file_open(PoolState* pool) {
+  if (!pool->file_seq) {
+    fmt::print(stderr, "ERROR: file not allocated\n");
+    return false;
+  }
+
+  auto file_path = pool_file_path(*pool, pool->file_seq);
+
+  pool->file_fd = ::open(
+    file_path.c_str(),
     O_WRONLY | O_CREAT | O_EXCL,
     0644
   );
 
-  if (pool->segment_fd >= 0) {
+  if (pool->file_fd >= 0) {
     return true;
   } else {
-    perror("unable to open segment file");
+    perror("unable to open file");
     return false;
   }
 }
 
-bool pool_segment_close(PoolState* pool) {
-  if (!pool->segment_active) {
-    fmt::print(stderr, "ERROR: segment not allocated\n");
+bool pool_file_close(PoolState* pool) {
+  if (!pool->file_seq) {
+    fmt::print(stderr, "ERROR: file not allocated\n");
     return false;
   }
 
-  if (pool->segment_fd < 0) {
-    fmt::print(stderr, "ERROR: segment not open\n");
+  if (pool->file_fd < 0) {
+    fmt::print(stderr, "ERROR: file not open\n");
     return false;
   }
 
-  if (::close(pool->segment_fd) == 0) {
-    pool->segment_fd = -1;
+  if (::close(pool->file_fd) == 0) {
+    pool->file_fd = -1;
     return true;
   } else {
     perror("close error");
@@ -102,17 +105,13 @@ bool pool_segment_close(PoolState* pool) {
   }
 }
 
-uint64_t pool_segment_count(const PoolState& pool) {
-  return pool.segment_number - pool.segment_number_tail;
-}
-
 bool pool_rotate(
   PoolState* pool,
   uint64_t reserve = 0
 ) {
-  while (pool_segment_count(*pool) + reserve >= pool->segment_count_limit) {
-    auto segment_path = pool_segment_path(*pool, pool->segment_number_tail);
-    if (::unlink(segment_path.c_str()) != 0) {
+  while (pool_file_count(*pool) + reserve >= pool->file_count_limit) {
+    auto file_path = pool_file_path(*pool, pool->file_list[0]);
+    if (::unlink(file_path.c_str()) != 0) {
       switch (errno) {
         case ENOENT:
           break;
@@ -122,7 +121,7 @@ bool pool_rotate(
       }
     }
 
-    pool->segment_number_tail++;
+    pool->file_list[0]++;
   }
 
   return true;
@@ -133,48 +132,48 @@ bool pool_write(
   const uint8_t* data,
   size_t data_len
 ) {
-  // Conclude the current segment file if writing would exceed the size limit
-  if (pool->segment_active && data_len > pool_segment_free_space(*pool)) {
-    if (pool->segment_fd >= 0) {
-      if (!pool_segment_close(pool)) {
+  // Conclude the current file if writing would exceed the size limit
+  if (pool->file_seq && data_len > pool_file_free_space(*pool)) {
+    if (pool->file_fd >= 0) {
+      if (!pool_file_close(pool)) {
         return false;
       }
     }
 
-    if (!pool_segment_conclude(pool)) {
+    if (!pool_file_conclude(pool)) {
       return false;
     }
   }
 
-  // Allocate a new segment if required
-  if (!pool->segment_active) {
+  // Allocate a new file_sequence number if required
+  if (!pool->file_seq) {
     if (!pool_rotate(pool, 1)) {
       return false;
     }
 
-    if (!pool_segment_allocate(pool)) {
+    if (!pool_file_allocate(pool)) {
       return false;
     }
   }
 
-  // Open the current segment file if required
-  if (pool->segment_fd < 0) {
-    if (!pool_segment_open(pool)) {
+  // Open the current file if required
+  if (pool->file_fd < 0) {
+    if (!pool_file_open(pool)) {
       return false;
     }
   }
 
-  // Write the data to the current segment file
+  // Write the data to the current file
   for (size_t write_pos = 0; write_pos < data_len; ) {
     auto write_result = ::write(
-      pool->segment_fd,
+      pool->file_fd,
       data + write_pos,
       data_len - write_pos
     );
 
     if (write_result >= 0) {
       write_pos += write_result;
-      pool->segment_size += write_result;
+      pool->file_size += write_result;
     } else {
       perror("write error");
       return false;
